@@ -1,1 +1,1 @@
-# SenpaiBot2.0
+INIT README

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 ADMIN_IDS = os.getenv("ADMIN_ID_LIST")
-DISPLAY_CHANNEL = os.getenv("EV_CHANNEL_ID")
+DISPLAY_CHANNEL = os.getenv("EVENTS_CHANNEL_ID")
 
 
 class SenpaiBirthdays(commands.Cog):

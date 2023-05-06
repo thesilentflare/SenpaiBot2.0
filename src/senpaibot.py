@@ -98,7 +98,13 @@ async def main():
         await bot.start(TOKEN)
 
 
-modules = ["senpai_birthdays"]
+modules = [
+    "senpai_birthdays",
+    "senpai_8ball",
+    "senpai_imageboards",
+    "senpai_fortune",
+    # "senpai_polls",
+]
 
 
 if __name__ == "__main__":

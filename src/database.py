@@ -14,7 +14,7 @@ def create_table(conn, create_table_sql):
 ################################################################
 # Birthdays
 ################################################################
-def add(conn, id, name, mm, dd):
+def add_birthday(conn, id, name, mm, dd):
     if conn is not None:
         try:
             c = conn.cursor()
@@ -27,7 +27,7 @@ def add(conn, id, name, mm, dd):
         conn.close()
 
 
-def delete(conn, id):
+def delete_birthday(conn, id):
     if conn is not None:
         try:
             c = conn.cursor()
@@ -40,7 +40,7 @@ def delete(conn, id):
         conn.close()
 
 
-def list(conn):
+def list_birthdays(conn):
     if conn is not None:
         try:
             c = conn.cursor()
@@ -56,9 +56,9 @@ def get_today_birthdays(conn, mm, dd):
     if conn is not None:
         try:
             c = conn.cursor()
-            sql_today_birthday = """SELECT * FROM birthdays WHERE mm=$mm AND dd=$dd;"""
+            sql_today_birthdays = """SELECT * FROM birthdays WHERE mm=$mm AND dd=$dd;"""
             placeholders = {"mm": mm, "dd": dd}
-            c.execute(sql_today_birthday, placeholders)
+            c.execute(sql_today_birthdays, placeholders)
             return c.fetchall()
         except Error as e:
             print(e)

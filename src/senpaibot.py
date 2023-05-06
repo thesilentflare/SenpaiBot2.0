@@ -85,25 +85,38 @@ def leave_all_voice_channels(bot):
             voice.disconnect()
 
 
+# class MyBot(commands.Bot):
+#     async def setup_hook(self):
+#         for module in modules:
+#             await self.load_extension(module)
+
+
+async def main():
+    async with bot:
+        for module in modules:
+            await bot.load_extension(module)
+        await bot.start(TOKEN)
+
+
+modules = ["senpai_birthdays"]
+
+
 if __name__ == "__main__":
     if TOKEN is None:
         print("Error: no token given")
         sys.exit(1)
-    # TODO: modularize
-    # for module in modules:
-    #       bot.load_extension(module)
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+
     try:
-        loop.run_until_complete(bot.start(TOKEN))
-        # asyncio.new_event_loop().run_until_complete(bot.start(TOKEN))
+        #     loop.run_until_complete(bot.start(TOKEN))
+        #     # asyncio.new_event_loop().run_until_complete(bot.start(TOKEN))
+        asyncio.run(main())
     except KeyboardInterrupt:
         print("INTERRUPTED...")
-        # asyncio.get_event_loop().run_until_complete(tally_before_exit())
-        loop.run_until_complete(bot.close())
-        # cancel all tasks lingering
+        #     # asyncio.get_event_loop().run_until_complete(tally_before_exit())
+        #     loop.run_until_complete(bot.close())
+        #     # cancel all tasks lingering
 
-    finally:
-        loop.run_until_complete(bot.close())
-        # TODO: unsure to keep below or not
-        # loop.run_until_complete(asyncio.gather(*asyncio.all_tasks()))
+        # finally:
+        #     loop.run_until_complete(bot.close())
+        #     # TODO: unsure to keep below or not
+        #     loop.run_until_complete(asyncio.gather(*asyncio.all_tasks()))

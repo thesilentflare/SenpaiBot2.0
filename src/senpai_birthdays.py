@@ -136,14 +136,23 @@ class SenpaiBirthdays(commands.Cog):
         # else:
         #     await context.send("Command not found!")
 
-    # async def format_list(self, arr):
-    #     title = "Birthdays"
-    #     # for entry in arr:
-    #     #     description += "{}".format(entry)
-    #     description = "this1\n"
-    #     description += "this"
-    #     embed = discord.Embed(title=title, description=description, color=0xffffff)
-    #     return embed
+    @commands.command()
+    async def bnext(self, context):
+        list = database_helper.get_next_birthdays(
+            datetime.datetime.now(pytz.timezone(TIME_ZONE)).month,
+            datetime.datetime.now(pytz.timezone(TIME_ZONE)).day,
+        )
+        title = "Upcoming 3 Birthdays"
+        description = "Person | Month | Day\n\n"
+        if len(list) > 0:
+            for entry in list:
+                name = entry[1]
+                description += "{}: {}/{}\n".format(name, entry[2], entry[3])
+            embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
+        else:
+            description = "No Birthdays in Database"
+            embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
+        await context.send(embed=embed)
 
 
 async def setup(bot):

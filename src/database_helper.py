@@ -40,3 +40,11 @@ def list_birthdays():
         result = database.list_birthdays(conn)
         conn.close()
         return result
+
+
+def get_next_birthdays(month, day):
+    conn = sqlite3.connect(db)
+    if conn is not None:
+        result = database.get_next_birthdays(conn, month, day)
+        conn.close()
+        return result

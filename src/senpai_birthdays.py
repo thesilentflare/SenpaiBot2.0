@@ -5,12 +5,13 @@ import datetime
 import pytz
 import time
 import database_helper
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 load_dotenv()
 ADMIN_IDS = os.getenv("ADMIN_ID_LIST")
 DISPLAY_CHANNEL = os.getenv("EVENTS_CHANNEL_ID")
+TIME_ZONE = os.getenv("TIME_ZONE")
 
 
 class SenpaiBirthdays(commands.Cog):
@@ -19,43 +20,49 @@ class SenpaiBirthdays(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.messages = set()
+        self.background_birthdays.start()
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.loop.create_task(self.background_birthdays())
-        print("birthday task created")
+    # @commands.Cog.listener()
+    # async def on_ready(self):
+    #     # self.bot.loop.create_task(self.background_birthdays())
+    #     self.background_birthdays.start()
+    #     print("birthday task created")
 
+    def cog_unload(self):
+        self.background_birthdays.cancel()
+
+    @tasks.loop(minutes=60)
     async def background_birthdays(self):
-        await self.bot.wait_until_ready()
-        # channel = self.bot.get_channel(NEWS_CHANNEL_ID)
-        channel = self.bot.get_channel(DISPLAY_CHANNEL)
+        if datetime.datetime.now(pytz.timezone(TIME_ZONE)).hour != 15:
+            return
+        channel = self.bot.get_channel(int(DISPLAY_CHANNEL))
         if channel is None:
             return
-        while True:
-            # TODO: variable timezone
-            if datetime.datetime.now(pytz.timezone("America/Toronto")).hour == 0:
-                mm = datetime.datetime.now().month
-                dd = datetime.datetime.now().day
-                list = database_helper.get_today_birthdays(mm, dd)
-                if list:
-                    title = "🎊HAPPY BIRTHDAY TO🎊"
+        mm = datetime.datetime.now(pytz.timezone(TIME_ZONE)).month
+        dd = datetime.datetime.now(pytz.timezone(TIME_ZONE)).day
+        list = database_helper.get_today_birthdays(mm, dd)
+        if list:
+            title = "🎊HAPPY BIRTHDAY TO🎊"
 
-                    description = ""
-                    for entry in list:
-                        # username = self.bot.get_user(entry[0]).name
-                        #                         try:
-                        #                             username = self.bot.get_user(entry[0]).name
-                        #                         except:
-                        #                             username = entry[0]
-                        username = entry[0]
-                        description += "{}".format(username)
-                    embed = discord.Embed(
-                        title=title, description=description, color=0xFFFFFF
-                    )
-                    msg = await channel.send(embed=embed)
-                    if msg:
-                        self.messages.add(msg)
-            await asyncio.sleep(3600)
+            description = ""
+            for entry in list:
+                # username = self.bot.get_user(entry[0]).name
+                #                         try:
+                #                             username = self.bot.get_user(entry[0]).name
+                #                         except:
+                #                             username = entry[0]
+                username = entry[1]
+                description += "{}".format(username)
+            embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
+            msg = await channel.send(embed=embed)
+            if msg:
+                self.messages.add(msg)
+            # await asyncio.sleep(3600)
+
+    @background_birthdays.before_loop
+    async def before_background_birthdays(self):
+        print("waiting...")
+        await self.bot.wait_until_ready()
 
     async def get_birthdays():
         return None

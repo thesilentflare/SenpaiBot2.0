@@ -49,7 +49,8 @@ async def nine_nine(ctx):
     ]
 
     response = random.choice(brooklyn_99_quotes)
-    await ctx.send(response)
+    msg = await ctx.send(response)
+    await msg.add_reaction("✅")
 
 
 # def signal_handler(signal, frame):
@@ -99,11 +100,12 @@ async def main():
 
 
 modules = [
-    "senpai_birthdays",
     "senpai_8ball",
-    "senpai_imageboards",
+    "senpai_birthdays",
     "senpai_fortune",
-    # "senpai_polls",
+    "senpai_imageboards",
+    "senpai_warframe",
+    "senpai_yugioh",
 ]
 
 

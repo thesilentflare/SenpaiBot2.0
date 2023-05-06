@@ -69,9 +69,7 @@ def get_next_birthdays(conn, mm, dd):
     if conn is not None:
         try:
             c = conn.cursor()
-            sql_next_birthdays = (
-                """SELECT * FROM birthdays WHERE mm>=$mm AND dd>=$dd;"""
-            )
+            sql_next_birthdays = """SELECT * FROM birthdays WHERE mm>$mm AND dd>$dd;"""
             placeholders = {"mm": mm, "dd": dd}
             c.execute(sql_next_birthdays, placeholders)
             return c.fetchall()[:3]

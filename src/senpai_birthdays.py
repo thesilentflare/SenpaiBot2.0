@@ -12,6 +12,7 @@ load_dotenv()
 ADMIN_IDS = os.getenv("ADMIN_ID_LIST")
 DISPLAY_CHANNEL = os.getenv("EVENTS_CHANNEL_ID")
 TIME_ZONE = os.getenv("TIME_ZONE")
+BIRTHDAY_NOTIF_HOUR = int(os.getenv("BIRTHDAY_NOTIF_HOUR"))
 
 
 class SenpaiBirthdays(commands.Cog):
@@ -33,7 +34,7 @@ class SenpaiBirthdays(commands.Cog):
 
     @tasks.loop(minutes=60)
     async def background_birthdays(self):
-        if datetime.datetime.now(pytz.timezone(TIME_ZONE)).hour != 15:
+        if datetime.datetime.now(pytz.timezone(TIME_ZONE)).hour != BIRTHDAY_NOTIF_HOUR:
             return
         channel = self.bot.get_channel(int(DISPLAY_CHANNEL))
         if channel is None:
@@ -52,7 +53,7 @@ class SenpaiBirthdays(commands.Cog):
                 #                         except:
                 #                             username = entry[0]
                 username = entry[1]
-                description += "{}".format(username)
+                description += "{}\n".format(username)
             embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
             msg = await channel.send(embed=embed)
             if msg:

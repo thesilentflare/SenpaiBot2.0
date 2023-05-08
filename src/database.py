@@ -69,10 +69,15 @@ def get_next_birthdays(conn, mm, dd):
     if conn is not None:
         try:
             c = conn.cursor()
-            sql_next_birthdays = """SELECT * FROM birthdays WHERE mm>=$mm AND dd>$dd;"""
+            sql_next_birthdays = """SELECT * FROM birthdays WHERE (mm>=$mm AND dd>=$dd) OR (mm>$mm AND dd<=$dd);"""
             placeholders = {"mm": mm, "dd": dd}
             c.execute(sql_next_birthdays, placeholders)
-            return c.fetchall()[:3]
+            result = c.fetchmany(3)
+            # account for end of year
+            if len(result) < 3:
+                all_birthdays = list_birthdays(conn)
+                result += all_birthdays[: 3 - len(result)]
+            return result
         except Error as e:
             print(e)
         conn.close()

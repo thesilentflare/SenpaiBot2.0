@@ -31,15 +31,31 @@ Edit newly generate `.env` file with your `DISCORD_GUILD` and `DISCORD_TOKEN`.
 
 Makefile:
 
+To run the bot:
+
 ```
-~ $ make run
+~ $ make run-bot
+```
+
+To run the portal:
+
+```
+~ $ make run-portal
 ```
 
 Manually:
 
+To run the bot:
+
 ```
 ~ $ cd SenpaiBot2.0/src
 ~ $ python3 senpaibot.py
+```
+
+To run the portal:
+
+```
+~ $ python3 manage.py runserver
 ```
 
 ## Features

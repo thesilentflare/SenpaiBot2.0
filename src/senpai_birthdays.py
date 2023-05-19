@@ -52,7 +52,7 @@ class SenpaiBirthdays(commands.Cog):
                 #                             username = self.bot.get_user(entry[0]).name
                 #                         except:
                 #                             username = entry[0]
-                username = entry[1]
+                username = entry[2]
                 description += "{}\n".format(username)
             embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
             msg = await channel.send(embed=embed)
@@ -126,8 +126,8 @@ class SenpaiBirthdays(commands.Cog):
                 #                 username = self.bot.get_user(entry[0]).name
                 #             except:
                 #                 username = entry[0]
-                name = entry[1]
-                description += "{}: {}/{}\n".format(name, entry[2], entry[3])
+                name = entry[2]
+                description += "{}: {}/{}\n".format(name, entry[3], entry[4])
             embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
         else:
             description = "No Birthdays in Database"
@@ -147,8 +147,8 @@ class SenpaiBirthdays(commands.Cog):
         description = "Person | Month | Day\n\n"
         if len(list) > 0:
             for entry in list:
-                name = entry[1]
-                description += "{}: {}/{}\n".format(name, entry[2], entry[3])
+                name = entry[2]
+                description += "{}: {}/{}\n".format(name, entry[3], entry[4])
             embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
         else:
             description = "No Birthdays in Database"

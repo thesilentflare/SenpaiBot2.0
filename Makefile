@@ -1,4 +1,5 @@
 # Globals
+.PHONY= dev-setup
 PYTHON = python
 VENV = .venv
 FILES =
@@ -13,11 +14,13 @@ help:
 	@echo "------------------------------------"
 	@echo "----------------DEV-----------------"
 	@echo "------------------------------------"
-	@echo "To seed database, type: make seed"
+	@echo "To perform reset+setup+seed, type: make dev-setup"
+	@echo "To only seed database, type: make dev-seed"
+	@echo "To only reset database, type: make dev-reset"
 	@echo "------------------------------------"
 
 
-
+# Prod Functions
 setup:
 	@echo "Checking if project dependencies are installed..."
 	pip install -r requirements.txt
@@ -33,13 +36,39 @@ setup-portal:
 	@echo "Create superuser..."
 	${PYTHON} manage.py createsuperuser
 
-
-seed:
-	@echo "Seeding..."
-	${PYTHON} ./dev/seed.py
-
 run-bot:
 	${PYTHON} src/senpaibot.py
 
 run-portal:
+	${PYTHON} manage.py runserver
+
+
+# Dev functions
+dev-seed:
+	@echo "Seeding..."
+	${PYTHON} ./dev/seed.py
+
+dev-setup: dev-reset
+	@echo "Checking virtual environment..."
+	[ ! -d "./virt" ] && ${PYTHON} -m venv virt || source virt/Scripts/activate
+	@echo "Checking if project dependencies are installed..."
+	pip install -r requirements.txt
+	@echo "Checking database and migrations..."
+	${PYTHON} manage.py migrate
+	@echo "Creating default superuser..."
+	DJANGO_SUPERUSER_USERNAME="admin" \
+	DJANGO_SUPERUSER_PASSWORD="Senpaibot2!" \
+	DJANGO_SUPERUSER_EMAIL="senpai@bot.com" \
+	${PYTHON} manage.py createsuperuser --noinput
+	@echo "Seeding..."
+	${PYTHON} ./dev/seed.py
+
+dev-reset:
+	@echo "Resetting..."
+	${PYTHON} manage.py flush
+
+dev-bot: run-bot
+
+dev-portal:
+	. virt/Scripts/activate
 	${PYTHON} manage.py runserver

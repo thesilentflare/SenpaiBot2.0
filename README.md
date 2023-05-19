@@ -65,3 +65,37 @@ WIP
 ## Commands
 
 WIP
+
+## DEV
+
+Makefile:
+
+To setup:
+
+```
+~ $ make dev-setup
+```
+
+To seed database:
+
+```
+~ $ make dev-seed
+```
+
+To reset database:
+
+```
+~ $ make dev-reset
+```
+
+To run the bot:
+
+```
+~ $ make dev-bot
+```
+
+To run the portal:
+
+```
+~ $ make dev-portal
+```

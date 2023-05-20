@@ -21,5 +21,4 @@ def birthdays(conn):
       conn.commit()
     except Error as e:
         print(e)
-    conn.close()
   return birthday_list

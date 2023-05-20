@@ -16,6 +16,5 @@ def channels(conn):
       conn.commit()
     except Error as e:
         print(e)
-    conn.close()
   return channel_list
   

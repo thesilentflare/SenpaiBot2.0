@@ -14,9 +14,9 @@ conn = sqlite3.connect(db)
 
 
 # Seed Birthdays
-print(birthdays.birthdays(conn))
-print(channels.channels(conn))
-
+print("Seeded birthdays: ", birthdays.birthdays(conn))
+print("Seeded channels: ",channels.channels(conn))
+conn.close()
 
 
 

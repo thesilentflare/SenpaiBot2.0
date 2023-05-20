@@ -9,6 +9,13 @@ def initialize(server_name):
     # database.initialize(conn)
     conn.close()
 
+def get_admins(id):
+    conn = sqlite3.connect(db)
+    if conn is not None:
+        result = database.get_admins(conn, id)
+        conn.close()
+        return result
+
 
 def add_birthday(user_id, name, month, day):
     conn = sqlite3.connect(db)

@@ -79,10 +79,10 @@ dev-reset:
 	${PYTHON} manage.py flush
 
 dev-undo-migrate:
-	@echo "Resetting migrations..."
-	${PYTHON} manage.py migrate --fake models zero
-	${PYTHON} manage.py makemigrations
-	${PYTHON} manage.py migrate
+	@echo "Please enter file to revert to: "; \
+	read FILE; \
+	${PYTHON} manage.py migrate models ${FILE}
+
 
 dev-bot: run-bot
 

@@ -9,8 +9,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 load_dotenv()
-ADMIN_IDS = os.getenv("ADMIN_ID_LIST")
-# DISPLAY_CHANNEL = os.getenv("EVENTS_CHANNEL_ID")
+
 TIME_ZONE = os.getenv("TIME_ZONE")
 BIRTHDAY_NOTIF_HOUR = int(os.getenv("BIRTHDAY_NOTIF_HOUR"))
 
@@ -76,13 +75,13 @@ class SenpaiBirthdays(commands.Cog):
     #     return None
     
     @commands.command(name="bset")
-    async def btest(self, context):
-        if not str(context.message.author.id) in ADMIN_IDS:
-            await context.send("Y'all'th'st'd've'ish ain't Snoopy or Sflare")
+    async def bset(self, context):
+        ADMIN_IDS = database_helper.get_admins(context.message.author.id)
+        if len(ADMIN_IDS) == 0:
+            await context.send("Y'all'th'st'd've'ish ain't an Admin")
             return
         # get context id
         channel_id = context.message.channel.id
-        print("id: ",channel_id)
         # send to db
         database_helper.set_birthday_channel(channel_id)
         # confirmation message
@@ -104,20 +103,22 @@ class SenpaiBirthdays(commands.Cog):
             return
         if arg[0] == "add":
             if len(arg) == 5:
-                if str(context.message.author.id) in ADMIN_IDS:
+                ADMIN_IDS = database_helper.get_admins(context.message.author.id)
+                if len(ADMIN_IDS) == 0:
                     database_helper.add_birthday(arg[1], arg[2], arg[3], arg[4])
                     await context.send("Birthday Created")
                 else:
-                    await context.send("Y'all'th'st'd've'ish ain't Snoopy or Sflare")
+                    await context.send("Y'all'th'st'd've'ish ain't an Admin")
             else:
                 await context.send('Usage: !birthday add "user_id" "name" "mm" "dd"')
         elif arg[0] == "del":
             if len(arg) == 2:
-                if str(context.message.author.id) in ADMIN_IDS:
+                ADMIN_IDS = database_helper.get_admins(context.message.author.id)
+                if len(ADMIN_IDS) == 0:
                     database_helper.delete_birthday(arg[1])
                     await context.send("Birthday Deleted")
                 else:
-                    await context.send("Y'all'th'st'd've'ish ain't Snoopy or Sflare")
+                    await context.send("Y'all'th'st'd've'ish ain't an Admin")
             else:
                 await context.send('Usage: !birthday del "user_id"')
         # elif (arg[0] == "list"):

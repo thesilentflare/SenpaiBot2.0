@@ -12,6 +12,23 @@ def create_table(conn, create_table_sql):
 
 
 ################################################################
+# Users
+################################################################
+def get_admins(conn, id):
+    if conn is not None:
+        try:
+            c = conn.cursor()
+            sql_get_admins = """SELECT * FROM models_discordadmin WHERE discord_id=$id;"""
+            placeholders = {"id": id}
+            c.execute(sql_get_admins, placeholders)
+            return c.fetchall()
+        except Error as e:
+            print(e)
+        conn.close()
+
+
+
+################################################################
 # Birthdays
 ################################################################
 def add_birthday(conn, discord_id, name, month, day):

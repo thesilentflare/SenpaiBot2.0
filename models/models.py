@@ -9,3 +9,11 @@ class Birthday(models.Model):
   
   def __str__(self):
     return(f"{self.name} {self.month} {self.day}")
+  
+  
+class Channel(models.Model):
+  channel_name = models.CharField(max_length=100, unique=True)
+  channel_id = models.CharField(max_length=100)
+  
+  def __str__(self):
+    return(f"{self.channel_name} {self.channel_id}")

@@ -81,18 +81,45 @@ def get_next_birthdays(conn, month, day):
         except Error as e:
             print(e)
         conn.close()
+        
+def get_birthday_channel(conn):
+    if conn is not None:
+        try:
+            c = conn.cursor()
+            sql_get_birthday_channel = """SELECT channel_id FROM models_channel WHERE channel_name=$name;"""
+            placeholders = {"name": 'BIRTHDAY_CHANNEL'}
+            c.execute(sql_get_birthday_channel, placeholders)
+            return c.fetchone()[0]
+        except Error as e:
+            print(e)
+        conn.close()
 
 
-sql_create_birthday_table = """CREATE TABLE IF NOT EXISTS birthdays (
-                                            id CHAR(50) PRIMARY KEY,
-                                            name CHAR(50),
-                                            mm integer DEFAULT 0,
-                                            dd integer DEFAULT 0)"""
+def set_birthday_channel(conn, id):
+    if conn is not None:
+        try:
+            c = conn.cursor()
+            sql_set_birthday_channel = """INSERT OR IGNORE INTO models_channel (channel_name, channel_id) VALUES ($channel_name, $channel_id);"""
+            sql_update_birthday_channel = """UPDATE models_channel SET channel_id=$channel_id WHERE channel_name=$channel_name;"""
+            placeholders = {"channel_name": 'BIRTHDAY_CHANNEL', 'channel_id': id}
+            c.execute(sql_set_birthday_channel, placeholders)
+            c.execute(sql_update_birthday_channel, placeholders)
+            conn.commit()
+        except Error as e:
+            print(e)
+        conn.close()
+
+# TODO: use django models instead
+# sql_create_birthday_table = """CREATE TABLE IF NOT EXISTS birthdays (
+#                                             id CHAR(50) PRIMARY KEY,
+#                                             name CHAR(50),
+#                                             mm integer DEFAULT 0,
+#                                             dd integer DEFAULT 0)"""
 ################################################################
 ################################################################
 
-PIKAGACHA_TABLE_LIST = []
-OTHER_TABLE_LIST = [sql_create_birthday_table]
+# PIKAGACHA_TABLE_LIST = []
+# OTHER_TABLE_LIST = [sql_create_birthday_table]
 
 
 # def initialize(conn):

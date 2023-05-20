@@ -1,6 +1,8 @@
 # SenpaiBot 2.0
 
-Our bot for our Discord server.
+Our bot for our Discord server, version 2.0.
+
+Link to the original version: [Senpaibot](https://github.com/SnoopySnipe/SenpaiBot)
 
 <p>
 <img src="./senpai_bot.png" width="350">

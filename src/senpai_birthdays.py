@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 ADMIN_IDS = os.getenv("ADMIN_ID_LIST")
-DISPLAY_CHANNEL = os.getenv("EVENTS_CHANNEL_ID")
+# DISPLAY_CHANNEL = os.getenv("EVENTS_CHANNEL_ID")
 TIME_ZONE = os.getenv("TIME_ZONE")
 BIRTHDAY_NOTIF_HOUR = int(os.getenv("BIRTHDAY_NOTIF_HOUR"))
 
@@ -36,7 +36,10 @@ class SenpaiBirthdays(commands.Cog):
     async def background_birthdays(self):
         if datetime.datetime.now(pytz.timezone(TIME_ZONE)).hour != BIRTHDAY_NOTIF_HOUR:
             return
-        channel = self.bot.get_channel(int(DISPLAY_CHANNEL))
+        
+        # using channel id from db instead of .env
+        channel = self.bot.get_channel(int(database_helper.get_birthday_channel()))
+        # channel = self.bot.get_channel(int(DISPLAY_CHANNEL))
         if channel is None:
             return
         mm = datetime.datetime.now(pytz.timezone(TIME_ZONE)).month
@@ -65,8 +68,26 @@ class SenpaiBirthdays(commands.Cog):
         print("waiting...")
         await self.bot.wait_until_ready()
 
-    async def get_birthdays():
-        return None
+    # @commands.command(name="btest")
+    # async def btest(self, context):
+    #     print("invoked")
+    #     text = database_helper.get_birthday_channel()
+    #     print("id: ",text)
+    #     return None
+    
+    @commands.command(name="bset")
+    async def btest(self, context):
+        if not str(context.message.author.id) in ADMIN_IDS:
+            await context.send("Y'all'th'st'd've'ish ain't Snoopy or Sflare")
+            return
+        # get context id
+        channel_id = context.message.channel.id
+        print("id: ",channel_id)
+        # send to db
+        database_helper.set_birthday_channel(channel_id)
+        # confirmation message
+        await context.send("Birthday Channel Set")
+
 
     @commands.group(invoke_without_command=True)
     async def birthday(self, context, *arg):

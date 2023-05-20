@@ -1,5 +1,5 @@
 # Globals
-.PHONY= dev-setup
+.PHONY= dev-setup setup setup-portal run-bot run-portal dev-seed dev-undo-migrate dev-reset dev-portal dev-bot
 PYTHON = python
 VENV = .venv
 FILES =
@@ -17,6 +17,9 @@ help:
 	@echo "To perform reset+setup+seed, type: make dev-setup"
 	@echo "To only seed database, type: make dev-seed"
 	@echo "To only reset database, type: make dev-reset"
+	@echo "To only rollback migrations, type: make dev-undo-migrate"
+	@echo "To run the bot, type: make dev-bot"
+	@echo "To run the admin portal, type: make dev-portal"
 	@echo "------------------------------------"
 
 
@@ -62,10 +65,24 @@ dev-setup: dev-reset
 	${PYTHON} manage.py createsuperuser --noinput
 	@echo "Seeding..."
 	${PYTHON} ./dev/seed.py
+	@echo "..."
+	@echo "..."
+	@echo "..."
+	@echo "COMPLETED!!!"
+	@echo "..."
+	@echo "MAKE SURE TO EDIT THE DATABASE VALUES PER DEVELOPMENT DISCORD SERVER"
+	@echo "(e.g. Channel Model IDs)"
+
 
 dev-reset:
 	@echo "Resetting..."
 	${PYTHON} manage.py flush
+
+dev-undo-migrate:
+	@echo "Resetting migrations..."
+	${PYTHON} manage.py migrate --fake models zero
+	${PYTHON} manage.py makemigrations
+	${PYTHON} manage.py migrate
 
 dev-bot: run-bot
 

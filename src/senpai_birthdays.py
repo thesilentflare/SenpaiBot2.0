@@ -9,8 +9,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 load_dotenv()
-ADMIN_IDS = os.getenv("ADMIN_ID_LIST")
-DISPLAY_CHANNEL = os.getenv("EVENTS_CHANNEL_ID")
+
 TIME_ZONE = os.getenv("TIME_ZONE")
 BIRTHDAY_NOTIF_HOUR = int(os.getenv("BIRTHDAY_NOTIF_HOUR"))
 
@@ -36,7 +35,10 @@ class SenpaiBirthdays(commands.Cog):
     async def background_birthdays(self):
         if datetime.datetime.now(pytz.timezone(TIME_ZONE)).hour != BIRTHDAY_NOTIF_HOUR:
             return
-        channel = self.bot.get_channel(int(DISPLAY_CHANNEL))
+        
+        # using channel id from db instead of .env
+        channel = self.bot.get_channel(int(database_helper.get_birthday_channel()))
+        # channel = self.bot.get_channel(int(DISPLAY_CHANNEL))
         if channel is None:
             return
         mm = datetime.datetime.now(pytz.timezone(TIME_ZONE)).month
@@ -52,7 +54,7 @@ class SenpaiBirthdays(commands.Cog):
                 #                             username = self.bot.get_user(entry[0]).name
                 #                         except:
                 #                             username = entry[0]
-                username = entry[1]
+                username = entry[2]
                 description += "{}\n".format(username)
             embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
             msg = await channel.send(embed=embed)
@@ -65,8 +67,26 @@ class SenpaiBirthdays(commands.Cog):
         print("waiting...")
         await self.bot.wait_until_ready()
 
-    async def get_birthdays():
-        return None
+    # @commands.command(name="btest")
+    # async def btest(self, context):
+    #     print("invoked")
+    #     text = database_helper.get_birthday_channel()
+    #     print("id: ",text)
+    #     return None
+    
+    @commands.command(name="bset")
+    async def bset(self, context):
+        ADMIN_IDS = database_helper.get_admins(context.message.author.id)
+        if len(ADMIN_IDS) == 0:
+            await context.send("Y'all'th'st'd've'ish ain't an Admin")
+            return
+        # get context id
+        channel_id = context.message.channel.id
+        # send to db
+        database_helper.set_birthday_channel(channel_id)
+        # confirmation message
+        await context.send("Birthday Channel Set")
+
 
     @commands.group(invoke_without_command=True)
     async def birthday(self, context, *arg):
@@ -83,20 +103,22 @@ class SenpaiBirthdays(commands.Cog):
             return
         if arg[0] == "add":
             if len(arg) == 5:
-                if str(context.message.author.id) in ADMIN_IDS:
+                ADMIN_IDS = database_helper.get_admins(context.message.author.id)
+                if len(ADMIN_IDS) == 0:
                     database_helper.add_birthday(arg[1], arg[2], arg[3], arg[4])
                     await context.send("Birthday Created")
                 else:
-                    await context.send("Y'all'th'st'd've'ish ain't Snoopy or Sflare")
+                    await context.send("Y'all'th'st'd've'ish ain't an Admin")
             else:
                 await context.send('Usage: !birthday add "user_id" "name" "mm" "dd"')
         elif arg[0] == "del":
             if len(arg) == 2:
-                if str(context.message.author.id) in ADMIN_IDS:
+                ADMIN_IDS = database_helper.get_admins(context.message.author.id)
+                if len(ADMIN_IDS) == 0:
                     database_helper.delete_birthday(arg[1])
                     await context.send("Birthday Deleted")
                 else:
-                    await context.send("Y'all'th'st'd've'ish ain't Snoopy or Sflare")
+                    await context.send("Y'all'th'st'd've'ish ain't an Admin")
             else:
                 await context.send('Usage: !birthday del "user_id"')
         # elif (arg[0] == "list"):
@@ -126,8 +148,8 @@ class SenpaiBirthdays(commands.Cog):
                 #                 username = self.bot.get_user(entry[0]).name
                 #             except:
                 #                 username = entry[0]
-                name = entry[1]
-                description += "{}: {}/{}\n".format(name, entry[2], entry[3])
+                name = entry[2]
+                description += "{}: {}/{}\n".format(name, entry[3], entry[4])
             embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
         else:
             description = "No Birthdays in Database"
@@ -147,8 +169,8 @@ class SenpaiBirthdays(commands.Cog):
         description = "Person | Month | Day\n\n"
         if len(list) > 0:
             for entry in list:
-                name = entry[1]
-                description += "{}: {}/{}\n".format(name, entry[2], entry[3])
+                name = entry[2]
+                description += "{}: {}/{}\n".format(name, entry[3], entry[4])
             embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
         else:
             description = "No Birthdays in Database"

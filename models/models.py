@@ -13,7 +13,7 @@ class DiscordAdmin(models.Model):
     ordering = ['user']
   
 class Birthday(models.Model):
-  discord_id = models.CharField(max_length=100)
+  discord_id = models.CharField(max_length=100, unique=True)
   name = models.CharField(max_length=100)
   month = models.IntegerField()
   day = models.IntegerField()

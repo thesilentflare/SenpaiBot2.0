@@ -41,6 +41,13 @@ def get_today_birthdays(month, day):
         return result
 
 
+def get_monthly_birthdays(month):
+    conn = sqlite3.connect(db)
+    if conn is not None:
+        result = database.get_monthly_birthdays(conn, month)
+        conn.close()
+        return result
+
 def list_birthdays():
     conn = sqlite3.connect(db)
     if conn is not None:

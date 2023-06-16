@@ -81,6 +81,17 @@ def get_today_birthdays(conn, month, day):
             print(e)
         conn.close()
 
+def get_monthly_birthdays(conn, month):
+    if conn is not None:
+        try:
+            c = conn.cursor()
+            sql_today_birthdays = """SELECT * FROM models_birthday WHERE month=$month;"""
+            placeholders = {"month": month}
+            c.execute(sql_today_birthdays, placeholders)
+            return c.fetchall()
+        except Error as e:
+            print(e)
+        conn.close()
 
 def get_next_birthdays(conn, month, day):
     if conn is not None:

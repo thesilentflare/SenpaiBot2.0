@@ -4,15 +4,20 @@ import asyncio
 import datetime
 import pytz
 import time
+import calendar
 import database_helper
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 load_dotenv()
 
-TIME_ZONE = os.getenv("TIME_ZONE")
+TIME_ZONE = pytz.timezone(os.getenv("TIME_ZONE"))
+utc = pytz.utc
 BIRTHDAY_NOTIF_HOUR = int(os.getenv("BIRTHDAY_NOTIF_HOUR"))
-
+# time = datetime.time(BIRTHDAY_NOTIF_HOUR,0,0,0)
+time4 = datetime.datetime.strptime("{}:0:0".format(BIRTHDAY_NOTIF_HOUR), "%H:%M:%S")
+time3 = TIME_ZONE.localize(time4)
+time = time3.astimezone(utc).replace(minute=0).time()
 
 class SenpaiBirthdays(commands.Cog):
     __slots__ = "messages"
@@ -22,57 +27,51 @@ class SenpaiBirthdays(commands.Cog):
         self.messages = set()
         self.background_birthdays.start()
 
-    # @commands.Cog.listener()
-    # async def on_ready(self):
-    #     # self.bot.loop.create_task(self.background_birthdays())
-    #     self.background_birthdays.start()
-    #     print("birthday task created")
-
     def cog_unload(self):
         self.background_birthdays.cancel()
 
-    @tasks.loop(minutes=60)
+    @tasks.loop(time=time)
     async def background_birthdays(self):
-        if datetime.datetime.now(pytz.timezone(TIME_ZONE)).hour != BIRTHDAY_NOTIF_HOUR:
-            return
-        
         # using channel id from db instead of .env
         channel = self.bot.get_channel(int(database_helper.get_birthday_channel()))
         # channel = self.bot.get_channel(int(DISPLAY_CHANNEL))
         if channel is None:
             return
-        mm = datetime.datetime.now(pytz.timezone(TIME_ZONE)).month
-        dd = datetime.datetime.now(pytz.timezone(TIME_ZONE)).day
+        
+        mm = datetime.datetime.now(TIME_ZONE).month
+        dd = datetime.datetime.now(TIME_ZONE).day
+        
+        # Monthly birthdays
+        if (dd == 1):
+            m_list = database_helper.get_monthly_birthdays(mm)
+            if m_list:
+                title = "🎊 {} BIRTHDAYS 🎊".format((calendar.month_name[mm]).upper())
+
+                description = ""
+                for entry in m_list:
+                    username = entry[2]
+                    description += "{}: {}/{}\n".format(username, entry[3], entry[4])
+                embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
+                msg = await channel.send(embed=embed)
+                if msg:
+                    self.messages.add(msg)
+        
         list = database_helper.get_today_birthdays(mm, dd)
         if list:
-            title = "🎊HAPPY BIRTHDAY TO🎊"
-
+            title = "🎊 HAPPY BIRTHDAY TO 🎊"
             description = ""
             for entry in list:
-                # username = self.bot.get_user(entry[0]).name
-                #                         try:
-                #                             username = self.bot.get_user(entry[0]).name
-                #                         except:
-                #                             username = entry[0]
                 username = entry[2]
-                description += "{}\n".format(username)
+                description += "{}: <@{}>\n".format(username, entry[1])
             embed = discord.Embed(title=title, description=description, color=0xFFFFFF)
             msg = await channel.send(embed=embed)
             if msg:
                 self.messages.add(msg)
-            # await asyncio.sleep(3600)
 
     @background_birthdays.before_loop
     async def before_background_birthdays(self):
         print("waiting...")
         await self.bot.wait_until_ready()
-
-    # @commands.command(name="btest")
-    # async def btest(self, context):
-    #     print("invoked")
-    #     text = database_helper.get_birthday_channel()
-    #     print("id: ",text)
-    #     return None
     
     @commands.command(name="bset")
     async def bset(self, context):
@@ -162,8 +161,8 @@ class SenpaiBirthdays(commands.Cog):
     @commands.command()
     async def bnext(self, context):
         list = database_helper.get_next_birthdays(
-            datetime.datetime.now(pytz.timezone(TIME_ZONE)).month,
-            datetime.datetime.now(pytz.timezone(TIME_ZONE)).day,
+            datetime.datetime.now(TIME_ZONE).month,
+            datetime.datetime.now(TIME_ZONE).day,
         )
         title = "Upcoming 3 Birthdays"
         description = "Person | Month | Day\n\n"

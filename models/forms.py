@@ -1,4 +1,4 @@
-from .models import Birthday
+from .models import Birthday, CsvBirthdays
 from django import forms
 
 class AddBirthdayForm(forms.ModelForm):
@@ -14,3 +14,8 @@ class AddBirthdayForm(forms.ModelForm):
   def __init__(self, *args, **kwargs):
     super(AddBirthdayForm, self).__init__(*args, **kwargs)
     
+
+class AddCsvBirthdaysForm(forms.ModelForm):
+  class Meta:
+    model = CsvBirthdays
+    fields = ('file_name',)

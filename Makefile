@@ -73,16 +73,20 @@ dev-setup: dev-reset
 	@echo "MAKE SURE TO EDIT THE DATABASE VALUES PER DEVELOPMENT DISCORD SERVER"
 	@echo "(e.g. Channel Model IDs)"
 
-
 dev-reset:
 	@echo "Resetting..."
 	${PYTHON} manage.py flush
+
+dev-create-migration:
+	${PYTHON} manage.py makemigrations
+
+dev-migrate-up:
+	${PYTHON} manage.py migrate
 
 dev-undo-migrate:
 	@echo "Please enter file to revert to: "; \
 	read FILE; \
 	${PYTHON} manage.py migrate models ${FILE}
-
 
 dev-bot: run-bot
 

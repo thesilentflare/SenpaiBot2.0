@@ -11,12 +11,15 @@ help:
 	@echo "To setup portal, type: make setup-portal"
 	@echo "To run the bot, type: make run-bot"
 	@echo "To run the admin portal, type: make run-portal"
+	@echo "To run the grab latest updates, type: make update"
 	@echo "------------------------------------"
 	@echo "----------------DEV-----------------"
 	@echo "------------------------------------"
 	@echo "To perform reset+setup+seed, type: make dev-setup"
 	@echo "To only seed database, type: make dev-seed"
 	@echo "To only reset database, type: make dev-reset"
+	@echo "To create migration file, type: make dev-create-migration"
+	@echo "To use new migration file(s), type: make dev-migrate-up"
 	@echo "To only rollback migrations, type: make dev-undo-migrate"
 	@echo "To run the bot, type: make dev-bot"
 	@echo "To run the admin portal, type: make dev-portal"
@@ -45,6 +48,11 @@ run-bot:
 run-portal:
 	${PYTHON} manage.py runserver
 
+update:
+	@echo "Checking if theres an update..."
+	git pull
+	@echo "Checking database and migrations..."
+	${PYTHON} manage.py migrate
 
 # Dev functions
 dev-seed:
@@ -73,16 +81,20 @@ dev-setup: dev-reset
 	@echo "MAKE SURE TO EDIT THE DATABASE VALUES PER DEVELOPMENT DISCORD SERVER"
 	@echo "(e.g. Channel Model IDs)"
 
-
 dev-reset:
 	@echo "Resetting..."
 	${PYTHON} manage.py flush
+
+dev-create-migration:
+	${PYTHON} manage.py makemigrations
+
+dev-migrate-up:
+	${PYTHON} manage.py migrate
 
 dev-undo-migrate:
 	@echo "Please enter file to revert to: "; \
 	read FILE; \
 	${PYTHON} manage.py migrate models ${FILE}
-
 
 dev-bot: run-bot
 

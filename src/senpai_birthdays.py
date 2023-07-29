@@ -14,10 +14,10 @@ load_dotenv()
 TIME_ZONE = pytz.timezone(os.getenv("TIME_ZONE"))
 utc = pytz.utc
 BIRTHDAY_NOTIF_HOUR = int(os.getenv("BIRTHDAY_NOTIF_HOUR"))
-# time = datetime.time(BIRTHDAY_NOTIF_HOUR,0,0,0)
-time4 = datetime.datetime.strptime("{}:0:0".format(BIRTHDAY_NOTIF_HOUR), "%H:%M:%S")
-time3 = TIME_ZONE.localize(time4)
-time = time3.astimezone(utc).replace(minute=0).time()
+
+curr_time = TIME_ZONE.localize(datetime.datetime.now()).replace(hour=BIRTHDAY_NOTIF_HOUR)
+time = curr_time.astimezone(utc).replace(minute=0, second=0, microsecond=0).time()
+
 
 class SenpaiBirthdays(commands.Cog):
     __slots__ = "messages"

@@ -136,6 +136,19 @@ def set_birthday_channel(conn, id):
         except Error as e:
             print(e)
         conn.close()
+        
+# #########################################################################
+def get_logs_channel(conn):
+    if conn is not None:
+        try:
+            c = conn.cursor()
+            sql_get_logs_channel = """SELECT channel_id FROM models_channel WHERE channel_name=$name;"""
+            placeholders = {"name": 'LOGS_CHANNEL'}
+            c.execute(sql_get_logs_channel, placeholders)
+            return c.fetchone()[0]
+        except Error as e:
+            print(e)
+        conn.close()
 
 # TODO: use django models instead
 # sql_create_birthday_table = """CREATE TABLE IF NOT EXISTS birthdays (

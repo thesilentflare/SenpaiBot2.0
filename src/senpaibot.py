@@ -19,6 +19,8 @@ bot = commands.Bot(
     command_prefix="!", intents=discord.Intents.all(), description=DESCRIPTION
 )
 
+EXEMPT_IDS = []
+LOGS_CHANNEL_ID = ""
 
 @bot.event
 async def on_ready():
@@ -51,6 +53,22 @@ async def nine_nine(ctx):
     response = random.choice(brooklyn_99_quotes)
     msg = await ctx.send(response)
     await msg.add_reaction("✅")
+
+@bot.event
+async def on_message_delete(message):
+    if message.author.id not in EXEMPT_IDS:
+        channel = bot.get_channel(int(database_helper.get_logs_channel()))
+        if channel is None:
+            return
+        # channel = bot.get_channel(LOGS_CHANNEL_ID)
+        msg = ""
+        if message.channel.id != LOGS_CHANNEL_ID and message.author != bot.user:
+            msg = msg + "`In " + message.channel.name + ", " + message.author.name + " deleted: `"
+            if message.content != "":
+                msg = msg + "||" + message.content + "||"
+            for attachment in message.attachments:
+                msg = msg + "\n`proxy url: `||" + attachment.proxy_url + "||"
+            await channel.send(msg)
 
 
 # def signal_handler(signal, frame):

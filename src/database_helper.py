@@ -77,3 +77,10 @@ def set_birthday_channel(id):
         result = database.set_birthday_channel(conn, id)
         conn.close()
         return result
+
+def get_logs_channel():
+    conn = sqlite3.connect(db)
+    if conn is not None:
+        result = database.get_logs_channel(conn)
+        conn.close()
+        return result

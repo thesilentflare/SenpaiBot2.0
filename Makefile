@@ -1,7 +1,7 @@
 # Globals
 .PHONY= dev-setup setup setup-portal run-bot run-portal dev-seed dev-undo-migrate dev-reset dev-portal dev-bot
-PYTHON = python3
-PIP = pip3
+PYTHON = python
+PIP = pip
 VENV = .venv
 FILES =
 

@@ -20,7 +20,6 @@ bot = commands.Bot(
 )
 
 EXEMPT_IDS = []
-LOGS_CHANNEL_ID = ""
 
 @bot.event
 async def on_ready():
@@ -60,9 +59,8 @@ async def on_message_delete(message):
         channel = bot.get_channel(int(database_helper.get_logs_channel()))
         if channel is None:
             return
-        # channel = bot.get_channel(LOGS_CHANNEL_ID)
         msg = ""
-        if message.channel.id != LOGS_CHANNEL_ID and message.author != bot.user:
+        if message.channel.id != channel and message.author != bot.user:
             msg = msg + "`In " + message.channel.name + ", " + message.author.name + " deleted: `"
             if message.content != "":
                 msg = msg + "||" + message.content + "||"
@@ -70,6 +68,24 @@ async def on_message_delete(message):
                 msg = msg + "\n`proxy url: `||" + attachment.proxy_url + "||"
             await channel.send(msg)
 
+
+@bot.event
+async def on_message_edit(before, after):
+    if before.author.id not in EXEMPT_IDS:
+        channel = bot.get_channel(int(database_helper.get_logs_channel()))
+        msg = ""
+        if before.channel.id != channel and before.author != bot.user:
+            msg = msg + "`In " + before.channel.name + ", " + before.author.name + " edited: `"
+            if before.content != "":
+                msg = msg + "||" + before.content + "||"
+            for b_attachment in before.attachments:
+                msg = msg + "\n`proxy url: `||" + b_attachment.proxy_url + "||"
+            msg = msg + "\n`to: `"
+            if after.content != "":
+                msg = msg + "||" + after.content + "||"
+            for a_attachment in after.attachments:
+                msg = msg + "\n`proxy url: `||" + a_attachment.proxy_url + "||"
+            await channel.send(msg)
 
 # def signal_handler(signal, frame):
 # 	'''(Signal, Frame) -> null

@@ -16,16 +16,21 @@ See makefile for more details.
 
 - python3.10 or higher
 - pip
-  - discord.py
+  - [discord.py](https://discordpy.readthedocs.io/en/stable/)
+  - [venv](https://docs.python.org/3/library/venv.html)
   - [webpreview](https://github.com/ludbek/webpreview)
 
 ## Setup
+
+For first time setups (dev/prod), run the below command:
 
 ```
 ~ $ make setup
 ```
 
-_Note: if python is not found, open the makefile and edit the python alias_.
+_Note: if python is not found, open the makefile and edit the python and/or pip alias_.
+
+_Note2: if venv cannot be started, make sure prereqs are met_.
 
 Edit newly generate `.env` file with your `DISCORD_GUILD` and `DISCORD_TOKEN`.
 
@@ -62,7 +67,12 @@ To run the portal:
 
 ## Features
 
-WIP
+- Birthdays reminders
+- Random anime imageboard
+- Chat logs
+- Magic 8ball fortune
+- Warframe items lookup
+- Yu-gi-oh card lookup
 
 ## Commands
 
@@ -88,6 +98,24 @@ To reset database:
 
 ```
 ~ $ make dev-reset
+```
+
+To create database migration:
+
+```
+~ $ make dev-create-migration
+```
+
+To migrate-up database:
+
+```
+~ $ make dev-migrate-up
+```
+
+To undo database migration:
+
+```
+~ $ dev-undo-migrate
 ```
 
 To run the bot:

@@ -26,7 +26,6 @@ help:
 	@echo "To run the admin portal, type: make dev-portal"
 	@echo "------------------------------------"
 
-
 # Prod Functions
 setup:
 	@echo "Checking if project dependencies are installed..."

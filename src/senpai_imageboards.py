@@ -28,7 +28,7 @@ class SenpaiImageboard(commands.Cog):
         self.imageboards = [
             self.yandere,
             self.danbooru,
-            self.konachan,
+            # self.konachan,
             self.gelbooru,
             self.safebooru,
         ]
@@ -128,14 +128,16 @@ class SenpaiImageboard(commands.Cog):
             await context.send("Error: API down?")
             return
 
+        json_content = json_content.get("post")
         json_content = json_content[0]
 
-        if "id" not in json_content or "file_url" not in json_content:
+        if not json_content.get("id") or not json_content.get("file_url"):
             await context.send("Error: failed to parse json")
             return
 
-        post_id = json_content["id"]
-        file_url = json_content["file_url"]
+        post_id = json_content.get("id")
+
+        file_url = json_content.get("file_url")
         post_url = "https://gelbooru.com/index.php?page=post&s=view&id={}".format(
             post_id
         )
@@ -184,36 +186,42 @@ class SenpaiImageboard(commands.Cog):
         )
         if msg:
             self.messages.add(msg)
-
-    @daily.command()
-    async def konachan(self, context):
-        # link for konachan.com's json api
-        api_url = "https://konachan.com/post.json?limit=1"
-
-        # get json contents
-        json_content = requests.get(api_url).json()
-        if len(json_content) <= 0:
-            await context.send("Error: API down?")
-            return
-
-        json_content = json_content[0]
-
-        if "id" not in json_content or "file_url" not in json_content:
-            await context.send("Error: failed to parse json")
-            return
-
-        post_id = json_content["id"]
-        file_url = json_content["sample_url"]
-        post_url = "http://konachan.com/post/show/{}".format(post_id)
-
-        msg = await _send_embed_imageboard_msg(
-            context,
-            title="konachan: #{}".format(post_id),
-            post_url=post_url,
-            file_url=file_url,
-        )
-        if msg:
-            self.messages.add(msg)
+    
+    # 403 due to bot mitigation captcha
+    # @daily.command()
+    # async def konachan(self, context):
+    #     print("HERE")
+    #     # link for konachan.com's json api
+    #     api_url = "https://konachan.com/post.json?limit=1"
+    #     print("HERE2")
+    #     # get json contents
+    #     json_content = requests.get(api_url)
+    #     print(json_content)
+    #     print("HERE2.5")
+    #     if len(json_content) <= 0:
+    #         print("Error: Konachan API down?")
+    #         await context.send("Error: API down?")
+    #         return
+    #     print("HERE3")
+    #     json_content = json_content[0]
+    #     print("HERE4")
+    #     if "id" not in json_content or "file_url" not in json_content:
+    #         print("Error: Konachan failed to parse json")
+    #         await context.send("Error: failed to parse json")
+    #         return
+    #     print("HERE5")
+    #     post_id = json_content["id"]
+    #     file_url = json_content["sample_url"]
+    #     post_url = "http://konachan.com/post/show/{}".format(post_id)
+    #     print(post_url)
+    #     msg = await _send_embed_imageboard_msg(
+    #         context,
+    #         title="konachan: #{}".format(post_id),
+    #         post_url=post_url,
+    #         file_url=file_url,
+    #     )
+    #     if msg:
+    #         self.messages.add(msg)
 
 
 async def setup(bot):

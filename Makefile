@@ -1,9 +1,16 @@
 # Globals
 .PHONY= dev-setup setup setup-portal run-bot run-portal dev-seed dev-undo-migrate dev-reset dev-portal dev-bot
-PYTHON = python
-PIP = pip
+PYTHON := $(shell which python3)
+PIP := $(shell which pip3)
 VENV = .venv
 FILES =
+
+# Detect operating system
+ifeq ($(shell uname -s),Windows_NT)
+    VENV_ACTIVATE = venv\Scripts\activate.bat
+else
+    VENV_ACTIVATE = venv/bin/activate
+endif
 
 help:
 	@echo "------------------------------------"
@@ -62,7 +69,8 @@ dev-seed:
 
 dev-setup: dev-reset
 	@echo "Checking virtual environment..."
-	[ ! -d "./virt" ] && ${PYTHON} -m venv virt || source virt/Scripts/activate
+	# [ ! -d "./virt" ] && ${PYTHON} -m venv virt || source $(VENV_ACTIVATE)
+	[ ! -d "./virt" ] && ${PYTHON} -m venv virt || source $(VENV_ACTIVATE)
 	@echo "Checking if project dependencies are installed..."
 	${PIP} install -r requirements.txt
 	@echo "Checking database and migrations..."
@@ -100,5 +108,5 @@ dev-undo-migrate:
 dev-bot: run-bot
 
 dev-portal:
-	. virt/Scripts/activate
+	. $(VENV_ACTIVATE)
 	${PYTHON} manage.py runserver

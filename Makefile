@@ -69,7 +69,6 @@ dev-seed:
 
 dev-setup: dev-reset
 	@echo "Checking virtual environment..."
-	# [ ! -d "./virt" ] && ${PYTHON} -m venv virt || source $(VENV_ACTIVATE)
 	[ ! -d "./virt" ] && ${PYTHON} -m venv virt || source $(VENV_ACTIVATE)
 	@echo "Checking if project dependencies are installed..."
 	${PIP} install -r requirements.txt

@@ -9,6 +9,7 @@ import database_helper
 
 from discord.ext import commands
 from dotenv import load_dotenv
+from time import localtime, strftime
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -26,6 +27,7 @@ async def on_ready():
     print("Logged in as")
     print(bot.user.name)
     print(bot.user.id)
+    print("Bot started at: " + strftime("%Y-%m-%d %H:%M [%Z]", localtime()))
     print("------")
     await bot.change_presence(activity=discord.Game(name="Ara-ara~~❤ Kouhai-kun"))
     database_helper.initialize(str(bot.guilds[0].id))

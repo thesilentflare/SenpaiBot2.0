@@ -142,6 +142,7 @@ modules = [
     "senpai_imageboards",
     "senpai_warframe",
     "senpai_yugioh",
+    "senpai_nh"
 ]
 
 

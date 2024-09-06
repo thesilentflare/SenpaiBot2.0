@@ -23,17 +23,12 @@ async def send_embed_nh_msg(context, title, post_url, cover_url, doujin_id, douj
   
 async def send_embed_nh_list(context, search_query, res_list):
     embed_msg = discord.Embed(title=f"Searched: {search_query}", color=0xFF93AC)
-    # print("here")
     for res in res_list[:10]:
-      # print(res)
       title = res.title(Format.Pretty)
       id = hash(res)
-      msg_name = f"[{id}: {title}]({res.url})"
-      
+      msg_name = f"<{id}>: {title} [{res.url}]"
       msg_value = f"Favs: {res.num_favorites} | Pages: {res.num_pages}"
-      
       embed_msg.add_field(name=msg_name, value="`{}`".format(msg_value), inline=False)
-    
     
     # send message
     await context.send(embed=embed_msg)

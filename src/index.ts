@@ -3,9 +3,12 @@ import senpai8ball from "./senpai8ball";
 import fortune from "./fortune";
 import dotenv from "dotenv";
 import db from "./database";
-import { checkBirthdays, handleBirthCommand } from "./birthdayReminder";
+import { checkBirthdays, handleBirthCommand } from "./birthdays";
 
-dotenv.config();
+// Load .env.local if it exists, otherwise fallback to .env
+dotenv.config({
+  path: `.env${process.env.NODE_ENV ? `.${process.env.NODE_ENV}` : ""}`,
+});
 
 const GUILD_ID = process.env.GUILD_ID || ""; // Load the guild ID from the environment variables
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || ""; // Load the bot token from the environment variables

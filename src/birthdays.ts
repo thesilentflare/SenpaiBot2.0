@@ -6,7 +6,8 @@ import { DateTime } from "luxon";
 dotenv.config();
 
 const client = new Client({ intents: [] });
-const BIRTHDAY_CHANNEL_ID = process.env.BIRTHDAY_CHANNEL_ID || "";
+const BIRTHDAY_REMINDER_CHANNEL_ID =
+  process.env.BIRTHDAY_REMINDER_CHANNEL_ID || "";
 const TIME_ZONE = process.env.TIME_ZONE || "UTC"; // Default to UTC if not specified
 const BIRTHDAY_REMINDER_HOUR = parseInt(
   process.env.BIRTHDAY_REMINDER_HOUR || "9",
@@ -30,7 +31,7 @@ function checkBirthdays(): void {
 
       rows.forEach((user) => {
         const channel = client.channels.cache.get(
-          BIRTHDAY_CHANNEL_ID
+          BIRTHDAY_REMINDER_CHANNEL_ID
         ) as TextChannel; // Use environment variable for channel ID
         if (channel) {
           channel.send(`🎉 Happy Birthday, ${user.name || "User"}! 🎂`);
@@ -62,7 +63,7 @@ function sendMonthlyBirthdayReminders(): void {
         });
 
         const channel = client.channels.cache.get(
-          BIRTHDAY_CHANNEL_ID
+          BIRTHDAY_REMINDER_CHANNEL_ID
         ) as TextChannel; // Use environment variable for channel ID
         if (channel) {
           channel.send(message);

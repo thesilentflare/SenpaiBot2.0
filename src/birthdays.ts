@@ -127,4 +127,39 @@ setTimeout(() => {
   }, timeToNextRun);
 }, timeToFirstRun);
 
-export default checkBirthdays;
+// Function to handle the !birth command
+function handleBirthCommand(message: import("discord.js").Message) {
+  if (message.author.bot) return; // Ignore bot messages
+
+  const args = message.content.split(" ");
+  if (args.length !== 2) {
+    message.reply("Invalid command format. Use: !birth YYYY-MM-DD");
+    return;
+  }
+
+  const date = args[1];
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(date)) {
+    message.reply("Invalid date format. Please use YYYY-MM-DD.");
+    return;
+  }
+
+  const { id: discordID } = message.author;
+
+  db.run(
+    `INSERT OR REPLACE INTO Birthdays (discordID, dateISOString) VALUES (?, ?)`,
+    [discordID, date],
+    (err) => {
+      if (err) {
+        console.error("Error updating birthday:", err.message);
+        message.reply(
+          "An error occurred while updating your birthday. Please try again later."
+        );
+      } else {
+        message.reply(`Your birthday has been updated to ${date}. 🎉`);
+      }
+    }
+  );
+}
+
+export { checkBirthdays, handleBirthCommand };

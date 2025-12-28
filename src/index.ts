@@ -1,9 +1,9 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import checkBirthdays from "./birthdayReminder";
 import senpai8ball from "./senpai8ball";
 import fortune from "./fortune";
 import dotenv from "dotenv";
 import db from "./database";
+import { checkBirthdays, handleBirthCommand } from "./birthdayReminder";
 
 dotenv.config();
 
@@ -14,6 +14,7 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.MessageContent,
   ],
 });
@@ -51,6 +52,22 @@ function initializeDatabase(): Promise<void> {
             reject(err);
           } else {
             console.log("Birthdays table ready.");
+          }
+        }
+      );
+
+      db.run(
+        `CREATE TABLE IF NOT EXISTS Admins (
+        discordID TEXT,
+        active BOOLEAN,
+        FOREIGN KEY (discordID) REFERENCES Users (discordID)
+      )`,
+        (err) => {
+          if (err) {
+            console.error("Error creating Admins table:", err.message);
+            reject(err);
+          } else {
+            console.log("Admins table ready.");
             resolve();
           }
         }
@@ -82,6 +99,11 @@ initializeDatabase()
       // Delegate to Fortune
       if (message.content.startsWith("!fortune")) {
         fortune.emit("messageCreate", message);
+      }
+
+      // Delegate the !birth command to the birthdayReminder.ts file
+      if (message.content.startsWith("!birth")) {
+        handleBirthCommand(message);
       }
     });
 

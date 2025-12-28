@@ -55,4 +55,20 @@ db.run(
   }
 );
 
+// Create Admins table
+db.run(
+  `CREATE TABLE IF NOT EXISTS Admins (
+    discordID TEXT,
+    active BOOLEAN,
+    FOREIGN KEY (discordID) REFERENCES Users (discordID)
+  )`,
+  (err) => {
+    if (err) {
+      console.error("Error creating Admins table:", err.message);
+    } else {
+      console.log("Admins table ready.");
+    }
+  }
+);
+
 export default db;

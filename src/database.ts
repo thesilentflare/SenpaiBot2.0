@@ -27,9 +27,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 db.run(
   `CREATE TABLE IF NOT EXISTS Users (
     discordID TEXT PRIMARY KEY,
-    firstName TEXT,
-    lastName TEXT,
-    nickname TEXT
+    name TEXT
 )`,
   (err) => {
     if (err) {

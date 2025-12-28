@@ -18,11 +18,11 @@ function checkBirthdays(): void {
   const today = new Date().toISOString().slice(0, 10); // Get today's date in YYYY-MM-DD format
 
   db.all(
-    `SELECT Users.nickname, Users.discordID FROM Birthdays 
+    `SELECT Users.name, Users.discordID FROM Birthdays 
             JOIN Users ON Birthdays.discordID = Users.discordID
             WHERE dateISOString = ?`,
     [today],
-    (err, rows: Array<{ nickname: string; discordID: string }>) => {
+    (err, rows: Array<{ name: string; discordID: string }>) => {
       if (err) {
         console.error("Error fetching birthdays:", err.message);
         return;
@@ -33,7 +33,7 @@ function checkBirthdays(): void {
           BIRTHDAY_CHANNEL_ID
         ) as TextChannel; // Use environment variable for channel ID
         if (channel) {
-          channel.send(`🎉 Happy Birthday, ${user.nickname || "User"}! 🎂`);
+          channel.send(`🎉 Happy Birthday, ${user.name || "User"}! 🎂`);
         }
       });
     }
@@ -43,11 +43,11 @@ function checkBirthdays(): void {
 // Function to send monthly birthday reminders
 function sendMonthlyBirthdayReminders(): void {
   db.all(
-    `SELECT Users.nickname, strftime('%m', Birthdays.dateISOString) as month, strftime('%d', Birthdays.dateISOString) as day FROM Birthdays 
+    `SELECT Users.name, strftime('%m', Birthdays.dateISOString) as month, strftime('%d', Birthdays.dateISOString) as day FROM Birthdays 
             JOIN Users ON Birthdays.discordID = Users.discordID
             WHERE month = ?`,
     [new Date().getMonth() + 1],
-    (err, rows: Array<{ nickname: string; month: string; day: string }>) => {
+    (err, rows: Array<{ name: string; month: string; day: string }>) => {
       if (err) {
         console.error("Error fetching monthly birthdays:", err.message);
         return;
@@ -58,7 +58,7 @@ function sendMonthlyBirthdayReminders(): void {
           month: "long",
         })} 🎊\n`;
         rows.forEach((user) => {
-          message += `${user.nickname || "User"}: ${user.month}/${user.day}\n`;
+          message += `${user.name || "User"}: ${user.month}/${user.day}\n`;
         });
 
         const channel = client.channels.cache.get(

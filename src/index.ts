@@ -26,9 +26,7 @@ function initializeDatabase(): Promise<void> {
       db.run(
         `CREATE TABLE IF NOT EXISTS Users (
         discordID TEXT PRIMARY KEY,
-        firstName TEXT,
-        lastName TEXT,
-        nickname TEXT
+        name TEXT
       )`,
         (err) => {
           if (err) {
@@ -85,6 +83,28 @@ initializeDatabase()
       if (message.content.startsWith("!fortune")) {
         fortune.emit("messageCreate", message);
       }
+    });
+
+    // Event listener for when a new user joins the server
+    client.on("guildMemberAdd", (member) => {
+      const { id: discordID, username, discriminator } = member.user;
+
+      db.run(
+        `INSERT OR IGNORE INTO Users (discordID, name) VALUES (?, ?)`,
+        [
+          discordID,
+          member.nickname || username, // Combine nickname or username into a single name field
+        ],
+        (err) => {
+          if (err) {
+            console.error("Error adding new user to Users table:", err.message);
+          } else {
+            console.log(
+              `New user added to Users table: ${username}#${discriminator}`
+            );
+          }
+        }
+      );
     });
 
     // Log in to Discord

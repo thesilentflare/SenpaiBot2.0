@@ -3,7 +3,11 @@ import senpai8ball from "./senpai8ball";
 import fortune from "./fortune";
 import dotenv from "dotenv";
 import db from "./database";
-import { checkBirthdays, handleBirthCommand } from "./birthdays";
+import {
+  checkBirthdays,
+  handleBirthCommand,
+  handleBlistCommand,
+} from "./birthdays";
 
 // Load .env.local if it exists, otherwise fallback to .env
 dotenv.config({
@@ -107,6 +111,11 @@ initializeDatabase()
       // Delegate the !birth command to the birthdayReminder.ts file
       if (message.content.startsWith("!birth")) {
         handleBirthCommand(message);
+      }
+
+      // Delegate the !blist command to the birthdayReminder.ts file
+      if (message.content.startsWith("!blist")) {
+        handleBlistCommand(message);
       }
     });
 

@@ -13,6 +13,10 @@ const BIRTHDAY_REMINDER_HOUR = parseInt(
   process.env.BIRTHDAY_REMINDER_HOUR || "9",
   10
 ); // Default to 9 AM
+const BIRTHDAY_REMINDER_DAY_OF_MONTH = parseInt(
+  process.env.BIRTHDAY_REMINDER_DAY_OF_MONTH || "1",
+  10
+); // Default to 1st of the month
 
 // Function to check and send birthday reminders
 function checkBirthdays(): void {
@@ -90,43 +94,53 @@ function getNextReminderTime(): number {
   return nextReminder.toMillis() - now.toMillis();
 }
 
+// Helper to safely schedule timeouts
+function safeSetTimeout(fn: () => void, ms: number) {
+  const MAX_TIMEOUT = 2147483647; // Max for 32-bit signed int
+  if (ms > MAX_TIMEOUT) {
+    return setTimeout(() => safeSetTimeout(fn, ms - MAX_TIMEOUT), MAX_TIMEOUT);
+  } else {
+    return setTimeout(fn, ms);
+  }
+}
+
 // Schedule the birthday check at the specified hour
-setTimeout(() => {
+safeSetTimeout(() => {
   checkBirthdays();
   setInterval(checkBirthdays, 24 * 60 * 60 * 1000); // Repeat every 24 hours
 }, getNextReminderTime());
 
-// Send monthly birthday reminders on the 1st of every month
-const firstDayOfMonth = new Date();
-firstDayOfMonth.setDate(1);
-firstDayOfMonth.setHours(0, 0, 0, 0);
-
-const now = new Date();
-const timeToFirstRun = firstDayOfMonth.getTime() - now.getTime();
-
-// Schedule the monthly reminder
-setTimeout(() => {
-  sendMonthlyBirthdayReminders();
-
-  // Schedule the next run dynamically based on the first day of the next month
+// Recursive monthly reminder scheduling to avoid overflow
+function scheduleMonthlyReminder() {
   const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const timeToNextRun = nextMonth.getTime() - now.getTime();
-
-  setInterval(() => {
-    sendMonthlyBirthdayReminders();
-
-    // Dynamically calculate the next interval
-    const nextRun = new Date();
-    const followingMonth = new Date(
-      nextRun.getFullYear(),
-      nextRun.getMonth() + 1,
-      1
+  let nextReminder = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    BIRTHDAY_REMINDER_DAY_OF_MONTH,
+    0,
+    0,
+    0,
+    0
+  );
+  if (now >= nextReminder) {
+    // If today is past the reminder day, schedule for next month
+    nextReminder = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      BIRTHDAY_REMINDER_DAY_OF_MONTH,
+      0,
+      0,
+      0,
+      0
     );
-    const timeToFollowingRun = followingMonth.getTime() - nextRun.getTime();
-    setTimeout(sendMonthlyBirthdayReminders, timeToFollowingRun);
-  }, timeToNextRun);
-}, timeToFirstRun);
+  }
+  const msToNextRun = nextReminder.getTime() - now.getTime();
+  safeSetTimeout(() => {
+    sendMonthlyBirthdayReminders();
+    scheduleMonthlyReminder();
+  }, msToNextRun);
+}
+scheduleMonthlyReminder();
 
 // Function to handle the !birth command
 function handleBirthCommand(message: import("discord.js").Message) {
@@ -134,14 +148,30 @@ function handleBirthCommand(message: import("discord.js").Message) {
 
   const args = message.content.split(" ");
   if (args.length !== 2) {
-    message.reply("Invalid command format. Use: !birth YYYY-MM-DD");
+    message.reply({
+      embeds: [
+        {
+          title: "Birthday Error",
+          description: "Invalid command format. Use: !birth YYYY-MM-DD",
+          color: 0xff0000,
+        },
+      ],
+    });
     return;
   }
 
   const date = args[1];
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(date)) {
-    message.reply("Invalid date format. Please use YYYY-MM-DD.");
+    message.reply({
+      embeds: [
+        {
+          title: "Birthday Error",
+          description: "Invalid date format. Please use YYYY-MM-DD.",
+          color: 0xff0000,
+        },
+      ],
+    });
     return;
   }
 
@@ -152,15 +182,194 @@ function handleBirthCommand(message: import("discord.js").Message) {
     [discordID, date],
     (err) => {
       if (err) {
-        console.error("Error updating birthday:", err.message);
-        message.reply(
-          "An error occurred while updating your birthday. Please try again later."
-        );
+        message.reply({
+          embeds: [
+            {
+              title: "Birthday Error",
+              description:
+                "An error occurred while updating your birthday. Please try again later.",
+              color: 0xff0000,
+            },
+          ],
+        });
       } else {
-        message.reply(`Your birthday has been updated to ${date}. 🎉`);
+        message.reply({
+          embeds: [
+            {
+              title: "Birthday Updated",
+              description: `Your birthday has been updated to ${date}. 🎉`,
+              color: 0x93acff,
+            },
+          ],
+        });
       }
     }
   );
 }
 
-export { checkBirthdays, handleBirthCommand };
+// List all birthdays
+function handleBlistCommand(message: import("discord.js").Message) {
+  db.all(
+    `SELECT Users.name, strftime('%m', Birthdays.dateISOString) as month, strftime('%d', Birthdays.dateISOString) as day FROM Birthdays JOIN Users ON Birthdays.discordID = Users.discordID ORDER BY month, day`,
+    [],
+    (err, rows: Array<{ name: string; month: string; day: string }>) => {
+      if (err) {
+        message.reply({
+          embeds: [
+            {
+              title: "Birthday Error",
+              description: "An error occurred while fetching birthdays.",
+              color: 0xff0000,
+            },
+          ],
+        });
+        return;
+      }
+      let title = "All Birthdays";
+      let description = "Person | Month | Day\n\n";
+      if (rows.length > 0) {
+        rows.forEach((row) => {
+          description += `${row.name || "User"}: ${row.month}/${row.day}\n`;
+        });
+      } else {
+        description = "No Birthdays in Database";
+      }
+      message.reply({
+        embeds: [
+          {
+            title,
+            description,
+            color: 0x93acff,
+          },
+        ],
+      });
+    }
+  );
+}
+
+// Edit user's own birthday date
+// function handleBirthdayEditDateCommand(
+//   message: import("discord.js").Message,
+//   date: string
+// ) {
+//   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+//   if (!dateRegex.test(date)) {
+//     message.reply({
+//       embeds: [
+//         {
+//           title: "Birthday Error",
+//           description: "Invalid date format. Please use YYYY-MM-DD.",
+//           color: 0xff0000,
+//         },
+//       ],
+//     });
+//     return;
+//   }
+//   const { id: discordID } = message.author;
+//   db.run(
+//     `UPDATE Birthdays SET dateISOString = ? WHERE discordID = ?`,
+//     [date, discordID],
+//     function (err) {
+//       if (err) {
+//         message.reply({
+//           embeds: [
+//             {
+//               title: "Birthday Error",
+//               description:
+//                 "An error occurred while updating your birthday. Please try again later.",
+//               color: 0xff0000,
+//             },
+//           ],
+//         });
+//       } else if (this.changes === 0) {
+//         message.reply({
+//           embeds: [
+//             {
+//               title: "Birthday Error",
+//               description:
+//                 "No birthday found to update. Please set your birthday first with !birth YYYY-MM-DD.",
+//               color: 0xff0000,
+//             },
+//           ],
+//         });
+//       } else {
+//         message.reply({
+//           embeds: [
+//             {
+//               title: "Birthday Updated",
+//               description: `Your birthday has been updated to ${date}. 🎉`,
+//               color: 0x93acff,
+//             },
+//           ],
+//         });
+//       }
+//     }
+//   );
+// }
+
+// Edit user's own display name for birthdays
+// function handleBirthdayEditNameCommand(
+//   message: import("discord.js").Message,
+//   newName: string
+// ) {
+//   if (!newName || newName.length < 2) {
+//     message.reply({
+//       embeds: [
+//         {
+//           title: "Birthday Error",
+//           description: "Please provide a valid name (at least 2 characters).",
+//           color: 0xff0000,
+//         },
+//       ],
+//     });
+//     return;
+//   }
+//   const { id: discordID } = message.author;
+//   db.run(
+//     `UPDATE Users SET name = ? WHERE discordID = ?`,
+//     [newName, discordID],
+//     function (err) {
+//       if (err) {
+//         message.reply({
+//           embeds: [
+//             {
+//               title: "Birthday Error",
+//               description:
+//                 "An error occurred while updating your name. Please try again later.",
+//               color: 0xff0000,
+//             },
+//           ],
+//         });
+//       } else if (this.changes === 0) {
+//         message.reply({
+//           embeds: [
+//             {
+//               title: "Birthday Error",
+//               description:
+//                 "No user found to update. Please use !birth first to register.",
+//               color: 0xff0000,
+//             },
+//           ],
+//         });
+//       } else {
+//         message.reply({
+//           embeds: [
+//             {
+//               title: "Birthday Name Updated",
+//               description: `Your birthday display name has been updated to ${newName}.`,
+//               color: 0x93acff,
+//             },
+//           ],
+//         });
+//       }
+//     }
+//   );
+// }
+
+export {
+  checkBirthdays,
+  handleBirthCommand,
+  handleBlistCommand,
+  // handleBirthdayEditDateCommand,
+  // handleBirthdayEditNameCommand,
+};

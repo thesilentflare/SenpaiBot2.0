@@ -1,27 +1,22 @@
-import { Client, EmbedBuilder, Message, TextChannel } from "discord.js";
-import dotenv from "dotenv";
+import { Client, EmbedBuilder, Message, TextChannel } from 'discord.js';
+import dotenv from 'dotenv';
 import {
   BirthdayEntry,
   getAllBirthdays,
   getMonthlyBirthdays,
   getTodayBirthdays,
   setBirthday,
-} from "./birthdayDbHelpers";
-import { format, toZonedTime } from "date-fns-tz";
-import { parseISO } from "date-fns";
+} from './birthdayDbHelpers';
+import { format, toZonedTime } from 'date-fns-tz';
+import { parseISO } from 'date-fns';
 dotenv.config();
 
-// const client = new Client({ intents: [] });
-const BIRTHDAY_REMINDER_CHANNEL_ID =
-  process.env.BIRTHDAY_REMINDER_CHANNEL_ID || "";
-const TIME_ZONE = process.env.TIME_ZONE || "UTC"; // Default to UTC if not specified
-const BIRTHDAY_REMINDER_HOUR = parseInt(
-  process.env.BIRTHDAY_REMINDER_HOUR || "0",
-  10
-); // Default to 12 AM
+const BIRTHDAY_REMINDER_CHANNEL_ID = process.env.BIRTHDAY_REMINDER_CHANNEL_ID || '';
+const TIME_ZONE = process.env.TIME_ZONE || 'UTC'; // Default to UTC if not specified
+const BIRTHDAY_REMINDER_HOUR = parseInt(process.env.BIRTHDAY_REMINDER_HOUR || '0', 10); // Default to 12 AM
 const BIRTHDAY_REMINDER_DAY_OF_MONTH = parseInt(
-  process.env.BIRTHDAY_REMINDER_DAY_OF_MONTH || "1",
-  10
+  process.env.BIRTHDAY_REMINDER_DAY_OF_MONTH || '1',
+  10,
 ); // Default to 1st of the month
 
 export const scheduleBirthdayNotifications = (client: Client): void => {
@@ -33,16 +28,14 @@ export const scheduleBirthdayNotifications = (client: Client): void => {
     now.getMonth(),
     now.getDate(),
     BIRTHDAY_REMINDER_HOUR,
-    35,
-    0
+    0,
+    0,
   );
   let zonedNextNotificationTime = toZonedTime(nextNotificationTime, TIME_ZONE);
 
   // If the scheduled time has already passed for today, move it to tomorrow
   if (zonedNextNotificationTime <= now) {
-    zonedNextNotificationTime.setUTCDate(
-      zonedNextNotificationTime.getUTCDate() + 1
-    );
+    zonedNextNotificationTime.setUTCDate(zonedNextNotificationTime.getUTCDate() + 1);
   }
 
   // Calculate the delay until the next notification
@@ -57,9 +50,12 @@ export const scheduleBirthdayNotifications = (client: Client): void => {
     sendMonthlyBirthdays(client); // Run immediately at the scheduled time
 
     // Set interval to repeat the task daily
-    setInterval(() => {
-      sendMonthlyBirthdays(client);
-    }, 24 * 60 * 60 * 1000); // Repeat every 24 hours
+    setInterval(
+      () => {
+        sendMonthlyBirthdays(client);
+      },
+      24 * 60 * 60 * 1000,
+    ); // Repeat every 24 hours
   }, timeToNextRun);
 };
 
@@ -76,7 +72,7 @@ const sendMonthlyBirthdays = async (client: Client): Promise<void> => {
   if (currentDate === BIRTHDAY_REMINDER_DAY_OF_MONTH) {
     const birthdayList = await getMonthlyBirthdays(currentMonth);
     if (birthdayList.length > 0) {
-      const title = `🎊 ${new Intl.DateTimeFormat("en-US", { month: "long" })
+      const title = `🎊 ${new Intl.DateTimeFormat('en-US', { month: 'long' })
         .format(now)
         .toUpperCase()} BIRTHDAYS 🎊`;
       const description = birthdayList
@@ -88,12 +84,12 @@ const sendMonthlyBirthdays = async (client: Client): Promise<void> => {
           // Convert to the desired time zone
           const zonedBirthdayDate = toZonedTime(birthdayDate, TIME_ZONE);
           // Format the date as MM/DD
-          const formattedDate = format(zonedBirthdayDate, "MM/dd", {
+          const formattedDate = format(zonedBirthdayDate, 'MM/dd', {
             timeZone: TIME_ZONE,
           });
           return `${username}: ${formattedDate}`;
         })
-        .join("\n");
+        .join('\n');
 
       const embed = new EmbedBuilder()
         .setTitle(title)
@@ -106,19 +102,16 @@ const sendMonthlyBirthdays = async (client: Client): Promise<void> => {
   const todayBirthdays = await getTodayBirthdays(currentMonth, currentDate);
 
   if (todayBirthdays.length > 0) {
-    const title = "🎊 HAPPY BIRTHDAY TO 🎊";
+    const title = '🎊 HAPPY BIRTHDAY TO 🎊';
     const description = todayBirthdays
       .map((entry: BirthdayEntry) => {
         const username = entry.name; // User's name
         const userId = entry.discordID; // User's ID to mention
         return `${username}: <@${userId}>`;
       })
-      .join("\n");
+      .join('\n');
 
-    const embed = new EmbedBuilder()
-      .setTitle(title)
-      .setDescription(description)
-      .setColor(0xff0000);
+    const embed = new EmbedBuilder().setTitle(title).setDescription(description).setColor(0xff0000);
     await channel.send({ embeds: [embed] });
   }
 };
@@ -127,13 +120,13 @@ const sendMonthlyBirthdays = async (client: Client): Promise<void> => {
 export const handleBirthCommand = async (message: Message) => {
   if (message.author.bot) return; // Ignore bot messages
 
-  const args = message.content.split(" ");
+  const args = message.content.split(' ');
   if (args.length !== 2) {
     message.reply({
       embeds: [
         {
-          title: "Birthday Error",
-          description: "Invalid command format. Use: !birth YYYY-MM-DD",
+          title: 'Birthday Error',
+          description: 'Invalid command format. Use: !birth YYYY-MM-DD',
           color: 0xff0000,
         },
       ],
@@ -147,8 +140,8 @@ export const handleBirthCommand = async (message: Message) => {
     message.reply({
       embeds: [
         {
-          title: "Birthday Error",
-          description: "Invalid date format. Please use YYYY-MM-DD.",
+          title: 'Birthday Error',
+          description: 'Invalid date format. Please use YYYY-MM-DD.',
           color: 0xff0000,
         },
       ],
@@ -171,7 +164,7 @@ export const handleBirthCommand = async (message: Message) => {
     message.reply({
       embeds: [
         {
-          title: "Birthday Set",
+          title: 'Birthday Set',
           description: `Your birthday has been set to ${date}. 🎉`,
           color: 0x93acff,
         },
@@ -181,9 +174,8 @@ export const handleBirthCommand = async (message: Message) => {
     message.reply({
       embeds: [
         {
-          title: "Birthday Error",
-          description:
-            "An error occurred while setting your birthday. Please try again later.",
+          title: 'Birthday Error',
+          description: 'An error occurred while setting your birthday. Please try again later.',
           color: 0xff0000,
         },
       ],
@@ -197,8 +189,8 @@ export const handleBlistCommand = async (message: Message) => {
 
   const allBirthdays = await getAllBirthdays();
 
-  let title = "All Birthdays";
-  let description = "Person | Month | Day\n\n";
+  let title = 'All Birthdays';
+  let description = 'Person | Month | Day\n\n';
   if (allBirthdays.length > 0) {
     allBirthdays.forEach((entry: BirthdayEntry) => {
       const username = entry.name; // User's name
@@ -208,13 +200,13 @@ export const handleBlistCommand = async (message: Message) => {
       // Convert to the desired time zone
       const zonedBirthdayDate = toZonedTime(birthdayDate, TIME_ZONE);
       // Format the date as MM/DD
-      const formattedDate = format(zonedBirthdayDate, "MM/dd", {
+      const formattedDate = format(zonedBirthdayDate, 'MM/dd', {
         timeZone: TIME_ZONE,
       });
       description += `${username}: ${formattedDate}\n`;
     });
   } else {
-    description = "No Birthdays in Database";
+    description = 'No Birthdays in Database';
   }
   message.reply({
     embeds: [

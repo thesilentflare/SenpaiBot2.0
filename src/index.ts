@@ -2,11 +2,11 @@ import { Client, GatewayIntentBits } from "discord.js";
 import senpai8ball from "./senpai8ball";
 import fortune from "./fortune";
 import dotenv from "dotenv";
-import db from "./database";
+import { db, initializeDatabase } from "./database";
 import {
-  checkBirthdays,
   handleBirthCommand,
   handleBlistCommand,
+  scheduleBirthdayNotifications,
 } from "./birthdays";
 
 // Load .env.local if it exists, otherwise fallback to .env
@@ -26,63 +26,6 @@ const client = new Client({
   ],
 });
 
-// Initialize the database before the bot is ready
-function initializeDatabase(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    db.serialize(() => {
-      console.log("Initializing database...");
-      db.run(
-        `CREATE TABLE IF NOT EXISTS Users (
-        discordID TEXT PRIMARY KEY,
-        name TEXT
-      )`,
-        (err) => {
-          if (err) {
-            console.error("Error creating Users table:", err.message);
-            reject(err);
-          } else {
-            console.log("Users table ready.");
-          }
-        }
-      );
-
-      db.run(
-        `CREATE TABLE IF NOT EXISTS Birthdays (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        discordID TEXT,
-        dateISOString TEXT,
-        FOREIGN KEY (discordID) REFERENCES Users (discordID)
-      )`,
-        (err) => {
-          if (err) {
-            console.error("Error creating Birthdays table:", err.message);
-            reject(err);
-          } else {
-            console.log("Birthdays table ready.");
-          }
-        }
-      );
-
-      db.run(
-        `CREATE TABLE IF NOT EXISTS Admins (
-        discordID TEXT,
-        active BOOLEAN,
-        FOREIGN KEY (discordID) REFERENCES Users (discordID)
-      )`,
-        (err) => {
-          if (err) {
-            console.error("Error creating Admins table:", err.message);
-            reject(err);
-          } else {
-            console.log("Admins table ready.");
-            resolve();
-          }
-        }
-      );
-    });
-  });
-}
-
 // Wait for the database to initialize before starting the bot
 initializeDatabase()
   .then(() => {
@@ -91,7 +34,8 @@ initializeDatabase()
       console.log(`Bot is ready and connected to guild: ${GUILD_ID}`); // Log the guild ID when the bot is ready
 
       // Start the birthday reminder feature
-      checkBirthdays();
+      // checkBirthdays();
+      scheduleBirthdayNotifications(client);
     });
 
     // Event listener for messages

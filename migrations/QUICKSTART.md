@@ -22,6 +22,7 @@ node migrations/scripts/migrate_v0.2_to_v0.3.js YOUR_GUILD_ID YOUR_TIMEZONE [YOU
 ```
 
 **Example:**
+
 ```bash
 # With timezone and year
 node migrations/scripts/migrate_v0.2_to_v0.3.js 578082133646639126 America/Toronto 2000
@@ -70,6 +71,7 @@ The bot should now connect and work with your migrated data!
 ### Step 5: Test Birthday Features
 
 In Discord, try:
+
 - `!birthday` - Check if existing birthdays are shown
 - `!birthday @user` - Check a specific user's birthday
 - Wait for birthday notifications (if someone's birthday is today)
@@ -81,6 +83,7 @@ In Discord, try:
 ### "Old database not found"
 
 Make sure:
+
 1. You're in the project root directory
 2. Your database file is named `{YOUR_GUILD_ID}.db`
 3. The file exists (run `ls *.db` to check)
@@ -88,10 +91,12 @@ Make sure:
 ### "Backup database already exists"
 
 This means you already have a backup. Either:
+
 - The migration already ran (check if the new database has data)
 - A previous migration attempt created the backup
 
 To retry migration:
+
 ```bash
 # Remove the backup (be careful!)
 rm YOUR_GUILD_ID_OLD_v0.2.0-alpha.db
@@ -108,11 +113,13 @@ node migrations/scripts/migrate_v0.2_to_v0.3.js YOUR_GUILD_ID YOUR_TIMEZONE [YOU
 The timezone might be incorrect. To fix:
 
 1. Delete the new database:
+
    ```bash
    rm YOUR_GUILD_ID.db
    ```
 
 2. Restore from backup:
+
    ```bash
    mv YOUR_GUILD_ID_OLD_v0.2.0-alpha.db YOUR_GUILD_ID.db
    ```
@@ -127,6 +134,7 @@ The timezone might be incorrect. To fix:
 ## Finding Your Timezone
 
 Common timezones:
+
 - **United States:**
   - Eastern: `America/New_York`
   - Central: `America/Chicago`
@@ -158,6 +166,7 @@ Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 ## Need Help?
 
 See the full documentation in [`README.md`](./README.md) for detailed information about:
+
 - What gets migrated
 - Schema differences
 - Advanced troubleshooting

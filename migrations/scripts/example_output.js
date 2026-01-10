@@ -1,6 +1,6 @@
 /**
  * Example Migration Output
- * 
+ *
  * This file shows what successful migration output looks like.
  * This is for documentation purposes only - not an executable script.
  */

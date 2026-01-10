@@ -5,22 +5,26 @@ This directory contains database migration scripts for SenpaiBot version upgrade
 ## Available Migrations
 
 ### v0.2.0-alpha → v0.3.0
+
 **File:** `migrate_v0.2_to_v0.3.js`
 
 Migrates from Django/Python-based bot to TypeScript/Discord.js bot.
 
 **Features:**
+
 - Migrates user data and birthdays
 - Preserves old database as backup
 - Configurable timezone for birthday dates
 - Automatic rollback on failure
 
 **Usage:**
+
 ```bash
 node migrations/scripts/migrate_v0.2_to_v0.3.js <GUILD_ID> [TIMEZONE] [YEAR]
 ```
 
 **Documentation:**
+
 - Quick Start: [`../QUICKSTART.md`](../QUICKSTART.md)
 - Full Guide: [`../README.md`](../README.md)
 

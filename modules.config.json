@@ -1,0 +1,29 @@
+{
+  "8ball": {
+    "enabled": true
+  },
+  "fortune": {
+    "enabled": true
+  },
+  "birthdays": {
+    "enabled": true
+  },
+  "adminManager": {
+    "enabled": true
+  },
+  "help": {
+    "enabled": true
+  },
+  "yugioh": {
+    "enabled": true
+  },
+  "warframe": {
+    "enabled": true
+  },
+  "imageBoards": {
+    "enabled": true
+  },
+  "messageLogger": {
+    "enabled": true
+  }
+}

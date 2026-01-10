@@ -46,6 +46,11 @@ class HelpModule implements BotModule {
         const adminCmds: CommandInfo[] = [];
 
         for (const cmd of commands) {
+          // Skip hidden commands
+          if (cmd.hidden) {
+            continue;
+          }
+
           if (cmd.adminOnly) {
             adminCmds.push(cmd);
           } else {

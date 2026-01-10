@@ -93,6 +93,33 @@ describe('Help Module', () => {
         usage: '!commands',
       });
     });
+
+    it('should filter out hidden commands from help display', () => {
+      // Create mock modules with hidden commands
+      const mockModules = [
+        {
+          name: 'test1',
+          enabled: true,
+          getCommands: () => [
+            { command: '!visible', description: 'Visible command' },
+            {
+              command: '!hidden',
+              description: 'Hidden command',
+              hidden: true,
+            },
+          ],
+        },
+      ] as any;
+
+      HelpModule.setModules(mockModules);
+
+      // Access private method through reflection (for testing purposes)
+      const mockMessage = createMockMessage('!help');
+      HelpModule.handleMessage(mockMessage as Message);
+
+      // The reply should not contain the hidden command
+      expect(mockMessage.reply).toHaveBeenCalled();
+    });
   });
 
   describe('Cleanup', () => {

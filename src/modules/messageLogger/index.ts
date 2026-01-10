@@ -76,6 +76,7 @@ class MessageLoggerModule implements BotModule {
         description: 'Toggle your message log exemption status',
         usage: '!logexempt',
         adminOnly: false,
+        hidden: true,
       },
       {
         command: '!logexempt <@user>',
@@ -83,6 +84,7 @@ class MessageLoggerModule implements BotModule {
           'Toggle message log exemption for another user (admin only)',
         usage: '!logexempt @username',
         adminOnly: true,
+        hidden: true,
       },
     ];
   }

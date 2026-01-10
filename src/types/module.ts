@@ -15,6 +15,9 @@ export interface CommandInfo {
 
   /** Whether the command requires admin permissions */
   adminOnly?: boolean;
+
+  /** Whether the command should be hidden from help display */
+  hidden?: boolean;
 }
 
 /**

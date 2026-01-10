@@ -5,7 +5,7 @@ Our bot for our Discord server, version 2.0.
 Link to the original version: [Senpaibot](https://github.com/SnoopySnipe/SenpaiBot)
 
 <p>
-<img src="./senpai_bot.png" width="350">
+<img src="./docs/senpai_bot.png" width="350">
 </p>
 
 Credits: art by [Sen_Yomi](https://www.instagram.com/sen_yomi/?hl=en)

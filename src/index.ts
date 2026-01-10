@@ -8,10 +8,12 @@ import dotenv from 'dotenv';
 import { db, initializeDatabase } from './modules/database';
 import { ModuleLoader } from './utils/moduleLoader';
 
-// Load .env.local if it exists, otherwise fallback to .env
-dotenv.config({
-  path: `.env${process.env.NODE_ENV ? `.${process.env.NODE_ENV}` : ''}`,
-});
+// Load environment variables (base .env first, then environment-specific)
+dotenv.config(); // Load .env first
+const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : null;
+if (envFile) {
+  dotenv.config({ path: envFile, override: true }); // Override with environment-specific
+}
 
 const GUILD_ID = process.env.GUILD_ID || ''; // Load the guild ID from the environment variables
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || ''; // Load the bot token from the environment variables

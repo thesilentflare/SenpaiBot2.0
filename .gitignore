@@ -72,7 +72,7 @@ yarn.lock
 
 # dotenv environment variable files
 .env
-.env.test
+.env.development
 .env.production
 
 # IDE specific

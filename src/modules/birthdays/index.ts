@@ -88,8 +88,8 @@ class BirthdaysModule implements BotModule {
       );
 
       if (zonedNextNotificationTime <= now) {
-        zonedNextNotificationTime.setUTCDate(
-          zonedNextNotificationTime.getUTCDate() + 1,
+        zonedNextNotificationTime = new Date(
+          zonedNextNotificationTime.getTime() + 24 * 60 * 60 * 1000,
         );
       }
 

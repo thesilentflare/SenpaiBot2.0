@@ -55,11 +55,14 @@ describe('Yugioh Module', () => {
   });
 
   describe('Command Handling', () => {
-    it('should handle !ygo command with card name', async () => {
+    it('should handle !ygo command with card name as misspelling', async () => {
       const mockMessage = createMockMessage('!ygo Dark Magician');
       const handled = await YugiohModule.handleMessage(mockMessage as Message);
 
       expect(handled).toBe(true);
+      expect(mockMessage.reply).toHaveBeenCalledWith(
+        expect.stringContaining('Did you mean'),
+      );
     });
 
     it('should prompt when no card name provided', async () => {

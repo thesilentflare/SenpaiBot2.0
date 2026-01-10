@@ -53,6 +53,12 @@ initializeDatabase()
       console.log(`Logged in as ${client.user?.tag}!`);
       console.log(`Bot is ready and connected to guild: ${GUILD_ID}`);
 
+      // Set bot presence/status
+      client.user?.setPresence({
+        activities: [{ name: 'The senpai of the server' }],
+        status: 'online',
+      });
+
       // Display timezone information
       const now = new Date();
       const currentTime = now.toLocaleString('en-US', {

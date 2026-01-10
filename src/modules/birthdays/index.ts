@@ -72,41 +72,43 @@ class BirthdaysModule implements BotModule {
   private scheduleBirthdayNotifications(): void {
     if (!this.client) return;
 
-    const now = new Date();
-    const nextNotificationTime = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      BIRTHDAY_REMINDER_HOUR,
-      0,
-      0,
-    );
-    let zonedNextNotificationTime = toZonedTime(
-      nextNotificationTime,
-      TIME_ZONE,
-    );
-
-    if (zonedNextNotificationTime <= now) {
-      zonedNextNotificationTime.setUTCDate(
-        zonedNextNotificationTime.getUTCDate() + 1,
+    const scheduleNextCheck = () => {
+      const now = new Date();
+      const nextNotificationTime = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        BIRTHDAY_REMINDER_HOUR,
+        0,
+        0,
       );
-    }
-
-    const timeToNextRun = zonedNextNotificationTime.getTime() - now.getTime();
-    const minutesToNextRun = Math.ceil(timeToNextRun / (1000 * 60));
-    console.log(
-      `[${this.name}] Next birthday check in: ${minutesToNextRun} minutes`,
-    );
-
-    setTimeout(() => {
-      this.sendMonthlyBirthdays();
-      setInterval(
-        () => {
-          this.sendMonthlyBirthdays();
-        },
-        24 * 60 * 60 * 1000,
+      let zonedNextNotificationTime = toZonedTime(
+        nextNotificationTime,
+        TIME_ZONE,
       );
-    }, timeToNextRun);
+
+      if (zonedNextNotificationTime <= now) {
+        zonedNextNotificationTime.setUTCDate(
+          zonedNextNotificationTime.getUTCDate() + 1,
+        );
+      }
+
+      const timeToNextRun = zonedNextNotificationTime.getTime() - now.getTime();
+      const minutesToNextRun = Math.ceil(timeToNextRun / (1000 * 60));
+      console.log(
+        `[${this.name}] Next birthday check in: ${minutesToNextRun} minutes`,
+      );
+
+      setTimeout(() => {
+        this.sendMonthlyBirthdays();
+        // Reschedule the next check instead of using setInterval
+        // This ensures DST transitions are handled correctly
+        scheduleNextCheck();
+      }, timeToNextRun);
+    };
+
+    // Start the scheduling
+    scheduleNextCheck();
   }
 
   private async sendMonthlyBirthdays(): Promise<void> {

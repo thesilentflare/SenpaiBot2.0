@@ -1,0 +1,14 @@
+{
+  "8ball": {
+    "enabled": true
+  },
+  "fortune": {
+    "enabled": true
+  },
+  "birthdays": {
+    "enabled": true
+  },
+  "adminManager": {
+    "enabled": true
+  }
+}

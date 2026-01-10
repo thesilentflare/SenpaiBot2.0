@@ -1,0 +1,300 @@
+import { Client, EmbedBuilder, Message } from 'discord.js';
+import { BotModule } from '../../types/module';
+import {
+  addAdmin,
+  removeAdmin,
+  setAdminStatus,
+  getAllAdmins,
+  isActiveAdmin,
+} from './helpers';
+
+class AdminManagerModule implements BotModule {
+  name = 'adminManager';
+  description = 'Manage bot administrators';
+  enabled = true;
+
+  initialize(client: Client): void {
+    console.log(`[${this.name}] Module initialized`);
+  }
+
+  async handleMessage(message: Message): Promise<boolean> {
+    // Check if user has permission to use admin commands
+    const hasPermission = await this.checkPermission(message);
+
+    if (message.content.startsWith('!admin add ')) {
+      if (!hasPermission) {
+        await this.sendPermissionDenied(message);
+        return true;
+      }
+      await this.handleAddAdmin(message);
+      return true;
+    }
+
+    if (message.content.startsWith('!admin remove ')) {
+      if (!hasPermission) {
+        await this.sendPermissionDenied(message);
+        return true;
+      }
+      await this.handleRemoveAdmin(message);
+      return true;
+    }
+
+    if (message.content.startsWith('!admin disable ')) {
+      if (!hasPermission) {
+        await this.sendPermissionDenied(message);
+        return true;
+      }
+      await this.handleDisableAdmin(message);
+      return true;
+    }
+
+    if (message.content.startsWith('!admin enable ')) {
+      if (!hasPermission) {
+        await this.sendPermissionDenied(message);
+        return true;
+      }
+      await this.handleEnableAdmin(message);
+      return true;
+    }
+
+    if (message.content.startsWith('!admin list')) {
+      if (!hasPermission) {
+        await this.sendPermissionDenied(message);
+        return true;
+      }
+      await this.handleListAdmins(message);
+      return true;
+    }
+
+    if (message.content.startsWith('!admin help')) {
+      if (!hasPermission) {
+        await this.sendPermissionDenied(message);
+        return true;
+      }
+      await this.handleHelp(message);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if user has permission to use admin commands
+   * Server owner or active admin can use these commands
+   */
+  private async checkPermission(message: Message): Promise<boolean> {
+    if (!message.guild) return false;
+
+    const isOwner = message.guild.ownerId === message.author.id;
+    if (isOwner) return true;
+
+    const isAdmin = await isActiveAdmin(message.author.id);
+    return isAdmin;
+  }
+
+  private async sendPermissionDenied(message: Message): Promise<void> {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Permission Denied')
+      .setDescription('You do not have permission to use admin commands.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
+
+  private async handleAddAdmin(message: Message): Promise<void> {
+    const mentioned = message.mentions.users.first();
+    if (!mentioned) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription(
+          'Please mention a user to add as admin: `!admin add @user`',
+        )
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    try {
+      const result = await addAdmin(mentioned.id);
+      const embed = new EmbedBuilder()
+        .setTitle(result.success ? '✅ Success' : '⚠️ Notice')
+        .setDescription(result.message)
+        .setColor(result.success ? 0x00ff00 : 0xffaa00);
+      await message.reply({ embeds: [embed] });
+    } catch (error) {
+      console.error('Error adding admin:', error);
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription('An error occurred while adding the admin.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+    }
+  }
+
+  private async handleRemoveAdmin(message: Message): Promise<void> {
+    const mentioned = message.mentions.users.first();
+    if (!mentioned) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription(
+          'Please mention a user to remove from admins: `!admin remove @user`',
+        )
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    // Prevent removing yourself if you're the last active admin
+    if (mentioned.id === message.author.id) {
+      const admins = await getAllAdmins();
+      const activeAdmins = admins.filter((a) => a.active);
+      if (
+        activeAdmins.length === 1 &&
+        activeAdmins[0].discordID === message.author.id
+      ) {
+        const embed = new EmbedBuilder()
+          .setTitle('❌ Error')
+          .setDescription(
+            'You cannot remove yourself as the last active admin.',
+          )
+          .setColor(0xff0000);
+        await message.reply({ embeds: [embed] });
+        return;
+      }
+    }
+
+    try {
+      const result = await removeAdmin(mentioned.id);
+      const embed = new EmbedBuilder()
+        .setTitle(result.success ? '✅ Success' : '⚠️ Notice')
+        .setDescription(result.message)
+        .setColor(result.success ? 0x00ff00 : 0xffaa00);
+      await message.reply({ embeds: [embed] });
+    } catch (error) {
+      console.error('Error removing admin:', error);
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription('An error occurred while removing the admin.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+    }
+  }
+
+  private async handleDisableAdmin(message: Message): Promise<void> {
+    const mentioned = message.mentions.users.first();
+    if (!mentioned) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription(
+          'Please mention a user to disable: `!admin disable @user`',
+        )
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    try {
+      const result = await setAdminStatus(mentioned.id, false);
+      const embed = new EmbedBuilder()
+        .setTitle(result.success ? '✅ Success' : '⚠️ Notice')
+        .setDescription(result.message)
+        .setColor(result.success ? 0x00ff00 : 0xffaa00);
+      await message.reply({ embeds: [embed] });
+    } catch (error) {
+      console.error('Error disabling admin:', error);
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription('An error occurred while disabling the admin.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+    }
+  }
+
+  private async handleEnableAdmin(message: Message): Promise<void> {
+    const mentioned = message.mentions.users.first();
+    if (!mentioned) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription(
+          'Please mention a user to enable: `!admin enable @user`',
+        )
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    try {
+      const result = await setAdminStatus(mentioned.id, true);
+      const embed = new EmbedBuilder()
+        .setTitle(result.success ? '✅ Success' : '⚠️ Notice')
+        .setDescription(result.message)
+        .setColor(result.success ? 0x00ff00 : 0xffaa00);
+      await message.reply({ embeds: [embed] });
+    } catch (error) {
+      console.error('Error enabling admin:', error);
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription('An error occurred while enabling the admin.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+    }
+  }
+
+  private async handleListAdmins(message: Message): Promise<void> {
+    try {
+      const admins = await getAllAdmins();
+
+      if (admins.length === 0) {
+        const embed = new EmbedBuilder()
+          .setTitle('📋 Admin List')
+          .setDescription('No admins found in the database.')
+          .setColor(0x93acff);
+        await message.reply({ embeds: [embed] });
+        return;
+      }
+
+      const description = admins
+        .map((admin) => {
+          const status = admin.active ? '🟢 Active' : '🔴 Inactive';
+          return `${status} - ${admin.name} (<@${admin.discordID}>)`;
+        })
+        .join('\n');
+
+      const embed = new EmbedBuilder()
+        .setTitle('📋 Admin List')
+        .setDescription(description)
+        .setColor(0x93acff);
+      await message.reply({ embeds: [embed] });
+    } catch (error) {
+      console.error('Error listing admins:', error);
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription('An error occurred while listing admins.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+    }
+  }
+
+  private async handleHelp(message: Message): Promise<void> {
+    const embed = new EmbedBuilder()
+      .setTitle('🛡️ Admin Manager Commands')
+      .setDescription(
+        '**Available Commands:**\n\n' +
+          '`!admin add @user` - Add a user as an admin\n' +
+          '`!admin remove @user` - Remove a user from admins\n' +
+          '`!admin enable @user` - Enable an inactive admin\n' +
+          '`!admin disable @user` - Disable an active admin\n' +
+          '`!admin list` - List all admins\n' +
+          '`!admin help` - Show this help message\n\n' +
+          '**Permissions:**\n' +
+          'Only the server owner or active admins can use these commands.',
+      )
+      .setColor(0x93acff);
+    await message.reply({ embeds: [embed] });
+  }
+
+  cleanup(): void {
+    console.log(`[${this.name}] Module cleaned up`);
+  }
+}
+
+export default new AdminManagerModule();

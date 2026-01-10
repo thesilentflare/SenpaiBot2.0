@@ -1,4 +1,4 @@
-import { db, dbPromise } from './database';
+import { db, dbPromise } from '../database';
 
 export type BirthdayEntry = {
   discordID: string;
@@ -6,15 +6,15 @@ export type BirthdayEntry = {
   dateISOString: string;
 };
 
-export const getMonthlyBirthdays = async (month: number): Promise<BirthdayEntry[]> => {
+export const getMonthlyBirthdays = async (
+  month: number,
+): Promise<BirthdayEntry[]> => {
   const db = await dbPromise;
 
-  // Month should be between 1 and 12
   if (month < 1 || month > 12) {
     throw new Error('Invalid month. Please provide a month between 1 and 12.');
   }
 
-  // Query to get users with birthdays in the specified month
   const query = `
     SELECT u.discordID, u.name, b.dateISOString
     FROM Users u
@@ -32,12 +32,14 @@ export const getMonthlyBirthdays = async (month: number): Promise<BirthdayEntry[
   }));
 };
 
-export const getTodayBirthdays = async (month: number, day: number): Promise<BirthdayEntry[]> => {
+export const getTodayBirthdays = async (
+  month: number,
+  day: number,
+): Promise<BirthdayEntry[]> => {
   const db = await dbPromise;
 
-  // Pad the month and day for the query
-  const monthString = String(month).padStart(2, '0'); // Ensure two digits
-  const dayString = String(day).padStart(2, '0'); // Ensure two digits
+  const monthString = String(month).padStart(2, '0');
+  const dayString = String(day).padStart(2, '0');
 
   const query = `
         SELECT u.discordID, u.name, b.dateISOString
@@ -78,42 +80,47 @@ export const setBirthday = (
   dateISOString: string,
 ): Promise<{ success: boolean }> => {
   return new Promise((resolve, reject) => {
-    // First, check if a birthday entry already exists for this user
-    db.get(`SELECT * FROM Birthdays WHERE discordID = ?`, [discordID], (err, row) => {
-      if (err) {
-        console.error('Error querying Birthdays table:', err.message);
-        return reject(err);
-      }
+    db.get(
+      `SELECT * FROM Birthdays WHERE discordID = ?`,
+      [discordID],
+      (err, row) => {
+        if (err) {
+          console.error('Error querying Birthdays table:', err.message);
+          return reject(err);
+        }
 
-      if (row) {
-        // Update existing birthday
-        db.run(
-          `UPDATE Birthdays SET dateISOString = ? WHERE discordID = ?`,
-          [dateISOString, discordID],
-          function (err) {
-            if (err) {
-              console.error('Error updating birthday:', err.message);
-              return reject(err);
-            }
-            console.log(`Updated birthday for user ${discordID} to ${dateISOString}`);
-            resolve({ success: true });
-          },
-        );
-      } else {
-        // Insert new birthday
-        db.run(
-          `INSERT INTO Birthdays (discordID, dateISOString) VALUES (?, ?)`,
-          [discordID, dateISOString],
-          function (err) {
-            if (err) {
-              console.error('Error inserting birthday:', err.message);
-              return reject(err);
-            }
-            console.log(`Set new birthday for user ${discordID} to ${dateISOString}`);
-            resolve({ success: true });
-          },
-        );
-      }
-    });
+        if (row) {
+          db.run(
+            `UPDATE Birthdays SET dateISOString = ? WHERE discordID = ?`,
+            [dateISOString, discordID],
+            function (err) {
+              if (err) {
+                console.error('Error updating birthday:', err.message);
+                return reject(err);
+              }
+              console.log(
+                `Updated birthday for user ${discordID} to ${dateISOString}`,
+              );
+              resolve({ success: true });
+            },
+          );
+        } else {
+          db.run(
+            `INSERT INTO Birthdays (discordID, dateISOString) VALUES (?, ?)`,
+            [discordID, dateISOString],
+            function (err) {
+              if (err) {
+                console.error('Error inserting birthday:', err.message);
+                return reject(err);
+              }
+              console.log(
+                `Set new birthday for user ${discordID} to ${dateISOString}`,
+              );
+              resolve({ success: true });
+            },
+          );
+        }
+      },
+    );
   });
 };

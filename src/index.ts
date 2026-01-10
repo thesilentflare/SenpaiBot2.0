@@ -1,13 +1,12 @@
-import { Client, EmbedBuilder, GatewayIntentBits, TextChannel } from 'discord.js';
-import senpai8ball from './modules/senpai8ball';
-import fortune from './modules/fortune';
+import {
+  Client,
+  EmbedBuilder,
+  GatewayIntentBits,
+  TextChannel,
+} from 'discord.js';
 import dotenv from 'dotenv';
 import { db, initializeDatabase } from './modules/database';
-import {
-  handleBirthCommand,
-  handleBlistCommand,
-  scheduleBirthdayNotifications,
-} from './modules/birthdays';
+import { ModuleLoader } from './utils/moduleLoader';
 
 // Load .env.local if it exists, otherwise fallback to .env
 dotenv.config({
@@ -27,58 +26,57 @@ const client = new Client({
   ],
 });
 
+// Initialize the module loader
+const moduleLoader = new ModuleLoader(client);
+
 // Wait for the database to initialize before starting the bot
 initializeDatabase()
-  .then(() => {
+  .then(async () => {
+    // Discover and load all modules
+    await moduleLoader.discoverModules();
+    await moduleLoader.initializeModules();
+
     client.once('clientReady', () => {
       console.log(`Logged in as ${client.user?.tag}!`);
-      console.log(`Bot is ready and connected to guild: ${GUILD_ID}`); // Log the guild ID when the bot is ready
-
-      // Start the birthday reminder feature
-      // checkBirthdays();
-      scheduleBirthdayNotifications(client);
+      console.log(`Bot is ready and connected to guild: ${GUILD_ID}`);
+      console.log(
+        `Loaded ${moduleLoader.getEnabledModules().length} module(s): ${moduleLoader
+          .getEnabledModules()
+          .map((m) => m.name)
+          .join(', ')}`,
+      );
     });
 
-    // Event listener for messages
-    client.on('messageCreate', (message) => {
+    // Event listener for messages - delegate to modules
+    client.on('messageCreate', async (message) => {
       if (message.author.bot) return; // Ignore bot messages
 
-      // Delegate to Senpai8ball
-      if (message.content.startsWith('!8ball')) {
-        senpai8ball.emit('messageCreate', message);
-      }
-
-      // Delegate to Fortune
-      if (message.content.startsWith('!fortune')) {
-        fortune.emit('messageCreate', message);
-      }
-
-      // Delegate the !birth command to the birthdayReminder.ts file
-      if (message.content.startsWith('!birth')) {
-        handleBirthCommand(message);
-      }
-
-      // Delegate the !blist command to the birthdayReminder.ts file
-      if (message.content.startsWith('!blist')) {
-        handleBlistCommand(message);
+      // Let each enabled module handle the message
+      for (const module of moduleLoader.getEnabledModules()) {
+        if (module.handleMessage) {
+          try {
+            const handled = await module.handleMessage(message);
+            if (handled) break; // Stop processing if a module handled the message
+          } catch (error) {
+            console.error(`[${module.name}] Error handling message:`, error);
+          }
+        }
       }
     });
 
     // Event listener for when a new user joins the server
     client.on('guildMemberAdd', async (member) => {
       const { id: discordID, username, discriminator } = member.user;
-      const channel = (await client.channels.fetch(MAIN_GENERAL_CHANNEL_ID)) as TextChannel; // Replace with your channel ID
+      const channel = (await client.channels.fetch(
+        MAIN_GENERAL_CHANNEL_ID,
+      )) as TextChannel;
 
       db.run(
         `INSERT OR IGNORE INTO Users (discordID, name) VALUES (?, ?)`,
-        [
-          discordID,
-          member.nickname || username, // Combine nickname or username into a single name field
-        ],
+        [discordID, member.nickname || username],
         async (err) => {
           if (err) {
             console.error('Error adding new user to Users table:', err.message);
-            // bot send message in chat about error
             const embed = new EmbedBuilder()
               .setTitle('Error')
               .setDescription(
@@ -89,7 +87,9 @@ initializeDatabase()
               .setColor(0xff0000);
             await channel.send({ embeds: [embed] });
           } else {
-            console.log(`New user added to Users table: ${username}#${discriminator}`);
+            console.log(
+              `New user added to Users table: ${username}#${discriminator}`,
+            );
             const embed = new EmbedBuilder()
               .setTitle(`Welcome ${member.nickname || username}!`)
               .setDescription(
@@ -102,8 +102,16 @@ initializeDatabase()
       );
     });
 
+    // Handle graceful shutdown
+    process.on('SIGINT', async () => {
+      console.log('\nShutting down bot...');
+      await moduleLoader.cleanup();
+      client.destroy();
+      process.exit(0);
+    });
+
     // Log in to Discord
-    client.login(BOT_TOKEN); // Use the loaded bot token
+    client.login(BOT_TOKEN);
   })
   .catch((err) => {
     console.error('Failed to initialize the database:', err);

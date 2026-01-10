@@ -99,6 +99,12 @@ export class ModuleLoader {
         }
       }
     }
+
+    // After all modules are initialized, set module references for help module
+    const helpModule = this.modules.get('help');
+    if (helpModule && 'setModules' in helpModule) {
+      (helpModule as any).setModules(this.getEnabledModules());
+    }
   }
 
   /**

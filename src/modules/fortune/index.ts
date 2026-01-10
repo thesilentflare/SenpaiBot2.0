@@ -1,5 +1,5 @@
 import { Client, Message } from 'discord.js';
-import { BotModule } from '../../types/module';
+import { BotModule, CommandInfo } from '../../types/module';
 
 const fortunes: string[] = [
   'You will have a great day!',
@@ -22,17 +22,36 @@ class FortuneModule implements BotModule {
   }
 
   handleMessage(message: Message): boolean {
-    if (message.content.startsWith('!fortune')) {
+    const content = message.content.trim();
+
+    if (content.startsWith('!fortune')) {
       const randomIndex = Math.floor(Math.random() * fortunes.length);
       const reply = fortunes[randomIndex];
       message.reply(reply);
       return true;
     }
+
+    // Check for common misspellings
+    if (content.match(/^!(?:fortun|forune|fotune|fourtune)/i)) {
+      message.reply('🔮 Did you mean `!fortune`?');
+      return true;
+    }
+
     return false;
   }
 
   cleanup(): void {
     console.log(`[${this.name}] Module cleaned up`);
+  }
+
+  getCommands(): CommandInfo[] {
+    return [
+      {
+        command: '!fortune',
+        description: 'Get a random fortune cookie message',
+        usage: '!fortune',
+      },
+    ];
   }
 }
 

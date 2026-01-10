@@ -1,5 +1,5 @@
 import { Client, EmbedBuilder, Message } from 'discord.js';
-import { BotModule } from '../../types/module';
+import { BotModule, CommandInfo } from '../../types/module';
 import {
   addAdmin,
   removeAdmin,
@@ -18,10 +18,12 @@ class AdminManagerModule implements BotModule {
   }
 
   async handleMessage(message: Message): Promise<boolean> {
+    const content = message.content.trim();
+
     // Check if user has permission to use admin commands
     const hasPermission = await this.checkPermission(message);
 
-    if (message.content.startsWith('!admin add ')) {
+    if (content.startsWith('!admin add ')) {
       if (!hasPermission) {
         await this.sendPermissionDenied(message);
         return true;
@@ -30,7 +32,7 @@ class AdminManagerModule implements BotModule {
       return true;
     }
 
-    if (message.content.startsWith('!admin remove ')) {
+    if (content.startsWith('!admin remove ')) {
       if (!hasPermission) {
         await this.sendPermissionDenied(message);
         return true;
@@ -39,7 +41,7 @@ class AdminManagerModule implements BotModule {
       return true;
     }
 
-    if (message.content.startsWith('!admin disable ')) {
+    if (content.startsWith('!admin disable ')) {
       if (!hasPermission) {
         await this.sendPermissionDenied(message);
         return true;
@@ -48,7 +50,7 @@ class AdminManagerModule implements BotModule {
       return true;
     }
 
-    if (message.content.startsWith('!admin enable ')) {
+    if (content.startsWith('!admin enable ')) {
       if (!hasPermission) {
         await this.sendPermissionDenied(message);
         return true;
@@ -57,7 +59,7 @@ class AdminManagerModule implements BotModule {
       return true;
     }
 
-    if (message.content.startsWith('!admin list')) {
+    if (content.startsWith('!admin list')) {
       if (!hasPermission) {
         await this.sendPermissionDenied(message);
         return true;
@@ -66,13 +68,42 @@ class AdminManagerModule implements BotModule {
       return true;
     }
 
-    if (message.content.startsWith('!admin help')) {
+    if (content.startsWith('!admin help')) {
       if (!hasPermission) {
         await this.sendPermissionDenied(message);
         return true;
       }
       await this.handleHelp(message);
       return true;
+    }
+
+    // Check if user typed !admin with unknown subcommand or no subcommand
+    if (content === '!admin' || content.startsWith('!admin ')) {
+      if (!hasPermission) {
+        await this.sendPermissionDenied(message);
+        return true;
+      }
+
+      const parts = content.split(/\s+/);
+      if (
+        parts.length === 1 ||
+        (parts.length > 1 &&
+          !['add', 'remove', 'disable', 'enable', 'list', 'help'].includes(
+            parts[1],
+          ))
+      ) {
+        const subcommand = parts[1] || '';
+        const embed = new EmbedBuilder()
+          .setTitle('❌ Unknown Command')
+          .setDescription(
+            subcommand
+              ? `Unknown subcommand: \`${subcommand}\`\n\nUse \`!admin help\` to see available commands.`
+              : 'Please specify a subcommand.\n\nUse `!admin help` to see available commands.',
+          )
+          .setColor(0xff0000);
+        await message.reply({ embeds: [embed] });
+        return true;
+      }
     }
 
     return false;
@@ -294,6 +325,47 @@ class AdminManagerModule implements BotModule {
 
   cleanup(): void {
     console.log(`[${this.name}] Module cleaned up`);
+  }
+
+  getCommands(): CommandInfo[] {
+    return [
+      {
+        command: '!admin add',
+        description: 'Add a user as an admin',
+        usage: '!admin add @user',
+        adminOnly: true,
+      },
+      {
+        command: '!admin remove',
+        description: 'Remove a user from admins',
+        usage: '!admin remove @user',
+        adminOnly: true,
+      },
+      {
+        command: '!admin enable',
+        description: 'Enable an inactive admin',
+        usage: '!admin enable @user',
+        adminOnly: true,
+      },
+      {
+        command: '!admin disable',
+        description: 'Disable an active admin',
+        usage: '!admin disable @user',
+        adminOnly: true,
+      },
+      {
+        command: '!admin list',
+        description: 'List all admins',
+        usage: '!admin list',
+        adminOnly: true,
+      },
+      {
+        command: '!admin help',
+        description: 'Show admin commands help',
+        usage: '!admin help',
+        adminOnly: true,
+      },
+    ];
   }
 }
 

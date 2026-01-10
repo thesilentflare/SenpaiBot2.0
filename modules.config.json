@@ -10,5 +10,8 @@
   },
   "adminManager": {
     "enabled": true
+  },
+  "help": {
+    "enabled": true
   }
 }

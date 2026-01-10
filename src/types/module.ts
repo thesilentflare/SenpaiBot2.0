@@ -1,6 +1,23 @@
 import { Client, Message } from 'discord.js';
 
 /**
+ * Command information for help system
+ */
+export interface CommandInfo {
+  /** The command trigger (e.g., "!8ball") */
+  command: string;
+
+  /** Description of what the command does */
+  description: string;
+
+  /** Usage example (optional) */
+  usage?: string;
+
+  /** Whether the command requires admin permissions */
+  adminOnly?: boolean;
+}
+
+/**
  * Interface that all feature modules must implement
  */
 export interface BotModule {
@@ -25,6 +42,12 @@ export interface BotModule {
    * @returns true if the message was handled, false otherwise
    */
   handleMessage?(message: Message): boolean | Promise<boolean>;
+
+  /**
+   * Get list of commands provided by this module
+   * @returns Array of command information
+   */
+  getCommands?(): CommandInfo[];
 
   /**
    * Cleanup when the module is disabled or bot shuts down

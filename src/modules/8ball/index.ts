@@ -1,5 +1,5 @@
 import { Client, Message } from 'discord.js';
-import { BotModule } from '../../types/module';
+import { BotModule, CommandInfo } from '../../types/module';
 
 const responses: string[] = [
   'Yes.',
@@ -22,17 +22,47 @@ class Senpai8BallModule implements BotModule {
   }
 
   handleMessage(message: Message): boolean {
-    if (message.content.startsWith('!8ball')) {
+    const content = message.content.trim();
+
+    if (content.startsWith('!8ball')) {
+      // Check if user provided a question
+      const question = content.slice(6).trim();
+      if (!question) {
+        message.reply(
+          '❓ Please ask me a question! Usage: `!8ball <your question>`',
+        );
+        return true;
+      }
+
       const randomIndex = Math.floor(Math.random() * responses.length);
       const reply = responses[randomIndex];
       message.reply(reply);
       return true;
     }
+
+    // Check for common misspellings
+    if (content.match(/^!8(?:bal|ball|bll|aball)/i)) {
+      message.reply(
+        '❓ Did you mean `!8ball`? Usage: `!8ball <your question>`',
+      );
+      return true;
+    }
+
     return false;
   }
 
   cleanup(): void {
     console.log(`[${this.name}] Module cleaned up`);
+  }
+
+  getCommands(): CommandInfo[] {
+    return [
+      {
+        command: '!8ball',
+        description: 'Ask the magic 8-ball a question',
+        usage: '!8ball <your question>',
+      },
+    ];
   }
 }
 

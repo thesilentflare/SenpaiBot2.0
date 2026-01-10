@@ -1,6 +1,6 @@
 import { Client, EmbedBuilder, Message, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
-import { BotModule } from '../../types/module';
+import { BotModule, CommandInfo } from '../../types/module';
 import {
   getAllBirthdays,
   getMonthlyBirthdays,
@@ -38,13 +38,31 @@ class BirthdaysModule implements BotModule {
   }
 
   handleMessage(message: Message): boolean {
-    if (message.content.startsWith('!birth ')) {
+    const content = message.content.trim();
+
+    if (content.startsWith('!birth ')) {
       this.handleBirthCommand(message);
       return true;
     }
 
-    if (message.content.startsWith('!blist')) {
+    if (content.startsWith('!blist')) {
       this.handleBlistCommand(message);
+      return true;
+    }
+
+    // Check for birth command without space/args
+    if (content === '!birth') {
+      message.reply(
+        '🎂 Please provide your birthday! Usage: `!birth YYYY-MM-DD`\nExample: `!birth 1990-05-15`',
+      );
+      return true;
+    }
+
+    // Check for common misspellings of birth commands
+    if (content.match(/^!(?:brith|borth|birrth|birthday)/)) {
+      message.reply(
+        '🎂 Did you mean `!birth YYYY-MM-DD` or `!blist`?\n\n**Birthday Commands:**\n`!birth YYYY-MM-DD` - Set your birthday\n`!blist` - List all birthdays',
+      );
       return true;
     }
 
@@ -242,6 +260,21 @@ class BirthdaysModule implements BotModule {
 
   cleanup(): void {
     console.log(`[${this.name}] Module cleaned up`);
+  }
+
+  getCommands(): CommandInfo[] {
+    return [
+      {
+        command: '!birth',
+        description: 'Set your birthday',
+        usage: '!birth YYYY-MM-DD (e.g., !birth 1990-05-15)',
+      },
+      {
+        command: '!blist',
+        description: 'List all birthdays in the database',
+        usage: '!blist',
+      },
+    ];
   }
 }
 

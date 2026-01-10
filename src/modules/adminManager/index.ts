@@ -5,7 +5,7 @@ import {
   removeAdmin,
   setAdminStatus,
   getAllAdmins,
-  isActiveAdmin,
+  isAdmin,
 } from './helpers';
 
 class AdminManagerModule implements BotModule {
@@ -116,11 +116,7 @@ class AdminManagerModule implements BotModule {
   private async checkPermission(message: Message): Promise<boolean> {
     if (!message.guild) return false;
 
-    const isOwner = message.guild.ownerId === message.author.id;
-    if (isOwner) return true;
-
-    const isAdmin = await isActiveAdmin(message.author.id);
-    return isAdmin;
+    return isAdmin(message.author.id, message.guild);
   }
 
   private async sendPermissionDenied(message: Message): Promise<void> {

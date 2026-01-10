@@ -1,23 +1,34 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables FIRST (base .env first, then environment-specific)
+dotenv.config(); // Load .env first
+const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : null;
+if (envFile) {
+  const envPath = path.resolve(process.cwd(), envFile);
+  console.log(`Loading environment from: ${envPath}`);
+  const result = dotenv.config({ path: envPath, override: true }); // Override with environment-specific
+  if (result.error) {
+    console.error(`Error loading ${envFile}:`, result.error);
+  } else {
+    console.log(`Successfully loaded ${envFile}`);
+  }
+}
+
+// NOW import modules that depend on environment variables
 import {
   Client,
   EmbedBuilder,
   GatewayIntentBits,
   TextChannel,
 } from 'discord.js';
-import dotenv from 'dotenv';
 import { db, initializeDatabase } from './modules/database';
 import { ModuleLoader } from './utils/moduleLoader';
-
-// Load environment variables (base .env first, then environment-specific)
-dotenv.config(); // Load .env first
-const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : null;
-if (envFile) {
-  dotenv.config({ path: envFile, override: true }); // Override with environment-specific
-}
 
 const GUILD_ID = process.env.GUILD_ID || ''; // Load the guild ID from the environment variables
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || ''; // Load the bot token from the environment variables
 const MAIN_GENERAL_CHANNEL_ID = process.env.MAIN_GENERAL_CHANNEL_ID || '';
+const TIME_ZONE = process.env.TIME_ZONE || 'UTC'; // Default to UTC if not set
 
 const client = new Client({
   intents: [
@@ -41,6 +52,17 @@ initializeDatabase()
     client.once('clientReady', () => {
       console.log(`Logged in as ${client.user?.tag}!`);
       console.log(`Bot is ready and connected to guild: ${GUILD_ID}`);
+
+      // Display timezone information
+      const now = new Date();
+      const currentTime = now.toLocaleString('en-US', {
+        timeZone: TIME_ZONE,
+        dateStyle: 'full',
+        timeStyle: 'long',
+      });
+      console.log(`Timezone: ${TIME_ZONE}`);
+      console.log(`Current time: ${currentTime}`);
+
       console.log(
         `Loaded ${moduleLoader.getEnabledModules().length} module(s): ${moduleLoader
           .getEnabledModules()

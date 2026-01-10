@@ -20,7 +20,10 @@
   "warframe": {
     "enabled": true
   },
-  "imageboards": {
+  "imageBoards": {
+    "enabled": true
+  },
+  "messageLogger": {
     "enabled": true
   }
 }

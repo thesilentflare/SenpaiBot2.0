@@ -17,20 +17,34 @@ src/modules/
 ├── birthdays/
 │   ├── index.ts
 │   └── helpers.ts
+├── adminManager/
+│   ├── index.ts
+│   └── helpers.ts
+├── help/
+│   └── index.ts
+├── yugioh/
+│   ├── index.ts
+│   └── helpers.ts
+├── warframe/
+│   ├── index.ts
+│   └── helpers.ts
+├── imageBoards/
+│   ├── index.ts
+│   └── helpers.ts
 └── database.ts
 ```
 
 ### Creating a New Module
 
 1. Create a new folder in `src/modules/` with your feature name
-2. Create an `index.ts` file that exports a class implementing the `BotModule` interface
+2. Create an `index.ts` file that exports an instance implementing the `BotModule` interface
 3. Add your module to the `modules.config.json` file
 
 Example module structure:
 
 ```typescript
 import { Client, Message } from 'discord.js';
-import { BotModule } from '../../types/module';
+import { BotModule, CommandInfo } from '../../types/module';
 
 class MyFeatureModule implements BotModule {
   name = 'myfeature';
@@ -42,18 +56,27 @@ class MyFeatureModule implements BotModule {
     // Set up any listeners, timers, etc.
   }
 
-  handleMessage(message: Message): boolean {
+  async handleMessage(message: Message): Promise<boolean> {
     if (message.content.startsWith('!mycommand')) {
-      // Handle the command
-      message.reply('Response');
-      return true; // Return true to indicate the message was handled
+      await message.reply('Response');
+      return true;
     }
-    return false; // Return false if not handled
+    return false;
+  }
+
+  getCommands(): CommandInfo[] {
+    return [
+      {
+        command: '!mycommand',
+        description: 'Does something cool',
+        usage: '!mycommand [options]',
+        adminOnly: false,
+      },
+    ];
   }
 
   cleanup(): void {
     console.log(`[${this.name}] Module cleaned up`);
-    // Clean up any resources
   }
 }
 
@@ -62,41 +85,8 @@ export default new MyFeatureModule();
 
 ### Module Configuration
 
-Modules are configured in `modules.config.json` at the root of the project:
-
-```json
-{
-  "8ball": {
-    "enabled": true
-  },
-  "fortune": {
-    "enabled": true
-  },
-  "birthdays": {
-    "enabled": true
-  },
-  "myfeature": {
-    "enabled": false
-  }
-}
-```
-
+Modules are configured in `modules.config.json` at the root of the project.
 Set `enabled: false` to disable a module without deleting its code.
-
-### Module Interface
-
-All modules must implement the `BotModule` interface:
-
-```typescript
-interface BotModule {
-  name: string; // Unique identifier
-  description: string; // What the module does
-  enabled: boolean; // Whether it's active
-  initialize(client: Client): void | Promise<void>; // Setup on bot start
-  handleMessage?(message: Message): boolean | Promise<boolean>; // Optional message handler
-  cleanup?(): void | Promise<void>; // Optional cleanup on shutdown
-}
-```
 
 ### Dynamic Loading
 
@@ -113,16 +103,22 @@ The `ModuleLoader` class automatically:
 - **No manual imports**: New modules are automatically discovered
 - **Easy toggling**: Enable/disable features via config file
 - **Clean separation**: Each feature is isolated in its own folder
-- **Reusable**: Module interface can be used for any feature type
 - **Type-safe**: Full TypeScript support with interfaces
+- **Auto-documentation**: Modules provide command info for the help system
+- **Admin controls**: Built-in permission system via adminManager module
 
-### Runtime Control
+## Current Modules
 
-The `ModuleLoader` also supports runtime enable/disable:
+### Core Features
 
-```typescript
-await moduleLoader.enableModule('myfeature'); // Enable a disabled module
-await moduleLoader.disableModule('8ball'); // Disable an enabled module
-```
+- **8ball** - Magic 8-ball fortune telling
+- **fortune** - Fortune cookie messages
+- **birthdays** - Birthday tracking and reminders with timezone support
+- **adminManager** - Admin user management with permission checks
+- **help** - Automatic command discovery and help display
 
-This allows for future admin commands to toggle features on the fly.
+### External API Features
+
+- **yugioh** - Yu-Gi-Oh! card lookup from Fandom wiki
+- **warframe** - Warframe codex wiki lookup
+- **imageBoards** - Random images from Yandere and Safebooru

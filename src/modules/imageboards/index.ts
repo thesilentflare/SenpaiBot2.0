@@ -12,7 +12,7 @@ const COLOR = 0xff93ac;
 type ImageboardFetcher = () => Promise<ImageboardPost>;
 
 class ImageboardsModule implements BotModule {
-  name = 'imageboards';
+  name = 'imageBoards';
   description = 'Random imageboard posts';
   enabled = true;
   private messages = new Set<Message>();

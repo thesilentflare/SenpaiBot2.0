@@ -1,4 +1,5 @@
 import { db, dbPromise } from '../database';
+import { Guild } from 'discord.js';
 
 export type AdminEntry = {
   discordID: string;
@@ -7,7 +8,7 @@ export type AdminEntry = {
 };
 
 /**
- * Check if a user is an active admin
+ * Check if a user is an active admin (database only)
  */
 export const isActiveAdmin = async (discordID: string): Promise<boolean> => {
   const database = await dbPromise;
@@ -19,6 +20,23 @@ export const isActiveAdmin = async (discordID: string): Promise<boolean> => {
 
   const admin = await database.get(query, [discordID]);
   return !!admin;
+};
+
+/**
+ * Check if a user is an admin (includes server owners)
+ * Server owners are always considered admins even if not in the database
+ */
+export const isAdmin = async (
+  discordID: string,
+  guild?: Guild | null,
+): Promise<boolean> => {
+  // Check if user is the guild owner
+  if (guild && guild.ownerId === discordID) {
+    return true;
+  }
+
+  // Fall back to database check
+  return isActiveAdmin(discordID);
 };
 
 /**

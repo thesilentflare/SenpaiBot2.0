@@ -10,6 +10,28 @@ Link to the original version: [Senpaibot](https://github.com/SnoopySnipe/SenpaiB
 
 Credits: art by [Sen_Yomi](https://www.instagram.com/sen_yomi/?hl=en)
 
+---
+
+## 🚨 Upgrading from v0.2.0-alpha?
+
+If you're upgrading from the Python-based v0.2.0-alpha to this TypeScript v0.3.0 version, **you need to migrate your database**.
+
+**Quick Start:**
+```bash
+node migrations/scripts/migrate_v0.2_to_v0.3.js YOUR_GUILD_ID YOUR_TIMEZONE [YEAR]
+```
+
+**Example:**
+```bash
+node migrations/scripts/migrate_v0.2_to_v0.3.js 578082133646639126 America/Toronto 2000
+```
+
+**Full Documentation:**
+- [Quick Start Guide](./migrations/QUICKSTART.md)
+- [Detailed Migration Guide](./migrations/README.md)
+
+---
+
 ## Requirements
 
 See makefile for more details.

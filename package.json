@@ -4,12 +4,14 @@
   "author": "Gavin L",
   "license": "GNU GPLv3",
   "description": "Our bot for our Discord server.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "dev": "NODE_ENV=development npx ts-node src/index.ts",
+    "dev": "cross-env NODE_ENV=development npx ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -22,6 +24,7 @@
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@types/jest": "^30.0.0",
+    "cross-env": "^10.1.0",
     "jest": "^30.2.0",
     "prettier": "^3.7.4",
     "ts-jest": "^29.4.6",

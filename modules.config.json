@@ -19,5 +19,8 @@
   },
   "warframe": {
     "enabled": true
+  },
+  "imageboards": {
+    "enabled": true
   }
 }

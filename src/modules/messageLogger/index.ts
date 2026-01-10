@@ -1,10 +1,4 @@
-import {
-  Client,
-  Message,
-  PartialMessage,
-  TextChannel,
-  EmbedBuilder,
-} from 'discord.js';
+import { Client, Message, TextChannel } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
 import { isAdmin } from '../adminManager/helpers';
 import { isExempt, addExemption, removeExemption } from './helpers';

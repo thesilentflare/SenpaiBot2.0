@@ -1,4 +1,4 @@
-import { db, dbPromise } from '../database';
+import { dbPromise } from '../database';
 
 /**
  * Check if a user is exempt from message logging

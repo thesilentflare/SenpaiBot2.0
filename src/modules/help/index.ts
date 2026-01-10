@@ -66,7 +66,7 @@ class HelpModule implements BotModule {
       .setFooter({ text: 'Use the commands exactly as shown' });
 
     // Add user commands grouped by module
-    for (const [moduleName, { user, admin }] of moduleCommands) {
+    for (const [moduleName, { user }] of moduleCommands) {
       if (user.length > 0) {
         let commandsText = '';
         user.forEach((cmd) => {

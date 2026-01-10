@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { Client, Message } from 'discord.js';
+import { Client } from 'discord.js';
 
 // Mock database before importing module
 jest.mock('../../database', () => ({

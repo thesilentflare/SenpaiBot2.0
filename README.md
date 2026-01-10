@@ -42,23 +42,29 @@ node migrations/scripts/migrate_v0.2_to_v0.3.js 578082133646639126 America/Toron
 - A Discord bot token ([How to create a bot](https://discord.com/developers/applications))
 - Your Discord server (guild) ID
 
-## Setup
+## Quick Start (Local Production)
 
-### 1. Install Dependencies
+To run the bot locally from the main branch:
+
+### 1. Clone and Install
 
 ```bash
+# Clone the repository
+git clone https://github.com/thesilentflare/SenpaiBot2.0.git
+cd SenpaiBot2.0
+
+# Install dependencies
 npm install
 ```
 
-### 2. Configure Environment Variables
-
-Copy the example environment file:
+### 2. Configure Environment
 
 ```bash
+# Copy the example environment file
 cp .env.example .env
 ```
 
-Edit `.env` with your configuration:
+Edit `.env` with your Discord bot credentials:
 
 ```env
 DISCORD_BOT_TOKEN=your_bot_token_here
@@ -73,20 +79,33 @@ BIRTHDAY_REMINDER_CHANNEL_ID=channel_id_here
 LOGS_CHANNEL_ID=channel_id_here
 ```
 
-### 3. Run the Bot
+**How to get these values:**
 
-**Development mode** (with auto-reload):
+- `DISCORD_BOT_TOKEN`: Create a bot at [Discord Developer Portal](https://discord.com/developers/applications)
+- `GUILD_ID`: Enable Developer Mode in Discord, right-click your server → Copy ID
+- Channel IDs: Right-click any channel → Copy ID
+
+### 3. Build and Run
+
+```bash
+# Compile TypeScript to JavaScript
+npm run build
+
+# Start the bot
+npm start
+```
+
+The bot will create a database file (e.g., `YOUR_GUILD_ID.db`) automatically on first run.
+
+### For Development
+
+If you're developing or modifying the bot, use development mode instead:
 
 ```bash
 npm run dev
 ```
 
-**Production mode**:
-
-```bash
-npm run build
-npm start
-```
+This runs the bot with `ts-node` and auto-reloads on file changes.
 
 ## Features
 

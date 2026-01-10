@@ -25,5 +25,8 @@
   },
   "messageLogger": {
     "enabled": true
+  },
+  "fortnite": {
+    "enabled": true
   }
 }

@@ -70,6 +70,7 @@ node migrations/scripts/migrate_v0.2_to_v0.3.js 578082133646639126 Europe/London
 The timezone parameter controls how birthday dates are stored, and the year parameter sets the default year for all birthdays (since the old database only has month and day).
 
 **Timezone:**
+
 - Birthdays are stored as ISO date strings in the new database
 - The timezone affects when birthday notifications are triggered
 - Common IANA timezone strings:
@@ -83,6 +84,7 @@ The timezone parameter controls how birthday dates are stored, and the year para
   - `Australia/Sydney`
 
 **Year:**
+
 - The old database only stores month and day, not year
 - You can specify a default year for all birthdays (e.g., 2000, 1990)
 - Default: Current year if not specified
@@ -93,6 +95,7 @@ You can find your timezone at: https://en.wikipedia.org/wiki/List_of_tz_database
 ### Schema Differences
 
 #### Old Schema (v0.2.0-alpha - Django)
+
 ```sql
 CREATE TABLE models_birthday (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -104,6 +107,7 @@ CREATE TABLE models_birthday (
 ```
 
 #### New Schema (v0.3.0 - TypeScript)
+
 ```sql
 -- Users table (new)
 CREATE TABLE Users (
@@ -171,15 +175,17 @@ The script includes automatic rollback on failure:
 ### After Migration
 
 1. **Verify the Migration**
+
    ```bash
    # Check users
    sqlite3 {GUILD_ID}.db "SELECT * FROM Users;"
-   
+
    # Check birthdays
    sqlite3 {GUILD_ID}.db "SELECT * FROM Birthdays;"
    ```
 
 2. **Start the Bot**
+
    ```bash
    npm run dev
    ```
@@ -197,23 +203,28 @@ The script includes automatic rollback on failure:
 ### Troubleshooting
 
 **Error: Old database not found**
+
 - Ensure you're running the script from the project root
 - Check that your database file is named `{GUILD_ID}.db`
 
 **Error: Backup database already exists**
+
 - A previous migration backup exists
 - Either delete/rename it, or verify if migration already completed
 
 **Error: Invalid timezone**
+
 - Check your timezone string is a valid IANA timezone
 - Use UTC if unsure
 - See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 **Migration completed but no data**
+
 - Check if the old database had data in `models_birthday` table
 - Verify the table name is exactly `models_birthday` (not `models_birthdays`)
 
 **Dates appear incorrect**
+
 - This may be due to timezone settings
 - You can re-run the migration with a different timezone
 - First, delete the new database and restore from backup
@@ -241,6 +252,7 @@ mv {GUILD_ID}_OLD_v0.2.0-alpha.db {GUILD_ID}.db
 ### Support
 
 If you encounter issues not covered here, please:
+
 1. Check the error message carefully
 2. Verify your database file structure
 3. Try running with `--verbose` flag (if implemented)

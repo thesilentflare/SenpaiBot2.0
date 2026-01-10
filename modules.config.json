@@ -13,5 +13,8 @@
   },
   "help": {
     "enabled": true
+  },
+  "yugioh": {
+    "enabled": true
   }
 }

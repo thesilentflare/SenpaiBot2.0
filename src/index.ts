@@ -16,18 +16,12 @@ if (envFile) {
 }
 
 // NOW import modules that depend on environment variables
-import {
-  Client,
-  EmbedBuilder,
-  GatewayIntentBits,
-  TextChannel,
-} from 'discord.js';
-import { db, initializeDatabase } from './modules/database';
+import { Client, GatewayIntentBits } from 'discord.js';
+import { initializeDatabase } from './modules/database';
 import { ModuleLoader } from './utils/moduleLoader';
 
 const GUILD_ID = process.env.GUILD_ID || ''; // Load the guild ID from the environment variables
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || ''; // Load the bot token from the environment variables
-const MAIN_GENERAL_CHANNEL_ID = process.env.MAIN_GENERAL_CHANNEL_ID || '';
 const TIME_ZONE = process.env.TIME_ZONE || 'UTC'; // Default to UTC if not set
 
 const client = new Client({
@@ -92,44 +86,6 @@ initializeDatabase()
           }
         }
       }
-    });
-
-    // Event listener for when a new user joins the server
-    client.on('guildMemberAdd', async (member) => {
-      const { id: discordID, username, discriminator } = member.user;
-      const channel = (await client.channels.fetch(
-        MAIN_GENERAL_CHANNEL_ID,
-      )) as TextChannel;
-
-      db.run(
-        `INSERT OR IGNORE INTO Users (discordID, name) VALUES (?, ?)`,
-        [discordID, member.nickname || username],
-        async (err) => {
-          if (err) {
-            console.error('Error adding new user to Users table:', err.message);
-            const embed = new EmbedBuilder()
-              .setTitle('Error')
-              .setDescription(
-                `There was an error adding ${
-                  member.nickname || username
-                } to the database. Please get an admin to add you manually.`,
-              )
-              .setColor(0xff0000);
-            await channel.send({ embeds: [embed] });
-          } else {
-            console.log(
-              `New user added to Users table: ${username}#${discriminator}`,
-            );
-            const embed = new EmbedBuilder()
-              .setTitle(`Welcome ${member.nickname || username}!`)
-              .setDescription(
-                `You have been added to the database. Use !birth YYYY-MM-DD to set your birthday!`,
-              )
-              .setColor(0xff0000);
-            await channel.send({ embeds: [embed] });
-          }
-        },
-      );
     });
 
     // Handle graceful shutdown

@@ -11,6 +11,9 @@
   "adminManager": {
     "enabled": true
   },
+  "userManager": {
+    "enabled": true
+  },
   "help": {
     "enabled": true
   },

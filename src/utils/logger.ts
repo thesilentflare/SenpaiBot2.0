@@ -51,14 +51,14 @@ const errorTransport = new DailyRotateFile({
   level: 'error',
 });
 
-// Transport for critical logs (we'll use error level as critical)
+// Transport for critical logs only
 const criticalTransport = new DailyRotateFile({
   filename: path.join(logsDir, 'critical-%DATE%.log'),
   datePattern: 'YYYY-MM-DD',
   maxFiles: '30d', // Keep critical logs longer
   maxSize: '20m',
   format: fileFormat,
-  level: 'error',
+  level: 'critical',
 });
 
 // Create the logger instance
@@ -73,6 +73,7 @@ const logger = winston.createLogger({
   transports: [
     combinedTransport,
     errorTransport,
+    criticalTransport,
     new winston.transports.Console({
       format: consoleFormat,
       level: LOG_LEVEL,

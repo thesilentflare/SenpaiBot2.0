@@ -17,7 +17,9 @@ class UserManagerModule implements BotModule {
   description = 'Manage user registration and information';
   enabled = true;
   private client: Client | null = null;
-  private guildMemberAddHandler: ((member: GuildMember) => Promise<void>) | null = null;
+  private guildMemberAddHandler:
+    | ((member: GuildMember) => Promise<void>)
+    | null = null;
   private logger = Logger.forModule('userManager');
 
   async initialize(client: Client): Promise<void> {

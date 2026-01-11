@@ -96,10 +96,7 @@ export const initializeDatabase = (): Promise<void> => {
       )`,
         (err) => {
           if (err) {
-            logger.error(
-              'Error creating MsgLogExemptions table',
-              err,
-            );
+            logger.error('Error creating MsgLogExemptions table', err);
             reject(err);
           } else {
             logger.debug('MsgLogExemptions table ready');

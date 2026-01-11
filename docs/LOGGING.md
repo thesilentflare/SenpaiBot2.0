@@ -125,19 +125,21 @@ This ensures you see the important startup info when the bot launches, while det
    - `critical` for system-threatening issues
 
 2. **Include context**: Add metadata objects to provide context
+
    ```typescript
-   logger.info('User action', { 
-     userId: user.id, 
-     action: 'rename', 
-     newName: 'JohnDoe' 
+   logger.info('User action', {
+     userId: user.id,
+     action: 'rename',
+     newName: 'JohnDoe',
    });
    ```
 
 3. **Pass Error objects**: Always pass the actual Error object, not just the message
+
    ```typescript
    // Good
    logger.error('Database query failed', error);
-   
+
    // Avoid
    logger.error(`Database query failed: ${error.message}`);
    ```
@@ -147,6 +149,7 @@ This ensures you see the important startup info when the bot launches, while det
 ## Monitoring Logs
 
 ### View recent logs
+
 ```bash
 # View latest combined log
 tail -f logs/combined-$(date +%Y-%m-%d).log
@@ -159,6 +162,7 @@ cat logs/combined-$(date +%Y-%m-%d).log
 ```
 
 ### Search logs
+
 ```bash
 # Search for errors from a specific module
 grep "userManager" logs/error-*.log
@@ -168,7 +172,9 @@ grep "userId.*123456" logs/combined-*.log
 ```
 
 ### Cleanup
+
 Logs are automatically cleaned up based on `LOG_RETENTION_DAYS`. You can manually delete old logs:
+
 ```bash
 # Remove logs older than 7 days
 find logs/ -name "*.log" -mtime +7 -delete

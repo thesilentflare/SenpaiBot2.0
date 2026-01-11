@@ -71,7 +71,7 @@ initializeDatabase()
           .map((m) => m.name)
           .join(', ')}`,
       );
-      
+
       // Also log to file for record keeping
       Logger.info('Bot started successfully', {
         user: client.user?.tag,
@@ -93,7 +93,10 @@ initializeDatabase()
             const handled = await module.handleMessage(message);
             if (handled) break; // Stop processing if a module handled the message
           } catch (error) {
-            Logger.forModule(module.name).error('Error handling message', error);
+            Logger.forModule(module.name).error(
+              'Error handling message',
+              error,
+            );
           }
         }
       }

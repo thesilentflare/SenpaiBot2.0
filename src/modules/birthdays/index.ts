@@ -97,9 +97,7 @@ class BirthdaysModule implements BotModule {
 
       const timeToNextRun = zonedNextNotificationTime.getTime() - now.getTime();
       const minutesToNextRun = Math.ceil(timeToNextRun / (1000 * 60));
-      this.logger.info(
-        `Next birthday check in: ${minutesToNextRun} minutes`,
-      );
+      this.logger.info(`Next birthday check in: ${minutesToNextRun} minutes`);
 
       setTimeout(() => {
         this.sendMonthlyBirthdays();

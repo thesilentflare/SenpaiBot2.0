@@ -21,14 +21,14 @@ const consoleFormat = winston.format.combine(
     const modulePrefix = module ? `[${module}]` : '';
     const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
     return `${timestamp} ${level} ${modulePrefix} ${message} ${metaStr}`.trim();
-  })
+  }),
 );
 
 // Format for file output
 const fileFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
-  winston.format.json()
+  winston.format.json(),
 );
 
 // Transport for all logs (combined)
@@ -108,16 +108,22 @@ class Logger {
       warn: (message: string, meta?: any) =>
         logger.warn(message, { module: moduleName, ...meta }),
       error: (message: string, error?: Error | any, meta?: any) => {
-        const errorMeta = error instanceof Error 
-          ? { error: { message: error.message, stack: error.stack } }
-          : { error };
+        const errorMeta =
+          error instanceof Error
+            ? { error: { message: error.message, stack: error.stack } }
+            : { error };
         logger.error(message, { module: moduleName, ...errorMeta, ...meta });
       },
       critical: (message: string, error?: Error | any, meta?: any) => {
-        const errorMeta = error instanceof Error
-          ? { error: { message: error.message, stack: error.stack } }
-          : { error };
-        logger.log('critical', message, { module: moduleName, ...errorMeta, ...meta });
+        const errorMeta =
+          error instanceof Error
+            ? { error: { message: error.message, stack: error.stack } }
+            : { error };
+        logger.log('critical', message, {
+          module: moduleName,
+          ...errorMeta,
+          ...meta,
+        });
       },
     };
   }
@@ -147,9 +153,10 @@ class Logger {
    * Log at error level
    */
   static error(message: string, error?: Error | any, meta?: any) {
-    const errorMeta = error instanceof Error
-      ? { error: { message: error.message, stack: error.stack } }
-      : { error };
+    const errorMeta =
+      error instanceof Error
+        ? { error: { message: error.message, stack: error.stack } }
+        : { error };
     logger.error(message, { ...errorMeta, ...meta });
   }
 
@@ -157,9 +164,10 @@ class Logger {
    * Log critical errors (system-threatening issues)
    */
   static critical(message: string, error?: Error | any, meta?: any) {
-    const errorMeta = error instanceof Error
-      ? { error: { message: error.message, stack: error.stack } }
-      : { error };
+    const errorMeta =
+      error instanceof Error
+        ? { error: { message: error.message, stack: error.stack } }
+        : { error };
     logger.log('critical', message, { ...errorMeta, ...meta });
   }
 

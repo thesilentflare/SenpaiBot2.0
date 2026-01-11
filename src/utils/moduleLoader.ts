@@ -30,9 +30,7 @@ export class ModuleLoader {
         this.config = JSON.parse(configData);
         logger.debug(`Loaded config from ${finalPath}`);
       } else {
-        logger.warn(
-          `Config file not found at ${finalPath}, using defaults`,
-        );
+        logger.warn(`Config file not found at ${finalPath}, using defaults`);
       }
     } catch (error) {
       logger.error(`Error loading config`, error);
@@ -73,10 +71,7 @@ export class ModuleLoader {
                 `Discovered module: ${moduleName} (${isEnabled ? 'enabled' : 'disabled'})`,
               );
             } catch (error) {
-              logger.error(
-                `Error loading module ${moduleName}`,
-                error,
-              );
+              logger.error(`Error loading module ${moduleName}`, error);
             }
           }
         }
@@ -95,10 +90,7 @@ export class ModuleLoader {
         try {
           await module.initialize(this.client);
         } catch (error) {
-          logger.error(
-            `Error initializing module ${name}`,
-            error,
-          );
+          logger.error(`Error initializing module ${name}`, error);
         }
       }
     }
@@ -171,10 +163,7 @@ export class ModuleLoader {
         try {
           await module.cleanup();
         } catch (error) {
-          logger.error(
-            `Error cleaning up module ${name}`,
-            error,
-          );
+          logger.error(`Error cleaning up module ${name}`, error);
         }
       }
     }

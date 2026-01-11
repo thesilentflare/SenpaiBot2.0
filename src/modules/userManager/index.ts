@@ -16,14 +16,16 @@ class UserManagerModule implements BotModule {
   description = 'Manage user registration and information';
   enabled = true;
   private client: Client | null = null;
+  private guildMemberAddHandler: ((member: GuildMember) => Promise<void>) | null = null;
 
   async initialize(client: Client): Promise<void> {
     this.client = client;
 
     // Register event listener for new guild members
-    client.on('guildMemberAdd', async (member: GuildMember) => {
+    this.guildMemberAddHandler = async (member: GuildMember) => {
       await this.handleGuildMemberAdd(member);
-    });
+    };
+    client.on('guildMemberAdd', this.guildMemberAddHandler);
 
     console.log(`[${this.name}] Module initialized`);
   }
@@ -56,18 +58,51 @@ class UserManagerModule implements BotModule {
    * Handle when a new user joins the server
    */
   private async handleGuildMemberAdd(member: GuildMember): Promise<void> {
-    const { id: discordID, username, discriminator } = member.user;
+    const { id: discordID, username } = member.user;
     const displayName = member.nickname || username;
 
+    // Check if MAIN_GENERAL_CHANNEL_ID is configured
+    if (!MAIN_GENERAL_CHANNEL_ID) {
+      console.warn(
+        `[${this.name}] MAIN_GENERAL_CHANNEL_ID not configured, skipping welcome message`,
+      );
+      // Still add user to database even if channel is not configured
+      try {
+        await addUser(discordID, displayName);
+        console.log(
+          `New user added to Users table: ${username} (ID: ${discordID})`,
+        );
+      } catch (error) {
+        console.error('Error adding new user to Users table:', error);
+      }
+      return;
+    }
+
+    // Fetch channel once
+    let channel: TextChannel;
     try {
-      const channel = (await this.client?.channels.fetch(
+      channel = (await this.client?.channels.fetch(
         MAIN_GENERAL_CHANNEL_ID,
       )) as TextChannel;
+    } catch (channelError) {
+      console.error('Error fetching welcome channel:', channelError);
+      // Still try to add user to database
+      try {
+        await addUser(discordID, displayName);
+        console.log(
+          `New user added to Users table: ${username} (ID: ${discordID})`,
+        );
+      } catch (error) {
+        console.error('Error adding new user to Users table:', error);
+      }
+      return;
+    }
 
+    try {
       await addUser(discordID, displayName);
 
       console.log(
-        `New user added to Users table: ${username}#${discriminator}`,
+        `New user added to Users table: ${username} (ID: ${discordID})`,
       );
 
       const embed = new EmbedBuilder()
@@ -82,10 +117,6 @@ class UserManagerModule implements BotModule {
       console.error('Error adding new user to Users table:', error);
 
       try {
-        const channel = (await this.client?.channels.fetch(
-          MAIN_GENERAL_CHANNEL_ID,
-        )) as TextChannel;
-
         const embed = new EmbedBuilder()
           .setTitle('Error')
           .setDescription(
@@ -94,8 +125,8 @@ class UserManagerModule implements BotModule {
           .setColor(0xff0000);
 
         await channel.send({ embeds: [embed] });
-      } catch (channelError) {
-        console.error('Error sending error message to channel:', channelError);
+      } catch (sendError) {
+        console.error('Error sending error message to channel:', sendError);
       }
     }
   }
@@ -305,6 +336,10 @@ class UserManagerModule implements BotModule {
   }
 
   async cleanup(): Promise<void> {
+    // Remove event listener to prevent memory leaks
+    if (this.client && this.guildMemberAddHandler) {
+      this.client.off('guildMemberAdd', this.guildMemberAddHandler);
+    }
     console.log(`[${this.name}] Module cleaned up`);
   }
 }

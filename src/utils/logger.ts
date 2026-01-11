@@ -109,17 +109,19 @@ class Logger {
       warn: (message: string, meta?: any) =>
         logger.warn(message, { module: moduleName, ...meta }),
       error: (message: string, error?: Error | any, meta?: any) => {
-        const errorMeta =
-          error instanceof Error
+        const errorMeta = error
+          ? (error instanceof Error
             ? { error: { message: error.message, stack: error.stack } }
-            : { error };
+            : { error })
+          : {};
         logger.error(message, { module: moduleName, ...errorMeta, ...meta });
       },
       critical: (message: string, error?: Error | any, meta?: any) => {
-        const errorMeta =
-          error instanceof Error
+        const errorMeta = error
+          ? (error instanceof Error
             ? { error: { message: error.message, stack: error.stack } }
-            : { error };
+            : { error })
+          : {};
         logger.log('critical', message, {
           module: moduleName,
           ...errorMeta,
@@ -154,10 +156,11 @@ class Logger {
    * Log at error level
    */
   static error(message: string, error?: Error | any, meta?: any) {
-    const errorMeta =
-      error instanceof Error
+    const errorMeta = error
+      ? (error instanceof Error
         ? { error: { message: error.message, stack: error.stack } }
-        : { error };
+        : { error })
+      : {};
     logger.error(message, { ...errorMeta, ...meta });
   }
 
@@ -165,10 +168,11 @@ class Logger {
    * Log critical errors (system-threatening issues)
    */
   static critical(message: string, error?: Error | any, meta?: any) {
-    const errorMeta =
-      error instanceof Error
+    const errorMeta = error
+      ? (error instanceof Error
         ? { error: { message: error.message, stack: error.stack } }
-        : { error };
+        : { error })
+      : {};
     logger.log('critical', message, { ...errorMeta, ...meta });
   }
 

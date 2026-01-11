@@ -88,7 +88,7 @@ export const setBirthday = (
       [discordID],
       (err, row) => {
         if (err) {
-          logger.error('Error querying Birthdays table:', err);
+          logger.error('Error querying Birthdays table', err);
           return reject(err);
         }
 
@@ -98,7 +98,7 @@ export const setBirthday = (
             [dateISOString, discordID],
             function (err) {
               if (err) {
-                logger.error('Error updating birthday:', err);
+                logger.error('Error updating birthday', err);
                 return reject(err);
               }
               logger.info(
@@ -113,7 +113,7 @@ export const setBirthday = (
             [discordID, dateISOString],
             function (err) {
               if (err) {
-                logger.error('Error inserting birthday:', err);
+                logger.error('Error inserting birthday', err);
                 return reject(err);
               }
               logger.info(

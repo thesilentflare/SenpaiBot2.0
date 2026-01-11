@@ -76,7 +76,7 @@ export const addAdmin = (
       [discordID],
       (err, row) => {
         if (err) {
-          logger.error('Error querying Admins table:', err);
+          logger.error('Error querying Admins table', err);
           return reject(err);
         }
 
@@ -89,7 +89,7 @@ export const addAdmin = (
             [discordID],
             function (err) {
               if (err) {
-                logger.error('Error adding admin:', err);
+                logger.error('Error adding admin', err);
                 return reject(err);
               }
               logger.info(`Added admin: ${discordID}`);
@@ -114,7 +114,7 @@ export const removeAdmin = (
       [discordID],
       function (err) {
         if (err) {
-          logger.error('Error removing admin:', err);
+          logger.error('Error removing admin', err);
           return reject(err);
         }
 
@@ -142,7 +142,7 @@ export const setAdminStatus = (
       [active ? 1 : 0, discordID],
       function (err) {
         if (err) {
-          logger.error('Error updating admin status:', err);
+          logger.error('Error updating admin status', err);
           return reject(err);
         }
 

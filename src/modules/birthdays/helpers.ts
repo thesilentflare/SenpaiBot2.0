@@ -1,4 +1,7 @@
 import { db, dbPromise } from '../database';
+import Logger from '../../utils/logger';
+
+const logger = Logger.forModule('birthdays-helpers');
 
 export type BirthdayEntry = {
   discordID: string;
@@ -85,7 +88,7 @@ export const setBirthday = (
       [discordID],
       (err, row) => {
         if (err) {
-          console.error('Error querying Birthdays table:', err.message);
+          logger.error('Error querying Birthdays table:', err);
           return reject(err);
         }
 
@@ -95,10 +98,10 @@ export const setBirthday = (
             [dateISOString, discordID],
             function (err) {
               if (err) {
-                console.error('Error updating birthday:', err.message);
+                logger.error('Error updating birthday:', err);
                 return reject(err);
               }
-              console.log(
+              logger.info(
                 `Updated birthday for user ${discordID} to ${dateISOString}`,
               );
               resolve({ success: true });
@@ -110,10 +113,10 @@ export const setBirthday = (
             [discordID, dateISOString],
             function (err) {
               if (err) {
-                console.error('Error inserting birthday:', err.message);
+                logger.error('Error inserting birthday:', err);
                 return reject(err);
               }
-              console.log(
+              logger.info(
                 `Set new birthday for user ${discordID} to ${dateISOString}`,
               );
               resolve({ success: true });

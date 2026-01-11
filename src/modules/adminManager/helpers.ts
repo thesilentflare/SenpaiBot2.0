@@ -1,5 +1,8 @@
 import { db, dbPromise } from '../database';
 import { Guild } from 'discord.js';
+import Logger from '../../utils/logger';
+
+const logger = Logger.forModule('adminManager-helpers');
 
 export type AdminEntry = {
   discordID: string;
@@ -73,7 +76,7 @@ export const addAdmin = (
       [discordID],
       (err, row) => {
         if (err) {
-          console.error('Error querying Admins table:', err.message);
+          logger.error('Error querying Admins table:', err);
           return reject(err);
         }
 
@@ -86,10 +89,10 @@ export const addAdmin = (
             [discordID],
             function (err) {
               if (err) {
-                console.error('Error adding admin:', err.message);
+                logger.error('Error adding admin:', err);
                 return reject(err);
               }
-              console.log(`Added admin: ${discordID}`);
+              logger.info(`Added admin: ${discordID}`);
               resolve({ success: true, message: 'Admin added successfully.' });
             },
           );
@@ -111,14 +114,14 @@ export const removeAdmin = (
       [discordID],
       function (err) {
         if (err) {
-          console.error('Error removing admin:', err.message);
+          logger.error('Error removing admin:', err);
           return reject(err);
         }
 
         if (this.changes === 0) {
           resolve({ success: false, message: 'User is not an admin.' });
         } else {
-          console.log(`Removed admin: ${discordID}`);
+          logger.info(`Removed admin: ${discordID}`);
           resolve({ success: true, message: 'Admin removed successfully.' });
         }
       },
@@ -139,14 +142,14 @@ export const setAdminStatus = (
       [active ? 1 : 0, discordID],
       function (err) {
         if (err) {
-          console.error('Error updating admin status:', err.message);
+          logger.error('Error updating admin status:', err);
           return reject(err);
         }
 
         if (this.changes === 0) {
           resolve({ success: false, message: 'User is not an admin.' });
         } else {
-          console.log(
+          logger.info(
             `Updated admin ${discordID} status to ${active ? 'active' : 'inactive'}`,
           );
           resolve({

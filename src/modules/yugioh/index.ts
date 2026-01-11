@@ -1,5 +1,6 @@
 import { Client, EmbedBuilder, Message } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 import { fetchCardPreview } from './helpers';
 
 const YUGIOH_WIKIA_URL = 'https://yugioh.fandom.com/wiki/';
@@ -9,9 +10,10 @@ class YugiohModule implements BotModule {
   name = 'yugioh';
   description = 'Search for Yu-Gi-Oh! card information';
   enabled = true;
+  private logger = Logger.forModule('yugioh');
 
   initialize(client: Client): void {
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   async handleMessage(message: Message): Promise<boolean> {
@@ -77,7 +79,7 @@ class YugiohModule implements BotModule {
 
       await searchingMsg.edit({ content: '', embeds: [embed] });
     } catch (error) {
-      console.error('[yugioh] Error fetching card:', error);
+      this.logger.error('Error fetching card:', error);
 
       // Try an alternative: search with exact user input (no formatting)
       const altUrl = `${YUGIOH_WIKIA_URL}${encodeURIComponent(cardName.split(' ').join('_'))}`;
@@ -116,7 +118,7 @@ class YugiohModule implements BotModule {
   }
 
   cleanup(): void {
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 }
 

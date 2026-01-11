@@ -1,5 +1,6 @@
 import { Client, Message, TextChannel } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 import { isAdmin } from '../adminManager/helpers';
 import { isExempt, addExemption, removeExemption } from './helpers';
 
@@ -8,12 +9,13 @@ class MessageLoggerModule implements BotModule {
   description = 'Logs deleted and edited messages to a specified channel';
   enabled = true;
   private logsChannelId: string = '';
+  private logger = Logger.forModule('messageLogger');
 
   initialize(client: Client): void {
     this.logsChannelId = process.env.LOGS_CHANNEL_ID || '';
 
     if (!this.logsChannelId) {
-      console.log(`[${this.name}] Warning: LOGS_CHANNEL_ID not set`);
+      this.logger.warn('LOGS_CHANNEL_ID not set');
       return;
     }
 
@@ -23,7 +25,7 @@ class MessageLoggerModule implements BotModule {
         try {
           await message.fetch();
         } catch (error) {
-          console.error('Error fetching deleted message:', error);
+          this.logger.error('Error fetching deleted message:', error);
           return;
         }
       }
@@ -36,7 +38,7 @@ class MessageLoggerModule implements BotModule {
         try {
           await oldMessage.fetch();
         } catch (error) {
-          console.error('Error fetching old message:', error);
+          this.logger.error('Error fetching old message:', error);
           return;
         }
       }
@@ -44,7 +46,7 @@ class MessageLoggerModule implements BotModule {
         try {
           await newMessage.fetch();
         } catch (error) {
-          console.error('Error fetching new message:', error);
+          this.logger.error('Error fetching new message:', error);
           return;
         }
       }
@@ -54,7 +56,7 @@ class MessageLoggerModule implements BotModule {
       );
     });
 
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   async handleMessage(message: Message): Promise<boolean> {
@@ -127,7 +129,7 @@ class MessageLoggerModule implements BotModule {
         );
       }
     } catch (error) {
-      console.error(`[${this.name}] Error toggling exemption:`, error);
+      this.logger.error('Error toggling exemption:', error);
       await message.reply('Failed to update exemption status.');
     }
   }
@@ -176,7 +178,7 @@ class MessageLoggerModule implements BotModule {
 
       await (logsChannel as TextChannel).send(msg);
     } catch (error) {
-      console.error(`[${this.name}] Error logging deleted message:`, error);
+      this.logger.error('Error logging deleted message:', error);
     }
   }
 
@@ -244,12 +246,12 @@ class MessageLoggerModule implements BotModule {
 
       await (logsChannel as TextChannel).send(msg);
     } catch (error) {
-      console.error(`[${this.name}] Error logging edited message:`, error);
+      this.logger.error('Error logging edited message:', error);
     }
   }
 
   cleanup(): void {
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 }
 

@@ -1,5 +1,6 @@
 import { Client, Message, EmbedBuilder, AttachmentBuilder } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 import {
   fetchYandere,
   fetchSafebooru,
@@ -17,13 +18,14 @@ class ImageboardsModule implements BotModule {
   enabled = true;
   private messages = new Set<Message>();
   private imageboards: ImageboardFetcher[];
+  private logger = Logger.forModule('imageBoards');
 
   constructor() {
     this.imageboards = [fetchYandere, fetchSafebooru];
   }
 
   initialize(client: Client): void {
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   async handleMessage(message: Message): Promise<boolean> {
@@ -120,7 +122,7 @@ class ImageboardsModule implements BotModule {
       try {
         await msg.delete();
       } catch (error) {
-        console.error(`Failed to delete message: ${error}`);
+        this.logger.error('Failed to delete message', error);
       }
     }
 
@@ -157,14 +159,14 @@ class ImageboardsModule implements BotModule {
       // Store message for purging
       this.messages.add(sentMessage);
     } catch (error) {
-      console.error(`Error fetching from imageboard:`, error);
+      this.logger.error('Error fetching from imageboard', error);
       await message.reply('Error: Failed to fetch image from API.');
     }
   }
 
   cleanup(): void {
     this.messages.clear();
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 }
 

@@ -6,6 +6,7 @@ import {
   TextChannel,
 } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 import { addUser, updateUserName, getUserByDiscordID } from './helpers';
 import { isAdmin } from '../adminManager/helpers';
 
@@ -16,7 +17,10 @@ class UserManagerModule implements BotModule {
   description = 'Manage user registration and information';
   enabled = true;
   private client: Client | null = null;
-  private guildMemberAddHandler: ((member: GuildMember) => Promise<void>) | null = null;
+  private guildMemberAddHandler:
+    | ((member: GuildMember) => Promise<void>)
+    | null = null;
+  private logger = Logger.forModule('userManager');
 
   async initialize(client: Client): Promise<void> {
     this.client = client;
@@ -27,7 +31,7 @@ class UserManagerModule implements BotModule {
     };
     client.on('guildMemberAdd', this.guildMemberAddHandler);
 
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   async handleMessage(message: Message): Promise<boolean> {
@@ -63,17 +67,17 @@ class UserManagerModule implements BotModule {
 
     // Check if MAIN_GENERAL_CHANNEL_ID is configured
     if (!MAIN_GENERAL_CHANNEL_ID) {
-      console.warn(
-        `[${this.name}] MAIN_GENERAL_CHANNEL_ID not configured, skipping welcome message`,
+      this.logger.warn(
+        'MAIN_GENERAL_CHANNEL_ID not configured, skipping welcome message',
       );
       // Still add user to database even if channel is not configured
       try {
         await addUser(discordID, displayName);
-        console.log(
+        this.logger.info(
           `New user added to Users table: ${username} (ID: ${discordID})`,
         );
       } catch (error) {
-        console.error('Error adding new user to Users table:', error);
+        this.logger.error('Error adding new user to Users table:', error);
       }
       return;
     }
@@ -85,15 +89,15 @@ class UserManagerModule implements BotModule {
         MAIN_GENERAL_CHANNEL_ID,
       )) as TextChannel;
     } catch (channelError) {
-      console.error('Error fetching welcome channel:', channelError);
+      this.logger.error('Error fetching welcome channel', channelError);
       // Still try to add user to database
       try {
         await addUser(discordID, displayName);
-        console.log(
+        this.logger.info(
           `New user added to Users table: ${username} (ID: ${discordID})`,
         );
       } catch (error) {
-        console.error('Error adding new user to Users table:', error);
+        this.logger.error('Error adding new user to Users table', error);
       }
       return;
     }
@@ -101,7 +105,7 @@ class UserManagerModule implements BotModule {
     try {
       await addUser(discordID, displayName);
 
-      console.log(
+      this.logger.info(
         `New user added to Users table: ${username} (ID: ${discordID})`,
       );
 
@@ -114,7 +118,7 @@ class UserManagerModule implements BotModule {
 
       await channel.send({ embeds: [embed] });
     } catch (error) {
-      console.error('Error adding new user to Users table:', error);
+      this.logger.error('Error adding new user to Users table', error);
 
       try {
         const embed = new EmbedBuilder()
@@ -126,7 +130,7 @@ class UserManagerModule implements BotModule {
 
         await channel.send({ embeds: [embed] });
       } catch (sendError) {
-        console.error('Error sending error message to channel:', sendError);
+        this.logger.error('Error sending error message to channel', sendError);
       }
     }
   }
@@ -211,8 +215,8 @@ class UserManagerModule implements BotModule {
           .setColor(0x00ff00);
 
         await message.reply({ embeds: [embed] });
-        console.log(
-          `[${this.name}] Admin ${message.author.tag} renamed user ${targetUserID} from "${user.name}" to "${newName}"`,
+        this.logger.info(
+          `Admin ${message.author.tag} renamed user ${targetUserID} from "${user.name}" to "${newName}"`,
         );
       } else {
         const embed = new EmbedBuilder()
@@ -223,7 +227,7 @@ class UserManagerModule implements BotModule {
         await message.reply({ embeds: [embed] });
       }
     } catch (error) {
-      console.error('Error renaming user:', error);
+      this.logger.error('Error renaming user', error);
 
       const embed = new EmbedBuilder()
         .setTitle('Error')
@@ -281,7 +285,7 @@ class UserManagerModule implements BotModule {
 
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      console.error('Error fetching user info:', error);
+      this.logger.error('Error fetching user info', error);
 
       const embed = new EmbedBuilder()
         .setTitle('Error')
@@ -340,7 +344,7 @@ class UserManagerModule implements BotModule {
     if (this.client && this.guildMemberAddHandler) {
       this.client.off('guildMemberAdd', this.guildMemberAddHandler);
     }
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 }
 

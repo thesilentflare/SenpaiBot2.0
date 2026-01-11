@@ -2,6 +2,9 @@ import { Client } from 'discord.js';
 import { BotModule, ModuleConfig } from '../types/module';
 import * as fs from 'fs';
 import * as path from 'path';
+import Logger from './logger';
+
+const logger = Logger.forModule('ModuleLoader');
 
 export class ModuleLoader {
   private modules: Map<string, BotModule> = new Map();
@@ -25,14 +28,12 @@ export class ModuleLoader {
       if (fs.existsSync(finalPath)) {
         const configData = fs.readFileSync(finalPath, 'utf-8');
         this.config = JSON.parse(configData);
-        console.log(`[ModuleLoader] Loaded config from ${finalPath}`);
+        logger.debug(`Loaded config from ${finalPath}`);
       } else {
-        console.warn(
-          `[ModuleLoader] Config file not found at ${finalPath}, using defaults`,
-        );
+        logger.warn(`Config file not found at ${finalPath}, using defaults`);
       }
     } catch (error) {
-      console.error(`[ModuleLoader] Error loading config:`, error);
+      logger.error(`Error loading config`, error);
     }
   }
 
@@ -66,20 +67,17 @@ export class ModuleLoader {
               module.enabled = isEnabled;
 
               this.modules.set(moduleName, module);
-              console.log(
-                `[ModuleLoader] Discovered module: ${moduleName} (${isEnabled ? 'enabled' : 'disabled'})`,
+              logger.debug(
+                `Discovered module: ${moduleName} (${isEnabled ? 'enabled' : 'disabled'})`,
               );
             } catch (error) {
-              console.error(
-                `[ModuleLoader] Error loading module ${moduleName}:`,
-                error,
-              );
+              logger.error(`Error loading module ${moduleName}`, error);
             }
           }
         }
       }
     } catch (error) {
-      console.error(`[ModuleLoader] Error discovering modules:`, error);
+      logger.error(`Error discovering modules`, error);
     }
   }
 
@@ -92,10 +90,7 @@ export class ModuleLoader {
         try {
           await module.initialize(this.client);
         } catch (error) {
-          console.error(
-            `[ModuleLoader] Error initializing module ${name}:`,
-            error,
-          );
+          logger.error(`Error initializing module ${name}`, error);
         }
       }
     }
@@ -127,14 +122,14 @@ export class ModuleLoader {
   async enableModule(name: string): Promise<boolean> {
     const module = this.modules.get(name);
     if (!module) {
-      console.error(`[ModuleLoader] Module ${name} not found`);
+      logger.error(`Module ${name} not found`);
       return false;
     }
 
     if (!module.enabled) {
       module.enabled = true;
       await module.initialize(this.client);
-      console.log(`[ModuleLoader] Enabled module: ${name}`);
+      logger.info(`Enabled module: ${name}`);
     }
     return true;
   }
@@ -145,7 +140,7 @@ export class ModuleLoader {
   async disableModule(name: string): Promise<boolean> {
     const module = this.modules.get(name);
     if (!module) {
-      console.error(`[ModuleLoader] Module ${name} not found`);
+      logger.error(`Module ${name} not found`);
       return false;
     }
 
@@ -154,7 +149,7 @@ export class ModuleLoader {
       if (module.cleanup) {
         await module.cleanup();
       }
-      console.log(`[ModuleLoader] Disabled module: ${name}`);
+      logger.info(`Disabled module: ${name}`);
     }
     return true;
   }
@@ -168,10 +163,7 @@ export class ModuleLoader {
         try {
           await module.cleanup();
         } catch (error) {
-          console.error(
-            `[ModuleLoader] Error cleaning up module ${name}:`,
-            error,
-          );
+          logger.error(`Error cleaning up module ${name}`, error);
         }
       }
     }

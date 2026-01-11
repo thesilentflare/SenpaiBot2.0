@@ -1,5 +1,6 @@
 import { Client, Message } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 
 const responses: string[] = [
   'Yes.',
@@ -16,9 +17,10 @@ class Senpai8BallModule implements BotModule {
   name = '8ball';
   description = 'Magic 8-ball fortune telling';
   enabled = true;
+  private logger = Logger.forModule('8ball');
 
   initialize(client: Client): void {
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   handleMessage(message: Message): boolean {
@@ -52,7 +54,7 @@ class Senpai8BallModule implements BotModule {
   }
 
   cleanup(): void {
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 
   getCommands(): CommandInfo[] {

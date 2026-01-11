@@ -1,5 +1,6 @@
 import { Client, Message } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 
 const fortunes: string[] = [
   'You will have a great day!',
@@ -16,9 +17,10 @@ class FortuneModule implements BotModule {
   name = 'fortune';
   description = 'Random fortune cookie messages';
   enabled = true;
+  private logger = Logger.forModule('fortune');
 
   initialize(client: Client): void {
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   handleMessage(message: Message): boolean {
@@ -41,7 +43,7 @@ class FortuneModule implements BotModule {
   }
 
   cleanup(): void {
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 
   getCommands(): CommandInfo[] {

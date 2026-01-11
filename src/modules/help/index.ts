@@ -1,5 +1,6 @@
 import { Client, EmbedBuilder, Message } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 
 class HelpModule implements BotModule {
   name = 'help';
@@ -7,10 +8,11 @@ class HelpModule implements BotModule {
   enabled = true;
   private client: Client | null = null;
   private allModules: BotModule[] = [];
+  private logger = Logger.forModule('help');
 
   initialize(client: Client): void {
     this.client = client;
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   /**
@@ -132,7 +134,7 @@ class HelpModule implements BotModule {
   }
 
   cleanup(): void {
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 }
 

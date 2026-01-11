@@ -2,6 +2,9 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
+import Logger from '../utils/logger';
+
+const logger = Logger.forModule('Database');
 
 // Get database path - this will be evaluated when the module is imported
 // The GUILD_ID should be set in process.env before this module is imported
@@ -15,15 +18,15 @@ const dbPath = getDbPath();
 
 // Ensure the database file exists
 if (!fs.existsSync(dbPath)) {
-  console.log(`Database file not found. Creating new database at ${dbPath}...`);
+  logger.info(`Database file not found. Creating new database at ${dbPath}`);
   fs.writeFileSync(dbPath, '');
 }
 
 export const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('Error opening database:', err.message);
+    logger.error('Error opening database', err);
   } else {
-    console.log('Connected to the SQLite database.');
+    logger.info('Connected to the SQLite database', { path: dbPath });
   }
 });
 
@@ -36,7 +39,7 @@ export const dbPromise = open({
 export const initializeDatabase = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     db.serialize(() => {
-      console.log('Initializing database...');
+      logger.info('Initializing database tables');
       db.run(
         `CREATE TABLE IF NOT EXISTS Users (
         discordID TEXT PRIMARY KEY,
@@ -44,10 +47,10 @@ export const initializeDatabase = (): Promise<void> => {
       )`,
         (err) => {
           if (err) {
-            console.error('Error creating Users table:', err.message);
+            logger.error('Error creating Users table', err);
             reject(err);
           } else {
-            console.log('Users table ready.');
+            logger.debug('Users table ready');
           }
         },
       );
@@ -61,10 +64,10 @@ export const initializeDatabase = (): Promise<void> => {
       )`,
         (err) => {
           if (err) {
-            console.error('Error creating Birthdays table:', err.message);
+            logger.error('Error creating Birthdays table', err);
             reject(err);
           } else {
-            console.log('Birthdays table ready.');
+            logger.debug('Birthdays table ready');
           }
         },
       );
@@ -77,10 +80,10 @@ export const initializeDatabase = (): Promise<void> => {
       )`,
         (err) => {
           if (err) {
-            console.error('Error creating Admins table:', err.message);
+            logger.error('Error creating Admins table', err);
             reject(err);
           } else {
-            console.log('Admins table ready.');
+            logger.debug('Admins table ready');
           }
         },
       );
@@ -93,13 +96,10 @@ export const initializeDatabase = (): Promise<void> => {
       )`,
         (err) => {
           if (err) {
-            console.error(
-              'Error creating MsgLogExemptions table:',
-              err.message,
-            );
+            logger.error('Error creating MsgLogExemptions table', err);
             reject(err);
           } else {
-            console.log('MsgLogExemptions table ready.');
+            logger.debug('MsgLogExemptions table ready');
             resolve();
           }
         },

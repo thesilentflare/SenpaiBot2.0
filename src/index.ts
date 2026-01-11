@@ -1,17 +1,18 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import Logger from './utils/logger';
 
 // Load environment variables FIRST (base .env first, then environment-specific)
 dotenv.config(); // Load .env first
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : null;
 if (envFile) {
   const envPath = path.resolve(process.cwd(), envFile);
-  console.log(`Loading environment from: ${envPath}`);
+  Logger.debug(`Loading environment from: ${envPath}`);
   const result = dotenv.config({ path: envPath, override: true }); // Override with environment-specific
   if (result.error) {
-    console.error(`Error loading ${envFile}:`, result.error);
+    Logger.error(`Error loading ${envFile}`, result.error);
   } else {
-    console.log(`Successfully loaded ${envFile}`);
+    Logger.debug(`Successfully loaded ${envFile}`);
   }
 }
 
@@ -44,8 +45,9 @@ initializeDatabase()
     await moduleLoader.initializeModules();
 
     client.once('clientReady', () => {
-      console.log(`Logged in as ${client.user?.tag}!`);
-      console.log(`Bot is ready and connected to guild: ${GUILD_ID}`);
+      // Keep these critical startup messages in console for visibility
+      Logger.console(`Logged in as ${client.user?.tag}!`);
+      Logger.console(`Bot is ready and connected to guild: ${GUILD_ID}`);
 
       // Set bot presence/status
       client.user?.setPresence({
@@ -60,15 +62,24 @@ initializeDatabase()
         dateStyle: 'full',
         timeStyle: 'long',
       });
-      console.log(`Timezone: ${TIME_ZONE}`);
-      console.log(`Current time: ${currentTime}`);
+      Logger.console(`Timezone: ${TIME_ZONE}`);
+      Logger.console(`Current time: ${currentTime}`);
 
-      console.log(
-        `Loaded ${moduleLoader.getEnabledModules().length} module(s): ${moduleLoader
-          .getEnabledModules()
+      const enabledModules = moduleLoader.getEnabledModules();
+      Logger.console(
+        `Loaded ${enabledModules.length} module(s): ${enabledModules
           .map((m) => m.name)
           .join(', ')}`,
       );
+
+      // Also log to file for record keeping
+      Logger.info('Bot started successfully', {
+        user: client.user?.tag,
+        guildId: GUILD_ID,
+        timezone: TIME_ZONE,
+        moduleCount: enabledModules.length,
+        modules: enabledModules.map((m) => m.name),
+      });
     });
 
     // Event listener for messages - delegate to modules
@@ -82,7 +93,10 @@ initializeDatabase()
             const handled = await module.handleMessage(message);
             if (handled) break; // Stop processing if a module handled the message
           } catch (error) {
-            console.error(`[${module.name}] Error handling message:`, error);
+            Logger.forModule(module.name).error(
+              'Error handling message',
+              error,
+            );
           }
         }
       }
@@ -90,7 +104,8 @@ initializeDatabase()
 
     // Handle graceful shutdown
     process.on('SIGINT', async () => {
-      console.log('\nShutting down bot...');
+      Logger.console('\nShutting down bot...');
+      Logger.info('Bot shutdown initiated');
       await moduleLoader.cleanup();
       client.destroy();
       process.exit(0);
@@ -100,6 +115,6 @@ initializeDatabase()
     client.login(BOT_TOKEN);
   })
   .catch((err) => {
-    console.error('Failed to initialize the database:', err);
+    Logger.critical('Failed to initialize the database', err);
     process.exit(1);
   });

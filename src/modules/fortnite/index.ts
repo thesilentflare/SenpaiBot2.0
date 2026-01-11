@@ -1,6 +1,7 @@
 import { AttachmentBuilder, Client, Message } from 'discord.js';
 import path from 'path';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 
 const FORTNITE_LOCATIONS: Record<string, string> = {
   'Anarchy Acres': 'anarchy_acres.png',
@@ -32,9 +33,10 @@ class FortniteModule implements BotModule {
   name = 'fortnite';
   description = 'Random Fortnite drop location selector';
   enabled = true;
+  private logger = Logger.forModule('fortnite');
 
   initialize(client: Client): void {
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   async handleMessage(message: Message): Promise<boolean> {
@@ -53,14 +55,6 @@ class FortniteModule implements BotModule {
 
   private async sendFortniteLocation(message: Message): Promise<void> {
     try {
-      // Check if channel supports sending messages
-      if (!message.channel.isSendable()) {
-        console.error(
-          `[${this.name}] Channel does not support sending messages`,
-        );
-        return;
-      }
-
       // Select a random location
       const randomIndex = Math.floor(Math.random() * LOCATION_NAMES.length);
       const locationName = LOCATION_NAMES[randomIndex];
@@ -76,10 +70,10 @@ class FortniteModule implements BotModule {
       // Create an attachment
       const attachment = new AttachmentBuilder(imagePath);
 
-      // Send the message with the image
-      const reply = `We dropping ${locationName} bois`;
-      const sentMessage = await message.channel.send({
-        content: reply,
+      // Send the message with the image as a reply
+      const replyText = `We dropping ${locationName} bois`;
+      const sentMessage = await message.reply({
+        content: replyText,
         files: [attachment],
       });
 
@@ -88,7 +82,7 @@ class FortniteModule implements BotModule {
       // Using a standard emoji instead
       await sentMessage.react('🔥');
     } catch (error) {
-      console.error(`[${this.name}] Error sending Fortnite location:`, error);
+      this.logger.error('Error sending Fortnite location', error);
       message.reply(
         '❌ Sorry, something went wrong while picking a drop location!',
       );
@@ -96,7 +90,7 @@ class FortniteModule implements BotModule {
   }
 
   cleanup(): void {
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 
   getCommands(): CommandInfo[] {

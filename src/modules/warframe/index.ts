@@ -1,5 +1,6 @@
 import { Client, Message, EmbedBuilder } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 import { fetchWikiPreview } from './helpers';
 
 const WARFRAME_WIKIA_URL = 'https://warframe.fandom.com/wiki/';
@@ -9,9 +10,10 @@ class WarframeModule implements BotModule {
   name = 'warframe';
   description = 'Warframe codex wiki lookup';
   enabled = true;
+  private logger = Logger.forModule('warframe');
 
   initialize(client: Client): void {
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   async handleMessage(message: Message): Promise<boolean> {
@@ -64,7 +66,7 @@ class WarframeModule implements BotModule {
 
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      console.error('Error fetching Warframe wiki:', error);
+      this.logger.error('Error fetching Warframe wiki', error);
       await message.reply(
         '`Operator, my codex does not seem to have an entry for this`',
       );
@@ -72,7 +74,7 @@ class WarframeModule implements BotModule {
   }
 
   cleanup(): void {
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 }
 

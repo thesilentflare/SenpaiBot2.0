@@ -1,6 +1,7 @@
 import { Client, EmbedBuilder, Message, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
 import { BotModule, CommandInfo } from '../../types/module';
+import Logger from '../../utils/logger';
 import {
   getAllBirthdays,
   getMonthlyBirthdays,
@@ -30,11 +31,12 @@ class BirthdaysModule implements BotModule {
   description = 'Birthday tracking and reminders';
   enabled = true;
   private client: Client | null = null;
+  private logger = Logger.forModule('birthdays');
 
   async initialize(client: Client): Promise<void> {
     this.client = client;
     this.scheduleBirthdayNotifications();
-    console.log(`[${this.name}] Module initialized`);
+    this.logger.debug('Module initialized');
   }
 
   handleMessage(message: Message): boolean {
@@ -95,9 +97,7 @@ class BirthdaysModule implements BotModule {
 
       const timeToNextRun = zonedNextNotificationTime.getTime() - now.getTime();
       const minutesToNextRun = Math.ceil(timeToNextRun / (1000 * 60));
-      console.log(
-        `[${this.name}] Next birthday check in: ${minutesToNextRun} minutes`,
-      );
+      this.logger.info(`Next birthday check in: ${minutesToNextRun} minutes`);
 
       setTimeout(() => {
         this.sendMonthlyBirthdays();
@@ -261,7 +261,7 @@ class BirthdaysModule implements BotModule {
   }
 
   cleanup(): void {
-    console.log(`[${this.name}] Module cleaned up`);
+    this.logger.debug('Module cleaned up');
   }
 
   getCommands(): CommandInfo[] {

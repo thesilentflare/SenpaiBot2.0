@@ -8,15 +8,9 @@ const createMockMessage = (content: string): Partial<Message> => {
     react: jest.fn<any>().mockResolvedValue(undefined),
   };
 
-  const mockChannel = {
-    send: jest.fn<any>().mockResolvedValue(mockSentMessage),
-    isSendable: jest.fn<any>().mockReturnValue(true),
-  } as any;
-
   const mockMessage = {
     content,
-    reply: jest.fn() as any,
-    channel: mockChannel,
+    reply: jest.fn<any>().mockResolvedValue(mockSentMessage),
     author: {
       bot: false,
       id: '123456789',
@@ -55,8 +49,8 @@ describe('Fortnite Module', () => {
       );
 
       expect(handled).toBe(true);
-      expect((mockMessage.channel as any).send).toHaveBeenCalledTimes(1);
-      expect((mockMessage.channel as any).send).toHaveBeenCalledWith(
+      expect(mockMessage.reply).toHaveBeenCalledTimes(1);
+      expect(mockMessage.reply).toHaveBeenCalledWith(
         expect.objectContaining({
           content: expect.stringContaining('We dropping'),
           files: expect.arrayContaining([expect.any(Object)]),
@@ -71,8 +65,8 @@ describe('Fortnite Module', () => {
       );
 
       expect(handled).toBe(true);
-      expect((mockMessage.channel as any).send).toHaveBeenCalledTimes(1);
-      expect((mockMessage.channel as any).send).toHaveBeenCalledWith(
+      expect(mockMessage.reply).toHaveBeenCalledTimes(1);
+      expect(mockMessage.reply).toHaveBeenCalledWith(
         expect.objectContaining({
           content: expect.stringContaining('We dropping'),
           files: expect.arrayContaining([expect.any(Object)]),
@@ -91,7 +85,7 @@ describe('Fortnite Module', () => {
         );
 
         expect(handled).toBe(true);
-        expect((mockMessage.channel as any).send).toHaveBeenCalledTimes(1);
+        expect(mockMessage.reply).toHaveBeenCalledTimes(1);
       }
     });
 
@@ -102,7 +96,7 @@ describe('Fortnite Module', () => {
       );
 
       expect(handled).toBe(false);
-      expect((mockMessage.channel as any).send).not.toHaveBeenCalled();
+      expect(mockMessage.reply).not.toHaveBeenCalled();
     });
 
     it('should not handle messages that only contain the word drop', async () => {
@@ -112,7 +106,7 @@ describe('Fortnite Module', () => {
       );
 
       expect(handled).toBe(false);
-      expect((mockMessage.channel as any).send).not.toHaveBeenCalled();
+      expect(mockMessage.reply).not.toHaveBeenCalled();
     });
   });
 

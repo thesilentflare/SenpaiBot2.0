@@ -53,14 +53,6 @@ class FortniteModule implements BotModule {
 
   private async sendFortniteLocation(message: Message): Promise<void> {
     try {
-      // Check if channel supports sending messages
-      if (!message.channel.isSendable()) {
-        console.error(
-          `[${this.name}] Channel does not support sending messages`,
-        );
-        return;
-      }
-
       // Select a random location
       const randomIndex = Math.floor(Math.random() * LOCATION_NAMES.length);
       const locationName = LOCATION_NAMES[randomIndex];
@@ -76,10 +68,10 @@ class FortniteModule implements BotModule {
       // Create an attachment
       const attachment = new AttachmentBuilder(imagePath);
 
-      // Send the message with the image
-      const reply = `We dropping ${locationName} bois`;
-      const sentMessage = await message.channel.send({
-        content: reply,
+      // Send the message with the image as a reply
+      const replyText = `We dropping ${locationName} bois`;
+      const sentMessage = await message.reply({
+        content: replyText,
         files: [attachment],
       });
 

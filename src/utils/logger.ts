@@ -110,17 +110,17 @@ class Logger {
         logger.warn(message, { module: moduleName, ...meta }),
       error: (message: string, error?: Error | any, meta?: any) => {
         const errorMeta = error
-          ? (error instanceof Error
+          ? error instanceof Error
             ? { error: { message: error.message, stack: error.stack } }
-            : { error })
+            : { error }
           : {};
         logger.error(message, { module: moduleName, ...errorMeta, ...meta });
       },
       critical: (message: string, error?: Error | any, meta?: any) => {
         const errorMeta = error
-          ? (error instanceof Error
+          ? error instanceof Error
             ? { error: { message: error.message, stack: error.stack } }
-            : { error })
+            : { error }
           : {};
         logger.log('critical', message, {
           module: moduleName,
@@ -157,9 +157,9 @@ class Logger {
    */
   static error(message: string, error?: Error | any, meta?: any) {
     const errorMeta = error
-      ? (error instanceof Error
+      ? error instanceof Error
         ? { error: { message: error.message, stack: error.stack } }
-        : { error })
+        : { error }
       : {};
     logger.error(message, { ...errorMeta, ...meta });
   }
@@ -169,9 +169,9 @@ class Logger {
    */
   static critical(message: string, error?: Error | any, meta?: any) {
     const errorMeta = error
-      ? (error instanceof Error
+      ? error instanceof Error
         ? { error: { message: error.message, stack: error.stack } }
-        : { error })
+        : { error }
       : {};
     logger.log('critical', message, { ...errorMeta, ...meta });
   }

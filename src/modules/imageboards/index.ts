@@ -122,7 +122,7 @@ class ImageboardsModule implements BotModule {
       try {
         await msg.delete();
       } catch (error) {
-        this.logger.error('Failed to delete message:', error);
+        this.logger.error('Failed to delete message', error);
       }
     }
 
@@ -159,7 +159,7 @@ class ImageboardsModule implements BotModule {
       // Store message for purging
       this.messages.add(sentMessage);
     } catch (error) {
-      this.logger.error('Error fetching from imageboard:', error);
+      this.logger.error('Error fetching from imageboard', error);
       await message.reply('Error: Failed to fetch image from API.');
     }
   }

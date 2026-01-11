@@ -89,7 +89,7 @@ class UserManagerModule implements BotModule {
         MAIN_GENERAL_CHANNEL_ID,
       )) as TextChannel;
     } catch (channelError) {
-      this.logger.error('Error fetching welcome channel:', channelError);
+      this.logger.error('Error fetching welcome channel', channelError);
       // Still try to add user to database
       try {
         await addUser(discordID, displayName);
@@ -97,7 +97,7 @@ class UserManagerModule implements BotModule {
           `New user added to Users table: ${username} (ID: ${discordID})`,
         );
       } catch (error) {
-        this.logger.error('Error adding new user to Users table:', error);
+        this.logger.error('Error adding new user to Users table', error);
       }
       return;
     }
@@ -118,7 +118,7 @@ class UserManagerModule implements BotModule {
 
       await channel.send({ embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error adding new user to Users table:', error);
+      this.logger.error('Error adding new user to Users table', error);
 
       try {
         const embed = new EmbedBuilder()
@@ -130,7 +130,7 @@ class UserManagerModule implements BotModule {
 
         await channel.send({ embeds: [embed] });
       } catch (sendError) {
-        this.logger.error('Error sending error message to channel:', sendError);
+        this.logger.error('Error sending error message to channel', sendError);
       }
     }
   }
@@ -227,7 +227,7 @@ class UserManagerModule implements BotModule {
         await message.reply({ embeds: [embed] });
       }
     } catch (error) {
-      this.logger.error('Error renaming user:', error);
+      this.logger.error('Error renaming user', error);
 
       const embed = new EmbedBuilder()
         .setTitle('Error')
@@ -285,7 +285,7 @@ class UserManagerModule implements BotModule {
 
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error fetching user info:', error);
+      this.logger.error('Error fetching user info', error);
 
       const embed = new EmbedBuilder()
         .setTitle('Error')

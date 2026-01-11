@@ -25,7 +25,7 @@ class MessageLoggerModule implements BotModule {
         try {
           await message.fetch();
         } catch (error) {
-          this.logger.error('Error fetching deleted message:', error);
+          this.logger.error('Error fetching deleted message', error);
           return;
         }
       }
@@ -38,7 +38,7 @@ class MessageLoggerModule implements BotModule {
         try {
           await oldMessage.fetch();
         } catch (error) {
-          this.logger.error('Error fetching old message:', error);
+          this.logger.error('Error fetching old message', error);
           return;
         }
       }
@@ -46,7 +46,7 @@ class MessageLoggerModule implements BotModule {
         try {
           await newMessage.fetch();
         } catch (error) {
-          this.logger.error('Error fetching new message:', error);
+          this.logger.error('Error fetching new message', error);
           return;
         }
       }
@@ -129,7 +129,7 @@ class MessageLoggerModule implements BotModule {
         );
       }
     } catch (error) {
-      this.logger.error('Error toggling exemption:', error);
+      this.logger.error('Error toggling exemption', error);
       await message.reply('Failed to update exemption status.');
     }
   }
@@ -178,7 +178,7 @@ class MessageLoggerModule implements BotModule {
 
       await (logsChannel as TextChannel).send(msg);
     } catch (error) {
-      this.logger.error('Error logging deleted message:', error);
+      this.logger.error('Error logging deleted message', error);
     }
   }
 
@@ -246,7 +246,7 @@ class MessageLoggerModule implements BotModule {
 
       await (logsChannel as TextChannel).send(msg);
     } catch (error) {
-      this.logger.error('Error logging edited message:', error);
+      this.logger.error('Error logging edited message', error);
     }
   }
 

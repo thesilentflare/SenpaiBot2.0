@@ -66,7 +66,7 @@ class WarframeModule implements BotModule {
 
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error fetching Warframe wiki:', error);
+      this.logger.error('Error fetching Warframe wiki', error);
       await message.reply(
         '`Operator, my codex does not seem to have an entry for this`',
       );

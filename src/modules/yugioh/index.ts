@@ -79,7 +79,7 @@ class YugiohModule implements BotModule {
 
       await searchingMsg.edit({ content: '', embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error fetching card:', error);
+      this.logger.error('Error fetching card', error);
 
       // Try an alternative: search with exact user input (no formatting)
       const altUrl = `${YUGIOH_WIKIA_URL}${encodeURIComponent(cardName.split(' ').join('_'))}`;

@@ -150,7 +150,7 @@ class AdminManagerModule implements BotModule {
         .setColor(result.success ? 0x00ff00 : 0xffaa00);
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error adding admin:', error);
+      this.logger.error('Error adding admin', error);
       const embed = new EmbedBuilder()
         .setTitle('❌ Error')
         .setDescription('An error occurred while adding the admin.')
@@ -199,7 +199,7 @@ class AdminManagerModule implements BotModule {
         .setColor(result.success ? 0x00ff00 : 0xffaa00);
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error removing admin:', error);
+      this.logger.error('Error removing admin', error);
       const embed = new EmbedBuilder()
         .setTitle('❌ Error')
         .setDescription('An error occurred while removing the admin.')
@@ -229,7 +229,7 @@ class AdminManagerModule implements BotModule {
         .setColor(result.success ? 0x00ff00 : 0xffaa00);
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error disabling admin:', error);
+      this.logger.error('Error disabling admin', error);
       const embed = new EmbedBuilder()
         .setTitle('❌ Error')
         .setDescription('An error occurred while disabling the admin.')
@@ -259,7 +259,7 @@ class AdminManagerModule implements BotModule {
         .setColor(result.success ? 0x00ff00 : 0xffaa00);
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error enabling admin:', error);
+      this.logger.error('Error enabling admin', error);
       const embed = new EmbedBuilder()
         .setTitle('❌ Error')
         .setDescription('An error occurred while enabling the admin.')
@@ -294,7 +294,7 @@ class AdminManagerModule implements BotModule {
         .setColor(0x93acff);
       await message.reply({ embeds: [embed] });
     } catch (error) {
-      this.logger.error('Error listing admins:', error);
+      this.logger.error('Error listing admins', error);
       const embed = new EmbedBuilder()
         .setTitle('❌ Error')
         .setDescription('An error occurred while listing admins.')

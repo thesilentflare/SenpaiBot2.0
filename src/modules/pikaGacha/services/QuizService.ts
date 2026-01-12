@@ -246,9 +246,9 @@ export class QuizService {
 
       const embed = new EmbedBuilder()
         .setColor(0x9370db)
-        .setTitle("👁️ Who's That PikaGacha?!")
+        .setTitle("👁️ Who's That Pokemon?!")
         .setDescription(
-          `**Identify this PikaGacha!**\n\n` +
+          `**Identify this Pokemon!**\n\n` +
             `Difficulty: ${spriteQuestion.difficulty.toUpperCase()}\n` +
             `Generation: ${spriteQuestion.generation}\n\n` +
             `Reply with the name within ${QUIZ_TIMEOUT_MS / 1000} seconds!\n` +
@@ -266,7 +266,7 @@ export class QuizService {
       }, QUIZ_TIMEOUT_MS);
 
       this.activeQuiz = {
-        question: `Who's that PikaGacha?`,
+        question: `Who's that Pokemon?`,
         answer: spriteQuestion.pokemonName,
         messageId: message.id,
         timeout,

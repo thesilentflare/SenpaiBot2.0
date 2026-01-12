@@ -103,9 +103,9 @@ Correct answers earn 20-60 pikapoints based on your streak!
 ### Sprite Quiz Example
 
 ```
-👁️ Who's That PikaGacha?!
+👁️ Who's That Pokemon?!
 
-Identify this PikaGacha!
+Identify this Pokemon!
 
 Difficulty: MEDIUM
 Generation: 1

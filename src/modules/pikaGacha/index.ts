@@ -18,14 +18,17 @@ import {
   handleRemovePoints,
   handleGiveAll,
   handleTriggerQuiz,
+  handleVoiceStats,
 } from './commands/admin';
 import { handleRegister } from './commands/register';
 import { LeagueService } from './services/LeagueService';
 import { QuizService } from './services/QuizService';
+import { VoiceRewardService } from './services/VoiceRewardService';
 import {
   QUIZ_CHANNEL_ID,
   ENABLE_LEAGUE_TRACKING,
   ENABLE_QUIZ,
+  ENABLE_VOICE_REWARDS,
 } from './config/config';
 
 class PikaGachaModule implements BotModule {
@@ -55,6 +58,13 @@ class PikaGachaModule implements BotModule {
         this.logger.info(`Quiz system enabled (channel: ${QUIZ_CHANNEL_ID})`);
       } else if (ENABLE_QUIZ && !QUIZ_CHANNEL_ID) {
         this.logger.warn('Quiz system enabled but QUIZ_CHANNEL_ID not set');
+      }
+
+      // Initialize Voice Channel Rewards
+      if (ENABLE_VOICE_REWARDS) {
+        const voiceRewardService = VoiceRewardService.getInstance();
+        voiceRewardService.initializeVoiceTracking(client);
+        this.logger.info('Voice channel rewards enabled');
       }
 
       this.initialized = true;
@@ -219,6 +229,11 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'voicestats') {
+        await handleVoiceStats(message, args);
+        return true;
+      }
+
       // Unknown subcommand
       await message.reply(
         `❌ Unknown PikaGacha command: \`${subcommand}\`\n` +
@@ -354,6 +369,12 @@ class PikaGachaModule implements BotModule {
         command: '!pg triggerquiz',
         description: 'Trigger a quiz in 10 seconds',
         usage: '!pg triggerquiz',
+        adminOnly: true,
+      },
+      {
+        command: '!pg voicestats',
+        description: 'View voice channel reward stats for a user',
+        usage: '!pg voicestats [@user|user_id]',
         adminOnly: true,
       },
     ];

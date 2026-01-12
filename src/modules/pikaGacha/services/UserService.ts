@@ -251,6 +251,7 @@ export class UserService {
       five: number;
       focus: number;
       leagueGameStart: number | null;
+      voiceChannelJoinTime: number | null;
     }>,
   ): Promise<User | null> {
     const user = await User.findByPk(userId);

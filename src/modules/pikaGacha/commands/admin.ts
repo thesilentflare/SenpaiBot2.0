@@ -5,6 +5,7 @@ import { isAdmin } from '../../adminManager/helpers';
 import Logger from '../../../utils/logger';
 import userService from '../services/UserService';
 import { QuizService } from '../services/QuizService';
+import { VoiceRewardService } from '../services/VoiceRewardService';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -625,6 +626,7 @@ export async function handleGiveAll(
 
 /**
  * Trigger a quiz in 10 seconds
+ * Usage: !pg admin triggerquiz [text|sprite]
  */
 export async function handleTriggerQuiz(
   message: Message,
@@ -661,14 +663,23 @@ export async function handleTriggerQuiz(
       return;
     }
 
+    // Parse quiz type (optional)
+    const quizType = args[0]?.toLowerCase();
+    let type: 'text' | 'sprite' | undefined = undefined;
+
+    if (quizType === 'text' || quizType === 'sprite') {
+      type = quizType;
+    }
+
     // Schedule quiz in 10 seconds
     setTimeout(async () => {
-      await quizService.triggerQuiz();
+      await quizService.triggerQuiz(type);
     }, 10000);
 
+    const typeStr = type ? ` (${type})` : ' (random)';
     const embed = new EmbedBuilder()
       .setTitle('⏰ Quiz Scheduled')
-      .setDescription('A quiz will start in **10 seconds**!')
+      .setDescription(`A${typeStr} quiz will start in **10 seconds**!`)
       .addFields([
         {
           name: 'Channel',
@@ -686,6 +697,84 @@ export async function handleTriggerQuiz(
     const embed = new EmbedBuilder()
       .setTitle('❌ Error')
       .setDescription('An error occurred while scheduling the quiz.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
+}
+
+/**
+ * View voice channel stats for a user
+ */
+export async function handleVoiceStats(
+  message: Message,
+  args: string[],
+): Promise<void> {
+  if (!(await isAdmin(message.author.id))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('Only administrators can view voice stats.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  try {
+    // Parse user mention or ID
+    let targetUserId = message.author.id;
+    if (args.length > 0) {
+      const mention = args[0].match(/^<@!?(\d+)>$/);
+      targetUserId = mention ? mention[1] : args[0];
+    }
+
+    const voiceService = VoiceRewardService.getInstance();
+    const stats = await voiceService.getVoiceStats(targetUserId);
+
+    if (!stats) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ User Not Found')
+        .setDescription('User is not registered in PikaGacha.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle('🎤 Voice Channel Stats')
+      .setDescription(`Stats for <@${targetUserId}>`)
+      .addFields([
+        {
+          name: 'Currently in Voice',
+          value: stats.inVoice ? 'Yes ✅' : 'No ❌',
+          inline: true,
+        },
+        {
+          name: 'Time in Voice',
+          value: stats.inVoice
+            ? `${Math.floor(stats.timeInVoice / 60000)} minutes`
+            : 'N/A',
+          inline: true,
+        },
+        {
+          name: 'Next Reward In',
+          value: stats.inVoice
+            ? `${Math.floor(stats.nextRewardIn / 60000)} minutes`
+            : 'N/A',
+          inline: true,
+        },
+      ])
+      .setColor(ADMIN_COLOR)
+      .setFooter({ text: 'Voice rewards: 2 points every 10 minutes' });
+
+    await message.reply({ embeds: [embed] });
+
+    Logger.info(
+      `Admin ${message.author.id} checked voice stats for ${targetUserId}`,
+    );
+  } catch (error) {
+    Logger.error('Error getting voice stats', error);
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Error')
+      .setDescription('An error occurred while fetching voice stats.')
       .setColor(0xff0000);
     await message.reply({ embeds: [embed] });
   }

@@ -23,10 +23,10 @@ export async function initializeDatabase(): Promise<void> {
 
     // First sync without altering to ensure tables exist
     await sequelize.sync({ alter: false });
-    
+
     // Run migrations to add new columns safely
     await runMigrations();
-    
+
     Logger.info('PikaGacha database models synced');
   } catch (error) {
     Logger.error('Unable to connect to PikaGacha database:', error);
@@ -40,11 +40,26 @@ export async function initializeDatabase(): Promise<void> {
 async function runMigrations(): Promise<void> {
   try {
     // Check and add leagueGameStart column to Users table
-    await addColumnIfNotExists('users', 'leagueGameStart', 'BIGINT DEFAULT NULL');
-    
+    await addColumnIfNotExists(
+      'users',
+      'leagueGameStart',
+      'BIGINT DEFAULT NULL',
+    );
+
+    // Check and add voiceChannelJoinTime column to Users table
+    await addColumnIfNotExists(
+      'users',
+      'voiceChannelJoinTime',
+      'BIGINT DEFAULT NULL',
+    );
+
     // Check and add currentStreak column to Trainers table
-    await addColumnIfNotExists('trainers', 'currentStreak', 'INTEGER DEFAULT 0 NOT NULL');
-    
+    await addColumnIfNotExists(
+      'trainers',
+      'currentStreak',
+      'INTEGER DEFAULT 0 NOT NULL',
+    );
+
     Logger.info('Database migrations completed');
   } catch (error) {
     Logger.error('Error running migrations:', error);
@@ -54,21 +69,30 @@ async function runMigrations(): Promise<void> {
 /**
  * Add a column to a table if it doesn't already exist
  */
-async function addColumnIfNotExists(tableName: string, columnName: string, columnDefinition: string): Promise<void> {
+async function addColumnIfNotExists(
+  tableName: string,
+  columnName: string,
+  columnDefinition: string,
+): Promise<void> {
   try {
     // Check if column exists
     const [results] = await sequelize.query(`PRAGMA table_info(${tableName})`);
     const columns = results as any[];
     const columnExists = columns.some((col: any) => col.name === columnName);
-    
+
     if (!columnExists) {
-      await sequelize.query(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`);
+      await sequelize.query(
+        `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`,
+      );
       Logger.info(`Added column ${columnName} to table ${tableName}`);
     } else {
       Logger.debug(`Column ${columnName} already exists in table ${tableName}`);
     }
   } catch (error) {
-    Logger.error(`Error adding column ${columnName} to table ${tableName}:`, error);
+    Logger.error(
+      `Error adding column ${columnName} to table ${tableName}:`,
+      error,
+    );
   }
 }
 

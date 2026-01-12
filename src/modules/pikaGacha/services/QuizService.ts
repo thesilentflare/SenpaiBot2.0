@@ -1,8 +1,19 @@
-import { Client, TextChannel, Message, EmbedBuilder } from 'discord.js';
+import {
+  Client,
+  TextChannel,
+  Message,
+  EmbedBuilder,
+  AttachmentBuilder,
+} from 'discord.js';
 import { UserService } from './UserService';
 import { TrainerService } from './TrainerService';
 import { ItemService } from './ItemService';
 import { getRandomQuestion, checkAnswer } from '../config/quizQuestions';
+import {
+  getRandomSpriteQuestion,
+  checkSpriteAnswer,
+  SpriteQuizQuestion,
+} from '../config/spriteQuizQuestions';
 import Logger from '../../../utils/logger';
 import {
   QUIZ_INTERVAL_MS,
@@ -28,6 +39,7 @@ export class QuizService {
     answer: string;
     messageId: string;
     timeout: NodeJS.Timeout;
+    type: 'text' | 'sprite';
   } | null = null;
   private quizInterval: NodeJS.Timeout | null = null;
 
@@ -60,20 +72,53 @@ export class QuizService {
   }
 
   /**
+   * Calculate next quiz time (15-minute intervals) and determine quiz type
+   * :00 and :30 = text quiz
+   * :15 and :45 = sprite quiz
+   */
+  private getNextQuizTime(now: Date): { time: Date; type: 'text' | 'sprite' } {
+    const next = new Date(now);
+    const currentMinute = now.getMinutes();
+
+    // Find next 15-minute mark
+    const nextMinute = Math.ceil((currentMinute + 1) / 15) * 15;
+
+    if (nextMinute === 60) {
+      next.setHours(next.getHours() + 1);
+      next.setMinutes(0);
+    } else {
+      next.setMinutes(nextMinute);
+    }
+
+    next.setSeconds(0);
+    next.setMilliseconds(0);
+
+    // Determine quiz type based on minute
+    const minute = next.getMinutes();
+    const type = minute === 0 || minute === 30 ? 'text' : 'sprite';
+
+    return { time: next, type };
+  }
+
+  /**
    * Calculate next hour or half-hour mark and schedule quiz
    */
   private scheduleNextQuiz(): void {
     const now = new Date();
-    const nextQuizTime = this.getNextHourOrHalfHour(now);
+    const { time: nextQuizTime, type: quizType } = this.getNextQuizTime(now);
     const delay = nextQuizTime.getTime() - now.getTime();
 
     this.quizInterval = setTimeout(() => {
-      this.postQuiz();
+      if (quizType === 'text') {
+        this.postQuiz();
+      } else {
+        this.postSpriteQuiz();
+      }
       this.scheduleNextQuiz(); // Schedule the next one after posting
     }, delay);
 
     logger.info(
-      `[QuizService] Next quiz scheduled for ${nextQuizTime.toLocaleTimeString()} (in ${Math.round(delay / 60000)} minutes)`,
+      `[QuizService] Next ${quizType} quiz scheduled for ${nextQuizTime.toLocaleTimeString()} (in ${Math.round(delay / 60000)} minutes)`,
     );
   }
 
@@ -117,7 +162,7 @@ export class QuizService {
   }
 
   /**
-   * Post a new quiz question to the channel
+   * Post a new text quiz question to the channel
    */
   private async postQuiz(): Promise<void> {
     try {
@@ -142,7 +187,7 @@ export class QuizService {
       const question = getRandomQuestion();
       const embed = new EmbedBuilder()
         .setColor(0x9370db)
-        .setTitle('🧠 Pokemon Quiz!')
+        .setTitle('🧠 PikaGacha Quiz!')
         .setDescription(
           `**${question.question}**\n\n` +
             `Difficulty: ${question.difficulty.toUpperCase()}\n` +
@@ -165,11 +210,74 @@ export class QuizService {
         answer: question.answer,
         messageId: message.id,
         timeout,
+        type: 'text',
       };
 
-      logger.info(`[QuizService] Posted quiz: ${question.question}`);
+      logger.info(`[QuizService] Posted text quiz: ${question.question}`);
     } catch (error) {
       logger.error('[QuizService] Error posting quiz:', error);
+    }
+  }
+
+  /**
+   * Post a new sprite quiz question to the channel
+   */
+  private async postSpriteQuiz(): Promise<void> {
+    try {
+      if (!this.client || !this.quizChannelId) {
+        logger.warn('[QuizService] Quiz system not properly initialized');
+        return;
+      }
+
+      if (this.activeQuiz) {
+        logger.info(
+          '[QuizService] Skipping sprite quiz post - active quiz in progress',
+        );
+        return;
+      }
+
+      const channel = await this.client.channels.fetch(this.quizChannelId);
+      if (!channel || !channel.isTextBased()) {
+        logger.error('[QuizService] Quiz channel not found or not text-based');
+        return;
+      }
+
+      const spriteQuestion = getRandomSpriteQuestion();
+
+      const embed = new EmbedBuilder()
+        .setColor(0x9370db)
+        .setTitle("👁️ Who's That PikaGacha?!")
+        .setDescription(
+          `**Identify this PikaGacha!**\n\n` +
+            `Difficulty: ${spriteQuestion.difficulty.toUpperCase()}\n` +
+            `Generation: ${spriteQuestion.generation}\n\n` +
+            `Reply with the name within ${QUIZ_TIMEOUT_MS / 1000} seconds!\n` +
+            `Correct answers earn **${BASE_REWARD}-${MAX_REWARD}** pikapoints based on your streak!`,
+        )
+        .setImage(spriteQuestion.spriteUrl)
+        .setFooter({ text: 'PikaGacha Sprite Quiz' })
+        .setTimestamp();
+
+      const message = await (channel as TextChannel).send({ embeds: [embed] });
+
+      // Set up active quiz with timeout
+      const timeout = setTimeout(() => {
+        this.handleQuizTimeout(message);
+      }, QUIZ_TIMEOUT_MS);
+
+      this.activeQuiz = {
+        question: `Who's that PikaGacha?`,
+        answer: spriteQuestion.pokemonName,
+        messageId: message.id,
+        timeout,
+        type: 'sprite',
+      };
+
+      logger.info(
+        `[QuizService] Posted sprite quiz: ${spriteQuestion.pokemonName}`,
+      );
+    } catch (error) {
+      logger.error('[QuizService] Error posting sprite quiz:', error);
     }
   }
 
@@ -201,7 +309,14 @@ export class QuizService {
       return false;
 
     const userAnswer = message.content.trim();
-    const isCorrect = checkAnswer(userAnswer, this.activeQuiz.answer);
+    let isCorrect = false;
+
+    // Check answer based on quiz type
+    if (this.activeQuiz.type === 'text') {
+      isCorrect = checkAnswer(userAnswer, this.activeQuiz.answer);
+    } else if (this.activeQuiz.type === 'sprite') {
+      isCorrect = checkSpriteAnswer(userAnswer, this.activeQuiz.answer);
+    }
 
     if (isCorrect) {
       await this.handleCorrectAnswer(message);
@@ -343,15 +458,24 @@ export class QuizService {
 
   /**
    * Manually trigger a quiz (for testing or admin commands)
+   * @param type - Optional quiz type ('text' or 'sprite'). If not specified, randomly chooses.
    */
-  public async triggerQuiz(): Promise<void> {
+  public async triggerQuiz(type?: 'text' | 'sprite'): Promise<void> {
     if (this.activeQuiz) {
       logger.warn(
         '[QuizService] Cannot trigger quiz - active quiz in progress',
       );
       return;
     }
-    await this.postQuiz();
+
+    // If no type specified, randomly choose
+    const quizType = type || (Math.random() < 0.5 ? 'text' : 'sprite');
+
+    if (quizType === 'text') {
+      await this.postQuiz();
+    } else {
+      await this.postSpriteQuiz();
+    }
     // Don't reschedule here since this is manual
   }
 

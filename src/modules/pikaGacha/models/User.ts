@@ -10,11 +10,19 @@ interface UserAttributes {
   five: number;
   focus: number;
   leagueGameStart: number | null; // Timestamp when League game started
+  voiceChannelJoinTime: number | null; // Timestamp when user joined voice channel
 }
 
 interface UserCreationAttributes extends Optional<
   UserAttributes,
-  'points' | 'savings' | 'three' | 'four' | 'five' | 'focus' | 'leagueGameStart'
+  | 'points'
+  | 'savings'
+  | 'three'
+  | 'four'
+  | 'five'
+  | 'focus'
+  | 'leagueGameStart'
+  | 'voiceChannelJoinTime'
 > {}
 
 export class User
@@ -29,6 +37,7 @@ export class User
   declare five: number;
   declare focus: number;
   declare leagueGameStart: number | null;
+  declare voiceChannelJoinTime: number | null;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -71,6 +80,11 @@ User.init(
       allowNull: false,
     },
     leagueGameStart: {
+      type: DataTypes.BIGINT,
+      defaultValue: null,
+      allowNull: true,
+    },
+    voiceChannelJoinTime: {
       type: DataTypes.BIGINT,
       defaultValue: null,
       allowNull: true,

@@ -1,7 +1,11 @@
 import { Client, ActivityType, GuildMember, Presence } from 'discord.js';
 import { UserService } from './UserService';
 import Logger from '../../../utils/logger';
-import { LEAGUE_CLIENT_ID, MIN_GAME_DURATION_MS, LEAGUE_REWARD_POINTS } from '../config/config';
+import {
+  LEAGUE_CLIENT_ID,
+  MIN_GAME_DURATION_MS,
+  LEAGUE_REWARD_POINTS,
+} from '../config/config';
 
 const logger = Logger.forModule('LeagueService');
 

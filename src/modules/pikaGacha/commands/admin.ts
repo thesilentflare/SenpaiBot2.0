@@ -4,6 +4,7 @@ import { Pokemon, Trainer } from '../models';
 import { isAdmin } from '../../adminManager/helpers';
 import Logger from '../../../utils/logger';
 import userService from '../services/UserService';
+import { QuizService } from '../services/QuizService';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -617,6 +618,74 @@ export async function handleGiveAll(
     const embed = new EmbedBuilder()
       .setTitle('❌ Error')
       .setDescription('An error occurred. Check logs for details.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
+}
+
+/**
+ * Trigger a quiz in 10 seconds
+ */
+export async function handleTriggerQuiz(
+  message: Message,
+  args: string[],
+): Promise<void> {
+  if (!(await isAdmin(message.author.id))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('Only administrators can trigger quizzes.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  try {
+    const quizService = QuizService.getInstance();
+    const stats = quizService.getQuizStats();
+
+    if (!stats.isActive) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Quiz System Inactive')
+        .setDescription('Quiz system is not currently running.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    if (stats.activeQuiz) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Quiz Already Active')
+        .setDescription('There is already an active quiz in progress.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    // Schedule quiz in 10 seconds
+    setTimeout(async () => {
+      await quizService.triggerQuiz();
+    }, 10000);
+
+    const embed = new EmbedBuilder()
+      .setTitle('⏰ Quiz Scheduled')
+      .setDescription('A quiz will start in **10 seconds**!')
+      .addFields([
+        {
+          name: 'Channel',
+          value: stats.channelId ? `<#${stats.channelId}>` : 'Unknown',
+          inline: false,
+        },
+      ])
+      .setColor(ADMIN_COLOR);
+
+    await message.reply({ embeds: [embed] });
+
+    Logger.info(`Admin ${message.author.id} triggered a quiz in 10 seconds`);
+  } catch (error) {
+    Logger.error('Error triggering quiz', error);
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Error')
+      .setDescription('An error occurred while scheduling the quiz.')
       .setColor(0xff0000);
     await message.reply({ embeds: [embed] });
   }

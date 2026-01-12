@@ -17,8 +17,16 @@ import {
   handleAddPoints,
   handleRemovePoints,
   handleGiveAll,
+  handleTriggerQuiz,
 } from './commands/admin';
 import { handleRegister } from './commands/register';
+import { LeagueService } from './services/LeagueService';
+import { QuizService } from './services/QuizService';
+import {
+  QUIZ_CHANNEL_ID,
+  ENABLE_LEAGUE_TRACKING,
+  ENABLE_QUIZ,
+} from './config/config';
 
 class PikaGachaModule implements BotModule {
   name = 'pikaGacha';
@@ -32,6 +40,23 @@ class PikaGachaModule implements BotModule {
     try {
       // Initialize database
       await initializeDatabase();
+
+      // Initialize League of Legends game tracking
+      if (ENABLE_LEAGUE_TRACKING) {
+        const leagueService = LeagueService.getInstance();
+        leagueService.initializeLeagueTracking(client);
+        this.logger.info('League of Legends tracking enabled');
+      }
+
+      // Initialize Quiz system
+      if (ENABLE_QUIZ && QUIZ_CHANNEL_ID) {
+        const quizService = QuizService.getInstance();
+        quizService.initializeQuiz(client, QUIZ_CHANNEL_ID);
+        this.logger.info(`Quiz system enabled (channel: ${QUIZ_CHANNEL_ID})`);
+      } else if (ENABLE_QUIZ && !QUIZ_CHANNEL_ID) {
+        this.logger.warn('Quiz system enabled but QUIZ_CHANNEL_ID not set');
+      }
+
       this.initialized = true;
       this.logger.info('PikaGacha module initialized successfully');
     } catch (error) {
@@ -42,6 +67,15 @@ class PikaGachaModule implements BotModule {
 
   async handleMessage(message: Message): Promise<boolean> {
     if (!this.initialized) return false;
+
+    // Check for quiz answers (non-command messages in quiz channel)
+    if (ENABLE_QUIZ && !message.content.startsWith('!')) {
+      const quizService = QuizService.getInstance();
+      const wasQuizAnswer = await quizService.checkQuizAnswer(message);
+      if (wasQuizAnswer) {
+        return true; // Message was a quiz answer, handled by QuizService
+      }
+    }
 
     const content = message.content.trim().toLowerCase();
 
@@ -180,6 +214,11 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'triggerquiz') {
+        await handleTriggerQuiz(message, args);
+        return true;
+      }
+
       // Unknown subcommand
       await message.reply(
         `❌ Unknown PikaGacha command: \`${subcommand}\`\n` +
@@ -309,6 +348,12 @@ class PikaGachaModule implements BotModule {
         command: '!pg giveall',
         description: 'Give pikapoints to all registered trainers',
         usage: '!pg giveall <amount> [--confirm]',
+        adminOnly: true,
+      },
+      {
+        command: '!pg triggerquiz',
+        description: 'Trigger a quiz in 10 seconds',
+        usage: '!pg triggerquiz',
         adminOnly: true,
       },
     ];

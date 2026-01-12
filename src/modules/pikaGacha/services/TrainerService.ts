@@ -203,6 +203,66 @@ export class TrainerService {
       limit,
     });
   }
+
+  /**
+   * Get trainer by userId (alias for backwards compatibility)
+   */
+  async getTrainerByUserId(userId: string): Promise<Trainer | null> {
+    return await this.getTrainer(userId);
+  }
+
+  /**
+   * Update trainer with partial data
+   */
+  async updateTrainer(
+    userId: string,
+    data: Partial<{
+      name: string;
+      rank: string;
+      team: string;
+      totalExp: number;
+      rankExp: number;
+      prestige: number;
+      rolls: number;
+      bricks: number;
+      jackpots: number;
+      opens: number;
+      releases: number;
+      trades: number;
+      quizAnswered: number;
+      hotStreaks: number;
+      shutdowns: number;
+      highestStreak: number;
+      currentStreak: number;
+      battles: number;
+      wins: number;
+      losses: number;
+      underdogWins: number;
+      highStakeWins: number;
+      neverLuckyLosses: number;
+      highStakeLosses: number;
+    }>,
+  ): Promise<Trainer | null> {
+    const trainer = await Trainer.findByPk(userId);
+    if (!trainer) {
+      return null;
+    }
+
+    await trainer.update(data);
+    return trainer;
+  }
+
+  /**
+   * Singleton instance
+   */
+  private static instance: TrainerService;
+
+  static getInstance(): TrainerService {
+    if (!TrainerService.instance) {
+      TrainerService.instance = new TrainerService();
+    }
+    return TrainerService.instance;
+  }
 }
 
 export default new TrainerService();

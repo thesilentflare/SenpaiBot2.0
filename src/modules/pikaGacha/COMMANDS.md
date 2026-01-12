@@ -143,7 +143,36 @@ Check your pikapoints and savings balance.
 - Savings account balance
 - Total combined balance
 
-**Related:** Points are earned from releases, battles, and jackpots
+---
+
+## 💰 Ways to Earn Pikapoints
+
+PikaGacha has multiple ways to earn pikapoints for more rolls and activities:
+
+### Active Earning Methods
+
+1. **Registration Bonus** - 100 pikapoints (one-time)
+2. **Opening Balls** - 1-150 pikapoints based on ball rarity
+3. **Releasing Pokemon** - 5-60 pikapoints based on Pokemon rarity
+4. **Winning Battles** - Wager amount (1-100 pikapoints)
+5. **Jackpot Wins** - Share of communal pool for ultra-rare Pokemon
+6. **Quiz System** - 20-60 pikapoints for answering Pokemon trivia
+
+### Passive Earning Methods
+
+7. **League of Legends Games** - 30 pikapoints for completing 15+ minute matches
+   - Automatically tracks your Discord status
+   - Must be playing for the full game duration
+   - Prevents farming from short matches
+
+8. **Quiz Streak Bonuses** - Additional rewards for consecutive correct answers
+   - Streak multiplier: 20 + (10 × current_streak), max 60 points
+   - Ball rewards at streaks 5, 10, 15, 20+ (Pokeball → Masterball)
+   - Shutdown bonuses when other players break your streak
+
+### Admin Commands
+
+9. **Manual Awards** - Administrators can grant points for events or rewards
 
 ---
 

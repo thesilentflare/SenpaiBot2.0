@@ -20,6 +20,7 @@ interface TrainerAttributes {
   hotStreaks: number;
   shutdowns: number;
   highestStreak: number;
+  currentStreak: number;
   battles: number;
   wins: number;
   losses: number;
@@ -46,6 +47,7 @@ interface TrainerCreationAttributes extends Optional<
   | 'hotStreaks'
   | 'shutdowns'
   | 'highestStreak'
+  | 'currentStreak'
   | 'battles'
   | 'wins'
   | 'losses'
@@ -76,6 +78,7 @@ export class Trainer
   declare hotStreaks: number;
   declare shutdowns: number;
   declare highestStreak: number;
+  declare currentStreak: number;
   declare battles: number;
   declare wins: number;
   declare losses: number;
@@ -174,6 +177,11 @@ Trainer.init(
       allowNull: false,
     },
     highestStreak: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
+    currentStreak: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
       allowNull: false,

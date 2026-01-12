@@ -9,11 +9,12 @@ interface UserAttributes {
   four: number;
   five: number;
   focus: number;
+  leagueGameStart: number | null; // Timestamp when League game started
 }
 
 interface UserCreationAttributes extends Optional<
   UserAttributes,
-  'points' | 'savings' | 'three' | 'four' | 'five' | 'focus'
+  'points' | 'savings' | 'three' | 'four' | 'five' | 'focus' | 'leagueGameStart'
 > {}
 
 export class User
@@ -27,6 +28,7 @@ export class User
   declare four: number;
   declare five: number;
   declare focus: number;
+  declare leagueGameStart: number | null;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -67,6 +69,11 @@ User.init(
       type: DataTypes.INTEGER,
       defaultValue: 10,
       allowNull: false,
+    },
+    leagueGameStart: {
+      type: DataTypes.BIGINT,
+      defaultValue: null,
+      allowNull: true,
     },
   },
   {

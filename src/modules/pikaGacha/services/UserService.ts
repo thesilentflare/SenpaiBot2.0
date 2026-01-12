@@ -230,6 +230,49 @@ export class UserService {
     const user = await this.getOrCreateUser(userId);
     return user.points + user.savings;
   }
+
+  /**
+   * Get user (without creating if doesn't exist)
+   */
+  async getUser(userId: string): Promise<User | null> {
+    return await User.findByPk(userId);
+  }
+
+  /**
+   * Update user with partial data
+   */
+  async updateUser(
+    userId: string,
+    data: Partial<{
+      points: number;
+      savings: number;
+      three: number;
+      four: number;
+      five: number;
+      focus: number;
+      leagueGameStart: number | null;
+    }>,
+  ): Promise<User | null> {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return null;
+    }
+
+    await user.update(data);
+    return user;
+  }
+
+  /**
+   * Singleton instance
+   */
+  private static instance: UserService;
+
+  static getInstance(): UserService {
+    if (!UserService.instance) {
+      UserService.instance = new UserService();
+    }
+    return UserService.instance;
+  }
 }
 
 export default new UserService();

@@ -13,12 +13,16 @@
     "build": "tsc && npm run copy-assets",
     "copy-assets": "mkdir -p dist/assets && cp -r src/assets/* dist/assets/",
     "start": "node dist/index.js",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "seed:pikagacha": "npx ts-node src/modules/pikaGacha/scripts/seedPokemon.ts"
   },
   "dependencies": {
+    "axios": "^1.13.2",
+    "canvas": "^3.2.1",
     "date-fns-tz": "^3.2.0",
     "discord.js": "^14.25.1",
     "dotenv": "^17.2.3",
+    "sequelize": "^6.37.7",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.19.0",
@@ -27,6 +31,7 @@
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.6",
     "cross-env": "^10.1.0",
     "jest": "^30.2.0",
     "prettier": "^3.7.4",

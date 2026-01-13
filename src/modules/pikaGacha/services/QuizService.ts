@@ -143,7 +143,7 @@ export class QuizService {
 
     logger.debug(`scheduleNextQuiz called, scheduling ${quizType} quiz`);
 
-    const timerId = setTimeout(() => {
+    const timerId = setTimeout(async () => {
       logger.info(
         `Quiz timeout triggered for ${quizType} quiz at ${new Date().toLocaleTimeString()}`,
       );
@@ -156,14 +156,16 @@ export class QuizService {
 
       this.isPostingQuiz = true;
 
-      if (quizType === 'text') {
-        this.postQuiz();
-      } else {
-        this.postSpriteQuiz();
+      try {
+        if (quizType === 'text') {
+          await this.postQuiz();
+        } else {
+          await this.postSpriteQuiz();
+        }
+      } finally {
+        this.isPostingQuiz = false;
+        this.scheduleNextQuiz(); // Schedule the next one after posting completes
       }
-
-      this.isPostingQuiz = false;
-      this.scheduleNextQuiz(); // Schedule the next one after posting
     }, delay);
 
     this.quizInterval = timerId;

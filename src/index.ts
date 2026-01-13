@@ -1,22 +1,22 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import Logger from './utils/logger';
 
 // Load environment variables FIRST (base .env first, then environment-specific)
 dotenv.config(); // Load .env first
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : null;
 if (envFile) {
   const envPath = path.resolve(process.cwd(), envFile);
-  Logger.debug(`Loading environment from: ${envPath}`);
+  console.log(`Loading environment from: ${envPath}`);
   const result = dotenv.config({ path: envPath, override: true }); // Override with environment-specific
   if (result.error) {
-    Logger.error(`Error loading ${envFile}`, result.error);
+    console.error(`Error loading ${envFile}`, result.error);
   } else {
-    Logger.debug(`Successfully loaded ${envFile}`);
+    console.log(`Successfully loaded ${envFile}`);
   }
 }
 
-// NOW import modules that depend on environment variables
+// NOW import Logger and other modules AFTER environment is configured
+import Logger from './utils/logger';
 import { Client, GatewayIntentBits } from 'discord.js';
 import { initializeDatabase } from './modules/database';
 import { ModuleLoader } from './utils/moduleLoader';
@@ -31,6 +31,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates, // Required for voice channel tracking
   ],
 });
 

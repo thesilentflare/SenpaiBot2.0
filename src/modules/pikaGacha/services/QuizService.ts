@@ -42,16 +42,22 @@ export class QuizService {
     type: 'text' | 'sprite';
   } | null = null;
   private quizInterval: NodeJS.Timeout | null = null;
+  private isInitialized: boolean = false;
+  private static instanceCount = 0;
+  private instanceId: number;
 
   private constructor() {
+    this.instanceId = ++QuizService.instanceCount;
     this.userService = UserService.getInstance();
     this.trainerService = TrainerService.getInstance();
     this.itemService = new ItemService();
+    logger.debug(`QuizService constructor called (instance #${this.instanceId})`);
   }
 
   public static getInstance(): QuizService {
     if (!QuizService.instance) {
       QuizService.instance = new QuizService();
+      logger.debug(`QuizService singleton instance created (#${QuizService.instance.instanceId})`);
     }
     return QuizService.instance;
   }
@@ -60,8 +66,12 @@ export class QuizService {
    * Initialize the quiz system with a Discord client and channel
    */
   public initializeQuiz(client: Client, channelId: string): void {
-    logger.info(`[QuizService] initializeQuiz called (channel: ${channelId})`);
+    if (this.isInitialized) {
+      logger.warn(`[Instance #${this.instanceId}] initializeQuiz called but already initialized - ignoring`);
+      return;
+    }
 
+    logger.info(`[Instance #${this.instanceId}] initializeQuiz called (channel: ${channelId})`);
     // Clear any existing timers first to prevent duplicate schedules
     this.stopQuiz();
 
@@ -71,9 +81,9 @@ export class QuizService {
     // Schedule quizzes at exact hour and half-hour marks
     this.scheduleNextQuiz();
 
-    logger.info(
-      `[QuizService] Quiz system initialized (channel: ${channelId})`,
-    );
+    this.isInitialized = true;
+
+    logger.info(`Quiz system initialized (channel: ${channelId})`);
   }
 
   /**
@@ -109,16 +119,21 @@ export class QuizService {
    * Calculate next hour or half-hour mark and schedule quiz
    */
   private scheduleNextQuiz(): void {
+    // Safety check: Clear any existing interval first
+    if (this.quizInterval) {
+      logger.warn('scheduleNextQuiz called but interval already exists! Clearing it first.');
+      clearTimeout(this.quizInterval);
+      this.quizInterval = null;
+    }
+
     const now = new Date();
     const { time: nextQuizTime, type: quizType } = this.getNextQuizTime(now);
     const delay = nextQuizTime.getTime() - now.getTime();
 
-    logger.debug(
-      `[QuizService] scheduleNextQuiz called, scheduling ${quizType} quiz`,
-    );
+    logger.debug(`scheduleNextQuiz called, scheduling ${quizType} quiz`);
 
-    this.quizInterval = setTimeout(() => {
-      logger.debug(`[QuizService] Quiz timeout triggered for ${quizType} quiz`);
+    const timerId = setTimeout(() => {
+      logger.info(`Quiz timeout triggered for ${quizType} quiz at ${new Date().toLocaleTimeString()}`);
       if (quizType === 'text') {
         this.postQuiz();
       } else {
@@ -127,8 +142,11 @@ export class QuizService {
       this.scheduleNextQuiz(); // Schedule the next one after posting
     }, delay);
 
+    this.quizInterval = timerId;
+    logger.debug(`Timer ID ${timerId} created`);
+
     logger.info(
-      `[QuizService] Next ${quizType} quiz scheduled for ${nextQuizTime.toLocaleTimeString()} (in ${Math.round(delay / 60000)} minutes)`,
+      `Next ${quizType} quiz scheduled for ${nextQuizTime.toLocaleTimeString()} (in ${Math.round(delay / 60000)} minutes)`,
     );
   }
 
@@ -163,12 +181,15 @@ export class QuizService {
     if (this.quizInterval) {
       clearTimeout(this.quizInterval);
       this.quizInterval = null;
+      logger.debug('Cleared quiz interval');
     }
     if (this.activeQuiz) {
       clearTimeout(this.activeQuiz.timeout);
       this.activeQuiz = null;
+      logger.debug('Cleared active quiz');
     }
-    logger.info('[QuizService] Quiz system stopped');
+    this.isInitialized = false;
+    logger.info('Quiz system stopped');
   }
 
   /**
@@ -177,20 +198,18 @@ export class QuizService {
   private async postQuiz(): Promise<void> {
     try {
       if (!this.client || !this.quizChannelId) {
-        logger.warn('[QuizService] Quiz system not properly initialized');
+        logger.warn('Quiz system not properly initialized');
         return;
       }
 
       if (this.activeQuiz) {
-        logger.info(
-          '[QuizService] Skipping quiz post - active quiz in progress',
-        );
+        logger.info('Skipping quiz post - active quiz in progress');
         return;
       }
 
       const channel = await this.client.channels.fetch(this.quizChannelId);
       if (!channel || !channel.isTextBased()) {
-        logger.error('[QuizService] Quiz channel not found or not text-based');
+        logger.error('Quiz channel not found or not text-based');
         return;
       }
 
@@ -223,9 +242,9 @@ export class QuizService {
         type: 'text',
       };
 
-      logger.info(`[QuizService] Posted text quiz: ${question.question}`);
+      logger.info(`Posted text quiz: ${question.question}`);
     } catch (error) {
-      logger.error('[QuizService] Error posting quiz:', error);
+      logger.error('Error posting quiz:', error);
     }
   }
 
@@ -235,20 +254,18 @@ export class QuizService {
   private async postSpriteQuiz(): Promise<void> {
     try {
       if (!this.client || !this.quizChannelId) {
-        logger.warn('[QuizService] Quiz system not properly initialized');
+        logger.warn('Quiz system not properly initialized');
         return;
       }
 
       if (this.activeQuiz) {
-        logger.info(
-          '[QuizService] Skipping sprite quiz post - active quiz in progress',
-        );
+        logger.info('Skipping sprite quiz post - active quiz in progress');
         return;
       }
 
       const channel = await this.client.channels.fetch(this.quizChannelId);
       if (!channel || !channel.isTextBased()) {
-        logger.error('[QuizService] Quiz channel not found or not text-based');
+        logger.error('Quiz channel not found or not text-based');
         return;
       }
 
@@ -259,8 +276,8 @@ export class QuizService {
         .setColor(0x9370db)
         .setTitle("👁️ Who's That Pokemon?!")
         .setImage(spriteQuestion.spriteUrl)
-        .setFooter({ 
-          text: `Reply with the name within ${QUIZ_TIMEOUT_MS / 1000} seconds! • Earn ${BASE_REWARD}-${MAX_REWARD} pikapoints` 
+        .setFooter({
+          text: `Reply with the name within ${QUIZ_TIMEOUT_MS / 1000} seconds! • Earn ${BASE_REWARD}-${MAX_REWARD} pikapoints`,
         })
         .setTimestamp();
 
@@ -279,11 +296,9 @@ export class QuizService {
         type: 'sprite',
       };
 
-      logger.info(
-        `[QuizService] Posted sprite quiz: ${spriteQuestion.pokemonName}`,
-      );
+      logger.info(`Posted sprite quiz: ${spriteQuestion.pokemonName}`);
     } catch (error) {
-      logger.error('[QuizService] Error posting sprite quiz:', error);
+      logger.error('Error posting sprite quiz:', error);
     }
   }
 
@@ -303,7 +318,7 @@ export class QuizService {
     await message.reply({ embeds: [embed] });
     this.activeQuiz = null;
 
-    logger.info('[QuizService] Quiz timed out');
+    logger.info('Quiz timed out');
   }
 
   /**
@@ -385,6 +400,9 @@ export class QuizService {
         });
       }
 
+      // Check if someone else had a streak that was broken (shutdown) BEFORE building response
+      const shutdowns = await this.checkForShutdowns(userId, newStreak);
+
       // Build response
       let description = `✅ **Correct!** ${message.author.toString()}\n\n`;
       description += `💰 You earned **${pointsReward}** pikapoints!\n`;
@@ -409,6 +427,14 @@ export class QuizService {
         description += `\n🔥 **HOT STREAK!** You're on fire!\n`;
       }
 
+      // Add shutdown information to the embed
+      if (shutdowns.length > 0) {
+        description += `\n💀 **Shutdowns:**\n`;
+        for (const shutdown of shutdowns) {
+          description += `   • ${shutdown.name} lost ${shutdown.streakLost} streak (additional +${shutdown.points} pts)\n`;
+        }
+      }
+
       const embed = new EmbedBuilder()
         .setColor(0x00ff00)
         .setTitle('🎉 Quiz Answer Correct!')
@@ -425,13 +451,10 @@ export class QuizService {
       this.activeQuiz = null;
 
       logger.info(
-        `[QuizService] ${message.author.tag} answered correctly (streak: ${newStreak}, points: ${pointsReward})`,
+        `${message.author.tag} answered correctly (streak: ${newStreak}, points: ${pointsReward})`,
       );
-
-      // Check if someone else had a streak that was broken (shutdown)
-      await this.checkForShutdowns(userId, newStreak);
     } catch (error) {
-      logger.error('[QuizService] Error handling correct answer:', error);
+      logger.error('Error handling correct answer:', error);
     }
   }
 
@@ -439,11 +462,18 @@ export class QuizService {
    * Check if other users had their streaks broken and award shutdown bonuses
    * Only one trainer can have a streak at a time - when someone new wins,
    * all others with streaks get shutdown bonuses and have their streaks reset
+   * Returns information about shutdowns for display
    */
   private async checkForShutdowns(
     winnerId: string,
     winnerStreak: number,
-  ): Promise<void> {
+  ): Promise<Array<{ name: string; streakLost: number; points: number }>> {
+    const shutdownInfo: Array<{
+      name: string;
+      streakLost: number;
+      points: number;
+    }> = [];
+
     try {
       // Import Trainer model to query for active streaks
       const { Trainer } = await import('../models/Trainer');
@@ -465,7 +495,7 @@ export class QuizService {
         if (shutdownPoints > 0) {
           await this.userService.adjustPoints(trainer.userId, shutdownPoints);
           logger.info(
-            `[QuizService] Shutdown: ${trainer.name} lost ${streakLost} streak, earned ${shutdownPoints} points`,
+            `Shutdown: ${trainer.name} lost ${streakLost} streak, earned ${shutdownPoints} points`,
           );
         }
 
@@ -474,10 +504,19 @@ export class QuizService {
           shutdowns: trainer.shutdowns + 1,
           currentStreak: 0,
         });
+
+        // Add to shutdown info for display
+        shutdownInfo.push({
+          name: trainer.name,
+          streakLost: streakLost,
+          points: shutdownPoints,
+        });
       }
     } catch (error) {
-      logger.error('[QuizService] Error checking shutdowns:', error);
+      logger.error('Error checking shutdowns:', error);
     }
+
+    return shutdownInfo;
   }
 
   /**

@@ -1,13 +1,17 @@
 import { Client, VoiceState } from 'discord.js';
 import { UserService } from './UserService';
 import Logger from '../../../utils/logger';
+import {
+  MIN_VOICE_MEMBERS,
+  VOICE_REWARD_INTERVAL_MS,
+  VOICE_REWARD_POINTS,
+} from '../config/config';
 
 const logger = Logger.forModule('VoiceRewardService');
 
-// Configuration constants
-const MIN_VOICE_MEMBERS = 2; // Minimum members required (including the user)
-const REWARD_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
-const REWARD_POINTS = 2; // Points per interval
+// Use imported configuration constants
+const REWARD_INTERVAL_MS = VOICE_REWARD_INTERVAL_MS;
+const REWARD_POINTS = VOICE_REWARD_POINTS;
 
 export class VoiceRewardService {
   private static instance: VoiceRewardService;
@@ -29,6 +33,10 @@ export class VoiceRewardService {
    * Initialize voice channel reward tracking
    */
   public initializeVoiceTracking(client: Client): void {
+    logger.info(
+      `Initializing voice tracking: MIN_MEMBERS=${MIN_VOICE_MEMBERS}, INTERVAL=${REWARD_INTERVAL_MS}ms, POINTS=${REWARD_POINTS}`,
+    );
+
     // Listen for voice state updates
     client.on('voiceStateUpdate', async (oldState, newState) => {
       await this.handleVoiceStateUpdate(oldState, newState);
@@ -39,7 +47,7 @@ export class VoiceRewardService {
       this.checkAndRewardActiveUsers(client);
     }, 60 * 1000); // Check every minute
 
-    logger.info('[VoiceRewardService] Voice channel tracking initialized');
+    logger.info('Voice channel tracking initialized');
   }
 
   /**
@@ -50,7 +58,7 @@ export class VoiceRewardService {
       clearInterval(this.rewardInterval);
       this.rewardInterval = null;
     }
-    logger.info('[VoiceRewardService] Voice channel tracking stopped');
+    logger.info('Voice channel tracking stopped');
   }
 
   /**
@@ -69,31 +77,34 @@ export class VoiceRewardService {
         newState.channel &&
         oldState.channel.id !== newState.channel.id;
 
+      const username = newState.member?.user.tag || userId;
+
       // User joined a voice channel
       if (joinedChannel || movedChannel) {
         const memberCount = newState.channel?.members.size || 0;
+        logger.info(
+          `User ${username} ${joinedChannel ? 'joined' : 'moved to'} voice channel (${memberCount} members, need ${MIN_VOICE_MEMBERS})`,
+        );
 
         if (memberCount >= MIN_VOICE_MEMBERS) {
           // Valid voice session - record join time
           await this.userService.updateUser(userId, {
             voiceChannelJoinTime: Date.now(),
           });
-          logger.debug(
-            `User ${userId} joined voice channel with ${memberCount} members`,
-          );
+          logger.info(`Voice tracking started for ${username}`);
         } else {
           // Not enough members - clear join time
           await this.userService.updateUser(userId, {
             voiceChannelJoinTime: null,
           });
-          logger.debug(
-            `User ${userId} joined voice channel but only ${memberCount} members`,
-          );
+          logger.info(`Not enough members for ${username} - tracking not started`);
         }
       }
 
       // User left a voice channel
       if (leftChannel) {
+        logger.info(`User ${username} left voice channel`);
+        
         // Award any pending rewards before clearing
         await this.checkAndRewardUser(userId);
 
@@ -101,7 +112,6 @@ export class VoiceRewardService {
         await this.userService.updateUser(userId, {
           voiceChannelJoinTime: null,
         });
-        logger.debug(`User ${userId} left voice channel`);
       }
 
       // Check if other users in the old/new channel need their timers reset
@@ -118,10 +128,7 @@ export class VoiceRewardService {
         );
       }
     } catch (error) {
-      logger.error(
-        '[VoiceRewardService] Error handling voice state update:',
-        error,
-      );
+      logger.error('Error handling voice state update:', error);
     }
   }
 
@@ -139,11 +146,18 @@ export class VoiceRewardService {
       const memberCount = channel.members.size;
       const now = Date.now();
 
+      logger.debug(
+        `Updating timers for ${memberCount} members in channel ${channelId}`,
+      );
+
       for (const [memberId, member] of channel.members) {
         if (member.user.bot) continue; // Skip bots
 
         const user = await this.userService.getUser(memberId);
-        if (!user) continue;
+        if (!user) {
+          logger.debug(`User ${memberId} not registered, skipping`);
+          continue;
+        }
 
         if (memberCount >= MIN_VOICE_MEMBERS) {
           // Enough members - set join time if not already set
@@ -151,6 +165,9 @@ export class VoiceRewardService {
             await this.userService.updateUser(memberId, {
               voiceChannelJoinTime: now,
             });
+            logger.info(
+              `Voice tracking started for ${member.user.tag} (via channel update)`,
+            );
           }
         } else {
           // Not enough members - award pending rewards and clear timer
@@ -158,13 +175,13 @@ export class VoiceRewardService {
           await this.userService.updateUser(memberId, {
             voiceChannelJoinTime: null,
           });
+          logger.info(
+            `Voice tracking stopped for ${member.user.tag} (not enough members)`,
+          );
         }
       }
     } catch (error) {
-      logger.error(
-        '[VoiceRewardService] Error updating channel member timers:',
-        error,
-      );
+      logger.error('Error updating channel member timers:', error);
     }
   }
 
@@ -189,7 +206,7 @@ export class VoiceRewardService {
         }
       }
     } catch (error) {
-      logger.error('[VoiceRewardService] Error checking active users:', error);
+      logger.error('Error checking active users:', error);
     }
   }
 
@@ -222,15 +239,12 @@ export class VoiceRewardService {
           });
 
           logger.info(
-            `[VoiceRewardService] Awarded ${pointsToAward} points to ${userId} for ${Math.floor(timeInVoice / 60000)} minutes in voice`,
+            `Awarded ${pointsToAward} points to ${userId} for ${Math.floor(timeInVoice / 60000)} minutes in voice`,
           );
         }
       }
     } catch (error) {
-      logger.error(
-        '[VoiceRewardService] Error checking/rewarding user:',
-        error,
-      );
+      logger.error('Error checking/rewarding user:', error);
     }
   }
 
@@ -264,7 +278,7 @@ export class VoiceRewardService {
         nextRewardIn,
       };
     } catch (error) {
-      logger.error('[VoiceRewardService] Error getting voice stats:', error);
+      logger.error('Error getting voice stats:', error);
       return null;
     }
   }

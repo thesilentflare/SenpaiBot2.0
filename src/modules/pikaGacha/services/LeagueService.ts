@@ -32,7 +32,7 @@ export class LeagueService {
       await this.handlePresenceUpdate(oldPresence, newPresence);
     });
 
-    logger.info('[LeagueService] League of Legends game tracking initialized');
+    logger.info('League of Legends game tracking initialized');
   }
 
   /**
@@ -60,7 +60,7 @@ export class LeagueService {
         await this.handleGameEnd(userId);
       }
     } catch (error) {
-      logger.error('[LeagueService] Error handling presence update:', error);
+      logger.error('Error handling presence update:', error);
     }
   }
 
@@ -90,9 +90,9 @@ export class LeagueService {
         leagueGameStart: Date.now(),
       });
 
-      logger.info(`[LeagueService] User ${userId} started a League game`);
+      logger.info(`User ${userId} started a League game`);
     } catch (error) {
-      logger.error('[LeagueService] Error handling game start:', error);
+      logger.error('Error handling game start:', error);
     }
   }
 
@@ -132,7 +132,7 @@ export class LeagueService {
         leagueGameStart: null,
       });
     } catch (error) {
-      logger.error('[LeagueService] Error handling game end:', error);
+      logger.error('Error handling game end:', error);
     }
   }
 

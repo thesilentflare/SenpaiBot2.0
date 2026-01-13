@@ -8,6 +8,13 @@ import { QuizService } from '../services/QuizService';
 import { VoiceRewardService } from '../services/VoiceRewardService';
 import * as fs from 'fs';
 import * as path from 'path';
+import {
+  getLatestSeedFile,
+  saveUploadedSeedFile,
+  listUploadedSeedFiles,
+  deleteUploadedSeedFile,
+} from '../utils/seedManager';
+import axios from 'axios';
 
 const ADMIN_COLOR = 0xff6b6b; // Red color for admin commands
 
@@ -56,6 +63,8 @@ function getRegionId(pokemonId: number): number {
   if (pokemonId <= 649) return 5; // Unova
   if (pokemonId <= 721) return 6; // Kalos
   if (pokemonId <= 809) return 7; // Alola
+  if (pokemonId <= 905) return 9; // Galar
+  if (pokemonId <= 1025) return 10; // Paldea
   return 8; // Special
 }
 
@@ -101,17 +110,19 @@ export async function handleReseed(
     .setTitle('🔄 Reseeding Database')
     .setDescription('Starting database reseed... This may take a minute.')
     .setColor(ADMIN_COLOR);
-  await message.reply({ embeds: [startEmbed] });
+  const statusMessage = await message.reply({ embeds: [startEmbed] });
 
   try {
-    const csvPath = path.join(__dirname, '../scripts/pokedata.csv');
+    // Get the latest seed file (uploaded or default)
+    const csvPath = getLatestSeedFile();
+    Logger.info(`Reseeding from: ${csvPath}`);
 
     if (!fs.existsSync(csvPath)) {
       const embed = new EmbedBuilder()
         .setTitle('❌ Error')
-        .setDescription('pokedata.csv not found!')
+        .setDescription('Seed file not found!')
         .setColor(0xff0000);
-      await message.reply({ embeds: [embed] });
+      await statusMessage.edit({ embeds: [embed] });
       return;
     }
 
@@ -156,6 +167,7 @@ export async function handleReseed(
       }
     }
 
+    const seedFileName = path.basename(csvPath);
     const completeEmbed = new EmbedBuilder()
       .setTitle('✅ Database Reseed Complete!')
       .addFields([
@@ -170,11 +182,16 @@ export async function handleReseed(
           value: `**${pokemonData.length}**`,
           inline: true,
         },
+        {
+          name: 'Seed File Used',
+          value: `${seedFileName}`,
+          inline: false,
+        },
       ])
       .setDescription('The bot is still running normally.')
       .setColor(ADMIN_COLOR);
 
-    await message.reply({ embeds: [completeEmbed] });
+    await statusMessage.edit({ embeds: [completeEmbed] });
 
     Logger.info(`Reseed complete: ${inserted} inserted, ${updated} updated`);
   } catch (error) {
@@ -184,6 +201,172 @@ export async function handleReseed(
       .setDescription(
         'An error occurred during the reseed. Check logs for details.',
       )
+      .setColor(0xff0000);
+    await statusMessage.edit({ embeds: [embed] });
+  }
+}
+
+export async function handleUploadSeed(
+  message: Message,
+  args: string[],
+): Promise<void> {
+  // Admin-only check
+  if (!(await isAdmin(message.author.id, message.guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('This command is admin-only!')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  // Check if a file is attached
+  if (message.attachments.size === 0) {
+    const embed = new EmbedBuilder()
+      .setTitle('📎 Upload Seed CSV')
+      .setDescription(
+        'Please attach a CSV file to this command.\n\n' +
+          'The file should have the format:\n' +
+          '`id,name,rarity,focus,bst`\n\n' +
+          'Example: `!pg uploadseed` with a .csv file attached',
+      )
+      .setColor(ADMIN_COLOR);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  const attachment = message.attachments.first();
+
+  if (!attachment) {
+    await message.reply('❌ No attachment found!');
+    return;
+  }
+
+  // Check file extension
+  if (!attachment.name?.endsWith('.csv')) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Invalid File Type')
+      .setDescription('Please upload a .csv file!')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  try {
+    const processingEmbed = new EmbedBuilder()
+      .setTitle('📥 Downloading CSV...')
+      .setDescription('Please wait...')
+      .setColor(ADMIN_COLOR);
+    const statusMessage = await message.reply({ embeds: [processingEmbed] });
+
+    // Download the file
+    const response = await axios.get(attachment.url, {
+      responseType: 'arraybuffer',
+    });
+
+    const buffer = Buffer.from(response.data);
+
+    // Validate CSV format by parsing
+    const csvContent = buffer.toString('utf-8');
+    const lines = csvContent.split('\n').filter((line) => line.trim());
+
+    if (lines.length === 0) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Invalid CSV')
+        .setDescription('The CSV file is empty!')
+        .setColor(0xff0000);
+      await statusMessage.edit({ embeds: [embed] });
+      return;
+    }
+
+    // Basic validation - check first line has correct number of columns
+    const firstLine = lines[0].split(',');
+    if (firstLine.length < 5) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Invalid CSV Format')
+        .setDescription(
+          'CSV must have at least 5 columns: `id,name,rarity,focus,bst`',
+        )
+        .setColor(0xff0000);
+      await statusMessage.edit({ embeds: [embed] });
+      return;
+    }
+
+    // Save the file
+    const savedPath = await saveUploadedSeedFile(buffer, attachment.name);
+    const filename = path.basename(savedPath);
+
+    const successEmbed = new EmbedBuilder()
+      .setTitle('✅ Seed CSV Uploaded!')
+      .addFields([
+        { name: 'Filename', value: filename, inline: false },
+        { name: 'Size', value: `${buffer.length} bytes`, inline: true },
+        { name: 'Entries', value: `~${lines.length}`, inline: true },
+      ])
+      .setDescription(
+        'The CSV has been saved and will be used for the next reseed.\n\n' +
+          'Run `!pg reseed --confirm` to apply the new data.',
+      )
+      .setColor(ADMIN_COLOR);
+
+    await statusMessage.edit({ embeds: [successEmbed] });
+    Logger.info(`Admin ${message.author.tag} uploaded new seed CSV: ${filename}`);
+  } catch (error) {
+    Logger.error('Error uploading seed CSV', error);
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Upload Error')
+      .setDescription('Failed to upload the CSV file. Check logs for details.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
+}
+
+export async function handleListSeeds(
+  message: Message,
+  args: string[],
+): Promise<void> {
+  // Admin-only check
+  if (!(await isAdmin(message.author.id, message.guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('This command is admin-only!')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  try {
+    const seedFiles = listUploadedSeedFiles();
+    const currentSeedFile = getLatestSeedFile();
+
+    const embed = new EmbedBuilder()
+      .setTitle('📋 Uploaded Seed Files')
+      .setColor(ADMIN_COLOR);
+
+    if (seedFiles.length === 0) {
+      embed.setDescription(
+        'No uploaded seed files found.\n\n' +
+          `Currently using: **${path.basename(currentSeedFile)}** (default)`,
+      );
+    } else {
+      let description = `**Currently using:** ${path.basename(currentSeedFile)}\n\n`;
+      description += '**Uploaded Files:**\n';
+
+      for (const file of seedFiles) {
+        const sizeKB = (file.size / 1024).toFixed(2);
+        const dateStr = file.created.toLocaleString();
+        description += `• ${file.filename}\n  Size: ${sizeKB} KB | Uploaded: ${dateStr}\n`;
+      }
+
+      embed.setDescription(description);
+    }
+
+    await message.reply({ embeds: [embed] });
+  } catch (error) {
+    Logger.error('Error listing seed files', error);
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Error')
+      .setDescription('Failed to list seed files.')
       .setColor(0xff0000);
     await message.reply({ embeds: [embed] });
   }

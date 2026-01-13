@@ -52,8 +52,10 @@ export async function handlePokedex(
         embed.setImage(url);
       }
     } else {
-      const strId = pokemon.id.toString().padStart(3, '0');
-      embed.setImage(`https://www.serebii.net/sunmoon/pokemon/${strId}.png`);
+      // Use PokeAPI sprites for all Pokemon (supports all generations)
+      embed.setImage(
+        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`,
+      );
     }
 
     await message.reply({ embeds: [embed] });

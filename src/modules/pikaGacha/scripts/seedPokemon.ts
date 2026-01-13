@@ -12,6 +12,7 @@ import * as path from 'path';
 import { initializeDatabase } from '../config/database';
 import { Pokemon } from '../models';
 import Logger from '../../../utils/logger';
+import { getLatestSeedFile } from '../utils/seedManager';
 
 interface PokemonData {
   id: number;
@@ -58,6 +59,8 @@ function getRegionId(pokemonId: number): number {
   if (pokemonId <= 649) return 5; // Unova
   if (pokemonId <= 721) return 6; // Kalos
   if (pokemonId <= 809) return 7; // Alola
+  if (pokemonId <= 905) return 9; // Galar
+  if (pokemonId <= 1025) return 10; // Paldea
   return 8; // Special
 }
 
@@ -77,14 +80,12 @@ async function seedPokemon() {
     await initializeDatabase();
     Logger.info('Database initialized');
 
-    // Find pokedata.csv (in the same directory as this script)
-    const csvPath = path.join(__dirname, 'pokedata.csv');
+    // Get the latest seed file (uploaded or default)
+    const csvPath = getLatestSeedFile();
+    Logger.info(`Using seed file: ${csvPath}`);
 
     if (!fs.existsSync(csvPath)) {
-      Logger.error(`pokedata.csv not found at ${csvPath}`);
-      Logger.info(
-        'Please ensure pokedata.csv exists in src/modules/pikaGacha/scripts/',
-      );
+      Logger.error(`Seed file not found at ${csvPath}`);
       process.exit(1);
     }
 

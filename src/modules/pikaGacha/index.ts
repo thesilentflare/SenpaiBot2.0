@@ -20,6 +20,8 @@ import {
   handleGiveAll,
   handleTriggerQuiz,
   handleVoiceStats,
+  handleUploadSeed,
+  handleListSeeds,
 } from './commands/admin';
 import { handleRegister } from './commands/register';
 import { LeagueService } from './services/LeagueService';
@@ -31,6 +33,7 @@ import {
   ENABLE_QUIZ,
   ENABLE_VOICE_REWARDS,
 } from './config/config';
+import { ensureSeedDataDirectory } from './utils/seedManager';
 
 class PikaGachaModule implements BotModule {
   name = 'pikaGacha';
@@ -51,6 +54,9 @@ class PikaGachaModule implements BotModule {
     try {
       // Initialize database
       await initializeDatabase();
+
+      // Ensure seed_data directory exists
+      ensureSeedDataDirectory();
 
       // Initialize League of Legends game tracking
       if (ENABLE_LEAGUE_TRACKING) {
@@ -247,6 +253,16 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'uploadseed') {
+        await handleUploadSeed(message, args);
+        return true;
+      }
+
+      if (subcommand === 'listseeds') {
+        await handleListSeeds(message, args);
+        return true;
+      }
+
       // Unknown subcommand
       await message.reply(
         `❌ Unknown PikaGacha command: \`${subcommand}\`\n` +
@@ -393,6 +409,18 @@ class PikaGachaModule implements BotModule {
         command: '!pg voicestats',
         description: 'View voice channel reward stats for a user',
         usage: '!pg voicestats [@user|user_id]',
+        adminOnly: true,
+      },
+      {
+        command: '!pg uploadseed',
+        description: 'Upload a new CSV seed file for Pokemon data',
+        usage: '!pg uploadseed (with CSV file attached)',
+        adminOnly: true,
+      },
+      {
+        command: '!pg listseeds',
+        description: 'List all uploaded seed files',
+        usage: '!pg listseeds',
         adminOnly: true,
       },
     ];

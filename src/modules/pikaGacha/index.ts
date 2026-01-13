@@ -6,6 +6,7 @@ import { handleRoll, handleFullRoll } from './commands/roll';
 import { handleProfile, handleBalance } from './commands/profile';
 import { handleBag, handleOpenBall } from './commands/bag';
 import { handlePokedex, handleInventory } from './commands/collection';
+import { handleBox } from './commands/box';
 import { handleRelease, handleReleaseDupes } from './commands/release';
 import { handleFavorite, handleFavorites } from './commands/favorite';
 import { handleTrade } from './commands/trade';
@@ -167,6 +168,11 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'box') {
+        await handleBox(message, args);
+        return true;
+      }
+
       // Release commands
       if (subcommand === 'releasedupes') {
         await handleReleaseDupes(message, args);
@@ -306,6 +312,11 @@ class PikaGachaModule implements BotModule {
         command: '!pg inventory',
         description: 'View Pokémon collection',
         usage: '!pg inventory [user]',
+      },
+      {
+        command: '!pg box',
+        description: 'View Pokémon collection with sprites (paginated)',
+        usage: '!pg box [user]',
       },
       {
         command: '!pg release',

@@ -315,16 +315,40 @@ export class InventoryService {
    * Toggle favorite status
    */
   async toggleFavorite(userId: string, pokemonId: number): Promise<boolean> {
-    const existing = await Favorite.findOne({ where: { userId, pokemonId } });
+    try {
+      const existing = await Favorite.findOne({ where: { userId, pokemonId } });
 
-    if (existing) {
-      await existing.destroy();
-      Logger.debug(`User ${userId} unfavorited pokemon ${pokemonId}`);
-      return false; // Removed from favorites
-    } else {
-      await Favorite.create({ userId, pokemonId });
-      Logger.debug(`User ${userId} favorited pokemon ${pokemonId}`);
-      return true; // Added to favorites
+      if (existing) {
+        await existing.destroy();
+        Logger.debug(`User ${userId} unfavorited pokemon ${pokemonId}`);
+        return false; // Removed from favorites
+      } else {
+        await Favorite.create({ userId, pokemonId });
+        Logger.debug(`User ${userId} favorited pokemon ${pokemonId}`);
+        return true; // Added to favorites
+      }
+    } catch (error: any) {
+      Logger.error(
+        `Error toggling favorite for user ${userId}, pokemon ${pokemonId}`,
+        {
+          errorName: error.name,
+          errorMessage: error.message,
+          errors: error.errors,
+        },
+      );
+
+      // Handle unique constraint violation
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        // Already exists, so remove it instead
+        const deleted = await Favorite.destroy({
+          where: { userId, pokemonId },
+        });
+        Logger.debug(
+          `User ${userId} unfavorited pokemon ${pokemonId} (via constraint error)`,
+        );
+        return false;
+      }
+      throw error;
     }
   }
 

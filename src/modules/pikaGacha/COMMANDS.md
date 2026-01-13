@@ -500,6 +500,7 @@ The PikaGacha module features a rank progression system where trainers gain expe
 Advance to the next rank when you have enough EXP.
 
 **Usage:**
+
 ```
 !promote              # Promote to the next rank
 ```
@@ -508,12 +509,14 @@ Advance to the next rank when you have enough EXP.
 **Requirements:** Must have enough rank EXP for the next rank
 
 **Features:**
+
 - Advances you to the next rank in the progression
 - Resets your rank EXP to 0
 - Awards pokeballs, great balls, or ultra balls based on rank tier
 - Check your current rank and EXP progress with `!profile`
 
 **Rank Progression:**
+
 1. **Recruit** (0 EXP) - Starting rank
 2. **Crook** (250 EXP) - Tier 1 reward
 3. **Thug** (500 EXP) - Tier 1 reward
@@ -527,6 +530,7 @@ Advance to the next rank when you have enough EXP.
 11. **Boss** (3500 EXP) - Max rank, eligible for prestige
 
 **Rewards by Tier:**
+
 - **Tier 1** (Crook-Hitman): 1× Poké Ball
 - **Tier 2** (Officer-Lieutenant): 1× Great Ball
 - **Tier 3** (Admin-Boss): 1× Ultra Ball
@@ -538,6 +542,7 @@ Advance to the next rank when you have enough EXP.
 Reset to Recruit rank from Boss rank to earn a Master Ball and increase your prestige level.
 
 **Usage:**
+
 ```
 !prestige             # Prestige from Boss rank
 ```
@@ -546,6 +551,7 @@ Reset to Recruit rank from Boss rank to earn a Master Ball and increase your pre
 **Requirements:** Must be at Boss rank
 
 **Effects:**
+
 - Resets rank to **Recruit**
 - Resets rank EXP to 0
 - Increments your prestige level by 1
@@ -553,6 +559,7 @@ Reset to Recruit rank from Boss rank to earn a Master Ball and increase your pre
 - Your total EXP and prestige level are preserved and displayed on your profile
 
 **Notes:**
+
 - Prestiging is optional but earns you rare Master Balls
 - You can prestige multiple times to increase your prestige level
 - Your prestige level shows your dedication as a trainer

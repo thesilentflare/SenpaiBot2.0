@@ -45,8 +45,11 @@ Favorite.init(
     tableName: 'favorites',
     timestamps: true,
     indexes: [
-      { fields: ['userId'] },
-      { fields: ['userId', 'pokemonId'], unique: true },
+      {
+        fields: ['userId', 'pokemonId'],
+        unique: true,
+        name: 'favorites_user_pokemon_unique',
+      },
     ],
   },
 );

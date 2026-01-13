@@ -15,11 +15,11 @@ import axios from 'axios';
 
 const POKEMON_PER_PAGE = 32; // 8x4 grid
 const INTERACTION_TIMEOUT = 120000; // 2 minutes
-const SPRITE_SIZE = 100;
+const SPRITE_SIZE = 48; // Further reduced for faster generation
 const COLS = 8;
 const ROWS = 4;
-const CANVAS_WIDTH = 850;
-const CANVAS_HEIGHT = 450;
+const CANVAS_WIDTH = 384; // Further reduced for faster generation
+const CANVAS_HEIGHT = 192; // Further reduced for faster generation
 
 /**
  * Generate a sprite grid image for the given Pokemon list
@@ -125,26 +125,31 @@ export async function handleBox(
       return;
     }
 
+    // Send loading message
+    const loadingMessage = await message.reply(
+      `📦 Loading ${username}'s box... (${inventory.length} unique Pokémon)`,
+    );
+
     // Sort by Pokemon ID
     inventory.sort((a, b) => a.pokemon.id - b.pokemon.id);
 
     const totalPages = Math.ceil(inventory.length / POKEMON_PER_PAGE);
     let currentPage = 0;
 
-    // Function to generate image for a specific page
-    const generatePageImage = async (
-      page: number,
-    ): Promise<AttachmentBuilder> => {
-      const start = page * POKEMON_PER_PAGE;
-      const end = Math.min(start + POKEMON_PER_PAGE, inventory.length);
-      const pageInventory = inventory.slice(start, end);
+    // Generate ONLY the first page immediately
+    const start = 0;
+    const end = Math.min(POKEMON_PER_PAGE, inventory.length);
+    const firstPageInventory = inventory.slice(start, end);
+    const firstPageBuffer = await generateBoxImage(firstPageInventory);
+    const firstPageAttachment = new AttachmentBuilder(firstPageBuffer, {
+      name: 'box_page_0.png',
+    });
 
-      const imageBuffer = await generateBoxImage(pageInventory);
-      return new AttachmentBuilder(imageBuffer, { name: 'box.png' });
-    };
+    // Store all page attachments (first page is ready, rest will be generated)
+    const pageAttachments: AttachmentBuilder[] = [firstPageAttachment];
 
-    // Generate initial image
-    const attachment = await generatePageImage(currentPage);
+    // Get initial attachment
+    const attachment = pageAttachments[currentPage];
 
     // Create navigation buttons
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -161,17 +166,39 @@ export async function handleBox(
     );
 
     const messageContent = `${username}'s party (page ${currentPage + 1}/${totalPages})`;
+
+    // Edit the loading message with the final result
     const response =
       totalPages > 1
-        ? await message.reply({
+        ? await loadingMessage.edit({
             content: messageContent,
             files: [attachment],
             components: [row],
           })
-        : await message.reply({ content: messageContent, files: [attachment] });
+        : await loadingMessage.edit({
+            content: messageContent,
+            files: [attachment],
+          });
 
     // If only one page, no need for interaction handling
     if (totalPages === 1) return;
+
+    // Generate remaining pages in the background after showing first page
+    (async () => {
+      for (let page = 1; page < totalPages; page++) {
+        const start = page * POKEMON_PER_PAGE;
+        const end = Math.min(start + POKEMON_PER_PAGE, inventory.length);
+        const pageInventory = inventory.slice(start, end);
+
+        const imageBuffer = await generateBoxImage(pageInventory);
+        pageAttachments[page] = new AttachmentBuilder(imageBuffer, {
+          name: `box_page_${page}.png`,
+        });
+      }
+      Logger.debug(
+        `Background generation complete for ${username}'s box (${totalPages} pages)`,
+      );
+    })();
 
     // Create collector for button interactions
     const collector = response.createMessageComponentCollector({
@@ -199,8 +226,21 @@ export async function handleBox(
         currentPage = Math.min(totalPages - 1, currentPage + 1);
       }
 
-      // Generate new image
-      const newAttachment = await generatePageImage(currentPage);
+      // Get pre-generated image for this page (might still be generating)
+      let newAttachment = pageAttachments[currentPage];
+
+      // If page hasn't been generated yet, generate it now
+      if (!newAttachment) {
+        const start = currentPage * POKEMON_PER_PAGE;
+        const end = Math.min(start + POKEMON_PER_PAGE, inventory.length);
+        const pageInventory = inventory.slice(start, end);
+        const imageBuffer = await generateBoxImage(pageInventory);
+        newAttachment = new AttachmentBuilder(imageBuffer, {
+          name: `box_page_${currentPage}.png`,
+        });
+        pageAttachments[currentPage] = newAttachment;
+      }
+
       const newMessageContent = `${username}'s party (page ${currentPage + 1}/${totalPages})`;
 
       // Update buttons

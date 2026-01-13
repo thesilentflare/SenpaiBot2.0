@@ -21,7 +21,7 @@ export async function handleTeam(
   // If no args, show current team and available teams
   if (args.length === 0) {
     const trainer = await trainerService.getTrainer(userId);
-    
+
     if (!trainer) {
       const embed = new EmbedBuilder()
         .setTitle('❌ Not Registered')
@@ -45,7 +45,7 @@ export async function handleTeam(
           `• \`!pg team electrocution\`\n` +
           `• \`!pg team lensflare\`\n` +
           `• \`!pg team hyperjoy\`\n\n` +
-          (trainer.team !== '' 
+          (trainer.team !== ''
             ? `**Note:** Switching teams costs **${TEAM_SWITCH_COST} pikapoints** and resets your rank and EXP!`
             : '**Note:** Joining your first team is free!'),
       )
@@ -82,7 +82,7 @@ export async function handleTeam(
 
   try {
     const trainer = await trainerService.getTrainer(userId);
-    
+
     if (!trainer) {
       const embed = new EmbedBuilder()
         .setTitle('❌ Not Registered')

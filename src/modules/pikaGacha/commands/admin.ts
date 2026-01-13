@@ -458,9 +458,7 @@ export async function handleSetFocus(
   }
 }
 
-export async function handleRemoveFocus(
-  message: Message,
-): Promise<void> {
+export async function handleRemoveFocus(message: Message): Promise<void> {
   // Admin-only check using server database
   if (!(await isAdmin(message.author.id, message.guild))) {
     const embed = new EmbedBuilder()

@@ -46,7 +46,11 @@ export class RankService {
   async addExp(
     userId: string,
     exp: number,
-  ): Promise<{ levelUp: boolean; currentRank: string; nextRank: string | null }> {
+  ): Promise<{
+    levelUp: boolean;
+    currentRank: string;
+    nextRank: string | null;
+  }> {
     const trainer = await Trainer.findByPk(userId);
     if (!trainer) {
       throw new Error('Trainer not found');
@@ -96,7 +100,11 @@ export class RankService {
 
     // Can't promote from max rank
     if (currentRank === 'Boss') {
-      return { promoted: false, message: 'Already at max rank. Use !prestige to reset and earn a Master Ball!' };
+      return {
+        promoted: false,
+        message:
+          'Already at max rank. Use !prestige to reset and earn a Master Ball!',
+      };
     }
 
     const nextRank = await this.getNextRank(currentRank);
@@ -127,7 +135,9 @@ export class RankService {
       const ballName = ballNames[ballReward - 1] || 'ball';
       rewardText = `1× ${ballName}`;
 
-      logger.info(`${trainer.name} promoted to ${nextRank.rank} and received a ${ballName}`);
+      logger.info(
+        `${trainer.name} promoted to ${nextRank.rank} and received a ${ballName}`,
+      );
     } else {
       logger.info(`${trainer.name} promoted to ${nextRank.rank}`);
     }
@@ -150,12 +160,20 @@ export class RankService {
   }> {
     const trainer = await Trainer.findByPk(userId);
     if (!trainer) {
-      return { prestiged: false, prestigeLevel: 0, message: 'Trainer not found' };
+      return {
+        prestiged: false,
+        prestigeLevel: 0,
+        message: 'Trainer not found',
+      };
     }
 
     // Must be at Boss rank to prestige
     if (trainer.rank !== 'Boss') {
-      return { prestiged: false, prestigeLevel: trainer.prestige, message: 'Must be Boss rank to prestige' };
+      return {
+        prestiged: false,
+        prestigeLevel: trainer.prestige,
+        message: 'Must be Boss rank to prestige',
+      };
     }
 
     // Increase prestige, reset rank and EXP

@@ -15,89 +15,128 @@ export async function handleRoll(
   const userId = message.author.id;
   const username = message.author.username;
 
-  // Parse region argument
+  // Parse region and count arguments
   let regionId: number | null = null;
-  if (args.length > 0) {
-    const regionName = args[0];
-    const region = getRegionByName(regionName);
+  let count = 1; // Default to 1 roll
 
-    if (region) {
-      regionId = region.id;
+  if (args.length > 0) {
+    // First arg could be region or count
+    const firstArg = args[0];
+    const parsedCount = parseInt(firstArg);
+
+    // Check if first arg is a number
+    if (!isNaN(parsedCount) && parsedCount > 0) {
+      count = Math.min(parsedCount, 30); // Cap at 30
+      // Check if second arg is region
+      if (args.length > 1) {
+        const region = getRegionByName(args[1]);
+        if (region) {
+          regionId = region.id;
+        } else {
+          const embed = new EmbedBuilder()
+            .setTitle('❌ Invalid Region')
+            .setDescription(
+              "Region must be one of: 'kanto', 'johto', 'hoenn', 'sinnoh', 'unova', 'kalos', 'alola', or omit for all regions",
+            )
+            .setColor(COLOR_ERROR);
+          await message.reply({ embeds: [embed] });
+          return;
+        }
+      }
     } else {
-      const embed = new EmbedBuilder()
-        .setTitle('❌ Invalid Region')
-        .setDescription(
-          "Region must be one of: 'kanto', 'johto', 'hoenn', 'sinnoh', 'unova', 'kalos', 'alola', or omit for all regions",
-        )
-        .setColor(COLOR_ERROR);
-      await message.reply({ embeds: [embed] });
-      return;
+      // First arg is region
+      const region = getRegionByName(firstArg);
+      if (region) {
+        regionId = region.id;
+        // Check if second arg is count
+        if (args.length > 1) {
+          const parsedCount = parseInt(args[1]);
+          if (!isNaN(parsedCount) && parsedCount > 0) {
+            count = Math.min(parsedCount, 30); // Cap at 30
+          }
+        }
+      } else {
+        const embed = new EmbedBuilder()
+          .setTitle('❌ Invalid Region')
+          .setDescription(
+            "Region must be one of: 'kanto', 'johto', 'hoenn', 'sinnoh', 'unova', 'kalos', 'alola', or omit for all regions",
+          )
+          .setColor(COLOR_ERROR);
+        await message.reply({ embeds: [embed] });
+        return;
+      }
     }
   }
 
   try {
-    // Check if user has enough points
+    // Check if user has enough points for all rolls
+    const totalCost = ROLL_COST * count;
     const balance = await userService.getPikapoints(userId);
-    if (balance < ROLL_COST) {
+    if (balance < totalCost) {
       const embed = new EmbedBuilder()
         .setTitle('❌ Insufficient Points')
         .setDescription(
-          `You need ${ROLL_COST} pikapoints to roll! You only have ${balance}. Join voice and start earning!`,
+          `You need ${totalCost} pikapoints to roll ${count} time${count > 1 ? 's' : ''}! You only have ${balance}. Join voice and start earning!`,
         )
         .setColor(COLOR_ERROR);
       await message.reply({ embeds: [embed] });
       return;
     }
 
-    // Perform the roll
-    const result = await gachaService.roll(userId, regionId);
+    // Perform the rolls
+    for (let i = 0; i < count; i++) {
+      const result = await gachaService.roll(userId, regionId);
 
-    // Build embed
-    const title = `${username} Summoned:`;
-    let rarityText: string;
-    if (result.pokemon.rarity <= 5) {
-      rarityText = `${result.pokemon.rarity}⭐`;
-    } else if (result.pokemon.rarity === 6) {
-      rarityText = 'Legendary';
-    } else if (result.pokemon.rarity === 7) {
-      rarityText = 'Mythic';
-    } else {
-      rarityText = 'Special';
-    }
-
-    const description = `${result.pokemon.name}\nRarity: ${rarityText}`;
-    const embed = new EmbedBuilder()
-      .setTitle(title)
-      .setDescription(description)
-      .setColor(0x9370db);
-
-    // Set thumbnail
-    if (result.pokemon.id >= 10000) {
-      const url = SPECIAL_POKEMON[result.pokemon.id];
-      if (url) {
-        embed.setThumbnail(url);
+      // Build embed
+      const title = `${username} Summoned:`;
+      let rarityText: string;
+      if (result.pokemon.rarity <= 5) {
+        rarityText = `${result.pokemon.rarity}⭐`;
+      } else if (result.pokemon.rarity === 6) {
+        rarityText = 'Legendary';
+      } else if (result.pokemon.rarity === 7) {
+        rarityText = 'Mythic';
+      } else {
+        rarityText = 'Special';
       }
-    } else {
-      const strId = result.pokemon.id.toString().padStart(3, '0');
-      embed.setThumbnail(
-        `https://www.serebii.net/sunmoon/pokemon/${strId}.png`,
+
+      const description = `${result.pokemon.name}\nRarity: ${rarityText}`;
+      const embed = new EmbedBuilder()
+        .setTitle(title)
+        .setDescription(description)
+        .setColor(0x9370db);
+
+      // Set thumbnail
+      if (result.pokemon.id >= 10000) {
+        const url = SPECIAL_POKEMON[result.pokemon.id];
+        if (url) {
+          embed.setThumbnail(url);
+        }
+      } else {
+        const strId = result.pokemon.id.toString().padStart(3, '0');
+        embed.setThumbnail(
+          `https://www.serebii.net/sunmoon/pokemon/${strId}.png`,
+        );
+      }
+
+      // Get new balance after this roll
+      const newBalance = await userService.getPikapoints(userId);
+
+      // Send result with roll counter if multiple rolls
+      const content =
+        count > 1
+          ? `Roll ${i + 1}/${count} - You now have ${newBalance} pikapoints.`
+          : `You now have ${newBalance} pikapoints.`;
+
+      await message.reply({
+        content,
+        embeds: [embed],
+      });
+
+      Logger.info(
+        `${username} (${userId}) rolled ${result.pokemon.name} (${rarityText}) - Roll ${i + 1}/${count}`,
       );
     }
-
-    // Get new balance
-    const newBalance = await userService.getPikapoints(userId);
-
-    // Send result
-    await message.reply({
-      content: `You now have ${newBalance} pikapoints.`,
-      embeds: [embed],
-    });
-
-    // TODO: Handle promotion and jackpot notifications
-
-    Logger.info(
-      `${username} (${userId}) rolled ${result.pokemon.name} (${rarityText})`,
-    );
   } catch (error) {
     Logger.error('Error handling roll command', error);
     const embed = new EmbedBuilder()
@@ -125,7 +164,7 @@ export async function handleFullRoll(
   if (args.length > 0) {
     // First arg could be region, count, or "all"
     const firstArg = args[0].toLowerCase();
-    
+
     // Check for "all" keyword
     if (firstArg === 'all') {
       rollAll = true;

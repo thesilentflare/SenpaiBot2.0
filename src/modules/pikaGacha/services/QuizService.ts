@@ -441,26 +441,44 @@ export class QuizService {
 
   /**
    * Check if other users had their streaks broken and award shutdown bonuses
+   * Only one trainer can have a streak at a time - when someone new wins,
+   * all others with streaks get shutdown bonuses and have their streaks reset
    */
   private async checkForShutdowns(
     winnerId: string,
     winnerStreak: number,
   ): Promise<void> {
     try {
-      // This would require tracking all active streaks
-      // For now, we'll implement a simple version that resets streaks when someone else wins
-      // In a full implementation, you'd query all trainers with currentStreak > 0
+      // Import Trainer model to query for active streaks
+      const { Trainer } = await import('../models/Trainer');
 
-      // TODO: Implement full shutdown logic
-      // This would involve:
-      // 1. Finding all trainers with currentStreak > 0
-      // 2. For each, award shutdown bonus: 10 * (streak - 1) points
-      // 3. Update shutdowns stat
-      // 4. Reset their currentStreak to 0
+      // Find all trainers with currentStreak > 0 except the winner
+      const trainersWithStreaks = await Trainer.findAll({
+        where: {
+          userId: { [require('sequelize').Op.ne]: winnerId },
+          currentStreak: { [require('sequelize').Op.gt]: 0 },
+        },
+      });
 
-      logger.info(
-        `[QuizService] Shutdown check for winner ${winnerId} with streak ${winnerStreak}`,
-      );
+      // Award shutdown bonuses and reset streaks
+      for (const trainer of trainersWithStreaks) {
+        const streakLost = trainer.currentStreak;
+        const shutdownPoints = SHUTDOWN_MULTIPLIER * (streakLost - 1);
+
+        // Award shutdown points (if any)
+        if (shutdownPoints > 0) {
+          await this.userService.adjustPoints(trainer.userId, shutdownPoints);
+          logger.info(
+            `[QuizService] Shutdown: ${trainer.name} lost ${streakLost} streak, earned ${shutdownPoints} points`,
+          );
+        }
+
+        // Update trainer stats
+        await this.trainerService.updateTrainer(trainer.userId, {
+          shutdowns: trainer.shutdowns + 1,
+          currentStreak: 0,
+        });
+      }
     } catch (error) {
       logger.error('[QuizService] Error checking shutdowns:', error);
     }

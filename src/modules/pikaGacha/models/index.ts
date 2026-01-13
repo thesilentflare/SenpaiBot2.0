@@ -5,6 +5,7 @@ import { Item } from './Item';
 import { Jackpot } from './Jackpot';
 import { Trainer } from './Trainer';
 import { Favorite } from './Favorite';
+import { Rank } from './Rank';
 
 // Define relationships
 User.hasMany(Inventory, { foreignKey: 'userId', as: 'inventory' });
@@ -28,4 +29,4 @@ Favorite.belongsTo(User, { foreignKey: 'userId' });
 Pokemon.hasMany(Favorite, { foreignKey: 'pokemonId', as: 'favoritedBy' });
 Favorite.belongsTo(Pokemon, { foreignKey: 'pokemonId', as: 'pokemon' });
 
-export { User, Pokemon, Inventory, Item, Jackpot, Trainer, Favorite };
+export { User, Pokemon, Inventory, Item, Jackpot, Trainer, Favorite, Rank };

@@ -5,6 +5,7 @@ import { initializeDatabase } from './config/database';
 import { handleRoll, handleFullRoll } from './commands/roll';
 import { handleProfile, handleBalance } from './commands/profile';
 import { handleBag, handleOpenBall } from './commands/bag';
+import { handleTransfer, handleWithdraw } from './commands/bank';
 import { handlePokedex, handleInventory } from './commands/collection';
 import { handleBox } from './commands/box';
 import { handleRelease, handleReleaseDupes } from './commands/release';
@@ -12,9 +13,12 @@ import { handleFavorite, handleFavorites } from './commands/favorite';
 import { handleTrade } from './commands/trade';
 import { handleBattle } from './commands/battle';
 import { handleLeaderboard } from './commands/leaderboard';
+import { handlePromote, handlePrestige } from './commands/rank';
+import { handleTeam } from './commands/team';
 import {
   handleReseed,
   handleSetFocus,
+  handleRemoveFocus,
   handleAddPoints,
   handleRemovePoints,
   handleGiveAll,
@@ -152,6 +156,16 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'transfer') {
+        await handleTransfer(message, args);
+        return true;
+      }
+
+      if (subcommand === 'withdraw') {
+        await handleWithdraw(message, args);
+        return true;
+      }
+
       // Bag commands
       if (subcommand === 'bag') {
         await handleBag(message, args);
@@ -217,6 +231,22 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      // Rank commands
+      if (subcommand === 'promote') {
+        await handlePromote(message);
+        return true;
+      }
+
+      if (subcommand === 'prestige') {
+        await handlePrestige(message);
+        return true;
+      }
+
+      if (subcommand === 'team') {
+        await handleTeam(message, args);
+        return true;
+      }
+
       // Admin commands
       if (subcommand === 'reseed') {
         await handleReseed(message, args);
@@ -225,6 +255,11 @@ class PikaGachaModule implements BotModule {
 
       if (subcommand === 'setfocus') {
         await handleSetFocus(message, args);
+        return true;
+      }
+
+      if (subcommand === 'removefocus') {
+        await handleRemoveFocus(message);
         return true;
       }
 

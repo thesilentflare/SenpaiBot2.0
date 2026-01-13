@@ -108,7 +108,7 @@ Trainer.init(
     },
     rank: {
       type: DataTypes.STRING,
-      defaultValue: '',
+      defaultValue: 'Recruit',
       allowNull: false,
     },
     team: {

@@ -88,6 +88,7 @@ export class UserService {
    */
   async getUserDetails(userId: string): Promise<{
     points: number;
+    savings: number;
     three: number;
     four: number;
     five: number;
@@ -96,6 +97,7 @@ export class UserService {
     const user = await this.getOrCreateUser(userId);
     return {
       points: user.points,
+      savings: user.savings,
       three: user.three,
       four: user.four,
       five: user.five,

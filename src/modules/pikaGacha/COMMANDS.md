@@ -13,6 +13,7 @@ Complete command reference for the PikaGacha module. All commands are message-ba
 - [Collection](#collection) - Pokemon lookup and favorites
 - [Social & Trading](#social--trading) - Trade and battle with others
 - [Leaderboards](#leaderboards) - Competitive rankings
+- [Rank System](#rank-system) - Promotion and prestige
 - [Admin Commands](#admin-commands) - Database and focus management
 
 ---
@@ -481,6 +482,80 @@ View leaderboards for various stats.
 - `losses` - Total Losses
 - `neverlucky` - Never Lucky Losses (≥65% odds)
 - `highstakeloss` - High Stake Losses (≥85 wager)
+
+---
+
+## Rank System
+
+The PikaGacha module features a rank progression system where trainers gain experience (EXP) through various activities and advance through 13 ranks.
+
+### How to Gain EXP
+
+- **Rolling Pokemon:** +1 EXP per roll
+- **Opening Balls:** +1 EXP per ball opened
+- **Winning Battles:** Variable EXP based on battle odds and wager
+
+### `!promote`
+
+Advance to the next rank when you have enough EXP.
+
+**Usage:**
+```
+!promote              # Promote to the next rank
+```
+
+**Permissions:** All users  
+**Requirements:** Must have enough rank EXP for the next rank
+
+**Features:**
+- Advances you to the next rank in the progression
+- Resets your rank EXP to 0
+- Awards pokeballs, great balls, or ultra balls based on rank tier
+- Check your current rank and EXP progress with `!profile`
+
+**Rank Progression:**
+1. **Recruit** (0 EXP) - Starting rank
+2. **Crook** (250 EXP) - Tier 1 reward
+3. **Thug** (500 EXP) - Tier 1 reward
+4. **Hitman** (750 EXP) - Tier 1 reward
+5. **Officer** (1000 EXP) - Tier 2 reward
+6. **Enforcer** (1250 EXP) - Tier 2 reward
+7. **Lieutenant** (1500 EXP) - Tier 2 reward
+8. **Admin** (1750 EXP) - Tier 3 reward
+9. **Executive** (2000 EXP) - Tier 3 reward
+10. **Underboss** (2500 EXP) - Tier 3 reward
+11. **Boss** (3500 EXP) - Max rank, eligible for prestige
+
+**Rewards by Tier:**
+- **Tier 1** (Crook-Hitman): 1× Poké Ball
+- **Tier 2** (Officer-Lieutenant): 1× Great Ball
+- **Tier 3** (Admin-Boss): 1× Ultra Ball
+
+---
+
+### `!prestige`
+
+Reset to Recruit rank from Boss rank to earn a Master Ball and increase your prestige level.
+
+**Usage:**
+```
+!prestige             # Prestige from Boss rank
+```
+
+**Permissions:** All users  
+**Requirements:** Must be at Boss rank
+
+**Effects:**
+- Resets rank to **Recruit**
+- Resets rank EXP to 0
+- Increments your prestige level by 1
+- Awards **1× Master Ball**
+- Your total EXP and prestige level are preserved and displayed on your profile
+
+**Notes:**
+- Prestiging is optional but earns you rare Master Balls
+- You can prestige multiple times to increase your prestige level
+- Your prestige level shows your dedication as a trainer
 
 ---
 

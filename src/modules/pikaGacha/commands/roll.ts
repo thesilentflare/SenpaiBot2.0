@@ -120,33 +120,72 @@ export async function handleFullRoll(
   // Parse region and count
   let regionId: number | null = null;
   let count = 10; // Default to 10
+  let rollAll = false;
 
   if (args.length > 0) {
-    // First arg could be region or count
-    const firstArg = args[0];
-    const region = getRegionByName(firstArg);
-
-    if (region) {
-      regionId = region.id;
-      // Second arg could be count
+    // First arg could be region, count, or "all"
+    const firstArg = args[0].toLowerCase();
+    
+    // Check for "all" keyword
+    if (firstArg === 'all') {
+      rollAll = true;
+      // Check if second arg is region
       if (args.length > 1) {
-        const parsedCount = parseInt(args[1]);
-        if (!isNaN(parsedCount) && parsedCount > 0 && parsedCount <= 100) {
-          count = parsedCount;
+        const region = getRegionByName(args[1]);
+        if (region) {
+          regionId = region.id;
         }
       }
     } else {
-      // First arg is count
-      const parsedCount = parseInt(firstArg);
-      if (!isNaN(parsedCount) && parsedCount > 0 && parsedCount <= 100) {
-        count = parsedCount;
+      const region = getRegionByName(firstArg);
+
+      if (region) {
+        regionId = region.id;
+        // Second arg could be count or "all"
+        if (args.length > 1) {
+          if (args[1].toLowerCase() === 'all') {
+            rollAll = true;
+          } else {
+            const parsedCount = parseInt(args[1]);
+            if (!isNaN(parsedCount) && parsedCount > 0 && parsedCount <= 100) {
+              count = parsedCount;
+            }
+          }
+        }
+      } else {
+        // First arg is count
+        const parsedCount = parseInt(firstArg);
+        if (!isNaN(parsedCount) && parsedCount > 0 && parsedCount <= 100) {
+          count = parsedCount;
+        }
       }
     }
   }
 
   try {
-    // Check if user has enough points
+    // Get user balance
     const balance = await userService.getPikapoints(userId);
+
+    // Calculate count if rolling all
+    if (rollAll) {
+      count = Math.floor(balance / ROLL_COST);
+      if (count === 0) {
+        const embed = new EmbedBuilder()
+          .setTitle('❌ Insufficient Points')
+          .setDescription(
+            `You need at least ${ROLL_COST} pikapoints to roll! You only have ${balance}.`,
+          )
+          .setColor(COLOR_ERROR);
+        await message.reply({ embeds: [embed] });
+        return;
+      }
+      // Cap at 100 rolls
+      if (count > 100) {
+        count = 100;
+      }
+    }
+
+    // Check if user has enough points
     const totalCost = ROLL_COST * count;
 
     if (balance < totalCost) {

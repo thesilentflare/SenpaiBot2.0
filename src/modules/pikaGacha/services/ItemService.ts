@@ -2,6 +2,7 @@ import { Item } from '../models';
 import pokemonService from './PokemonService';
 import inventoryService from './InventoryService';
 import userService from './UserService';
+import rankService from './RankService';
 import { BALL_TYPES, BallType } from '../types';
 import Logger from '../../../utils/logger';
 
@@ -158,6 +159,9 @@ export class ItemService {
 
       const pokemon = pokemonService.getRandomPokemon(options);
       await inventoryService.addPokemon(userId, pokemon.id);
+
+      // Award EXP for opening ball
+      await rankService.addExp(userId, 1);
 
       Logger.info(
         `User ${userId} opened ${ball.displayName} and got ${pokemon.name} (${pokemon.rarity}★)`,

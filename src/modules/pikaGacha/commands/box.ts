@@ -160,7 +160,7 @@ export async function handleBox(
         .setDisabled(currentPage === totalPages - 1),
     );
 
-    const messageContent = `${username}'s party (page ${currentPage + 1})`;
+    const messageContent = `${username}'s party (page ${currentPage + 1}/${totalPages})`;
     const response =
       totalPages > 1
         ? await message.reply({
@@ -189,6 +189,9 @@ export async function handleBox(
         return;
       }
 
+      // Defer the update to prevent timeout
+      await interaction.deferUpdate();
+
       // Update page based on button
       if (interaction.customId === 'box_prev') {
         currentPage = Math.max(0, currentPage - 1);
@@ -198,7 +201,7 @@ export async function handleBox(
 
       // Generate new image
       const newAttachment = await generatePageImage(currentPage);
-      const newMessageContent = `${username}'s party (page ${currentPage + 1})`;
+      const newMessageContent = `${username}'s party (page ${currentPage + 1}/${totalPages})`;
 
       // Update buttons
       const newRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -214,7 +217,7 @@ export async function handleBox(
           .setDisabled(currentPage === totalPages - 1),
       );
 
-      await interaction.update({
+      await interaction.editReply({
         content: newMessageContent,
         files: [newAttachment],
         components: [newRow],

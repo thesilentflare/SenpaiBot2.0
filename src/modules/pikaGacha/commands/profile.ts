@@ -1,5 +1,6 @@
 import { Message, EmbedBuilder } from 'discord.js';
 import trainerService from '../services/TrainerService';
+import rankService from '../services/RankService';
 import userService from '../services/UserService';
 import Logger from '../../../utils/logger';
 
@@ -49,13 +50,17 @@ export async function handleProfile(
     }
 
     // Get next rank info
-    const nextRank = trainerService.getNextRank(trainer.rank);
+    const nextRank = await rankService.getNextRank(trainer.rank);
     let expUntilPromotion: string;
 
     if (trainer.team === '') {
       expUntilPromotion = 'N/A';
-    } else if (!nextRank) {
+    } else if (trainer.rank === 'Boss') {
+      // Only Boss rank can prestige
       expUntilPromotion = 'Eligible for Prestige!';
+    } else if (!nextRank) {
+      // Rank not found in database
+      expUntilPromotion = 'Unknown (rank not found)';
     } else {
       expUntilPromotion = Math.max(
         0,
@@ -65,9 +70,10 @@ export async function handleProfile(
 
     // Build trainer card
     const teamPrefix = trainer.team !== '' ? `${trainer.team} ` : '';
+    const rankName = trainer.rank || 'Recruit';
     const title = `${user.username}'s Trainer Card`;
     const description =
-      `${teamPrefix}${trainer.rank} ${trainer.name}\nID: ${trainer.userId}\n\n` +
+      `${teamPrefix}${rankName} ${trainer.name}\nID: ${trainer.userId}\n\n` +
       `Total EXP Gained: ${trainer.totalExp}\n` +
       `EXP Gained in Current Rank: ${trainer.rankExp}\n` +
       `EXP Until Promotion: ${expUntilPromotion}\n` +

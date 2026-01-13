@@ -4,6 +4,7 @@ import pokemonService from './PokemonService';
 import inventoryService from './InventoryService';
 import jackpotService from './JackpotService';
 import trainerService from './TrainerService';
+import rankService from './RankService';
 import {
   Region,
   GACHA_COST,
@@ -66,7 +67,7 @@ export class GachaService {
 
     // Update trainer stats
     await trainerService.incrementStat(userId, 'rolls');
-    await trainerService.updateExp(userId, 1);
+    await rankService.addExp(userId, 1);
 
     Logger.info(
       `User ${userId} rolled ${pokemon.name} (${pokemon.rarity}★) in ${region?.name || 'all regions'}`,

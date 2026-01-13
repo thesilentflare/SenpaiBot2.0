@@ -27,6 +27,11 @@ export async function initializeDatabase(): Promise<void> {
     // Run migrations to add new columns safely
     await runMigrations();
 
+    // Initialize ranks table with seed data
+    // Import here to avoid circular dependency
+    const { default: rankService } = await import('../services/RankService');
+    await rankService.initializeRanks();
+
     Logger.info('PikaGacha database models synced');
   } catch (error) {
     Logger.error('Unable to connect to PikaGacha database:', error);

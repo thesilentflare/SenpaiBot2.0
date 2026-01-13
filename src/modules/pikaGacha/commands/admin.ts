@@ -458,6 +458,49 @@ export async function handleSetFocus(
   }
 }
 
+export async function handleRemoveFocus(
+  message: Message,
+): Promise<void> {
+  // Admin-only check using server database
+  if (!(await isAdmin(message.author.id, message.guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('This command is admin-only!')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  try {
+    // Remove focus from all Pokemon
+    const result = await Pokemon.update(
+      { focus: false },
+      { where: { focus: true } },
+    );
+
+    const count = result[0]; // Number of rows updated
+
+    const successEmbed = new EmbedBuilder()
+      .setTitle('✅ Focus Removed')
+      .setDescription(
+        `Focus has been removed from **${count}** Pokémon.\n\n` +
+          'All Pokémon are now rolling at normal rates.',
+      )
+      .setColor(ADMIN_COLOR);
+
+    await message.reply({ embeds: [successEmbed] });
+
+    Logger.info(`Focus removed from ${count} Pokemon`);
+  } catch (error) {
+    Logger.error('Error removing focus', error);
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Error')
+      .setDescription('An error occurred. Check logs for details.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
+}
+
 export async function handleAddPoints(
   message: Message,
   args: string[],

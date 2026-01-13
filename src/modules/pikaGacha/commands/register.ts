@@ -1,6 +1,7 @@
-import { Message, EmbedBuilder } from 'discord.js';
+import { Message, EmbedBuilder, MessageReaction, User } from 'discord.js';
 import trainerService from '../services/TrainerService';
 import userService from '../services/UserService';
+import { TEAMS } from '../types';
 import Logger from '../../../utils/logger';
 
 const COLOR = 0xffd700; // Gold color for PikaGacha
@@ -79,7 +80,7 @@ export async function handleRegister(
       const STARTER_BONUS = 100;
       await userService.adjustPoints(message.author.id, STARTER_BONUS);
 
-      const embed = new EmbedBuilder()
+      const welcomeEmbed = new EmbedBuilder()
         .setTitle(`🎉 Welcome to PikaGacha, ${trainerName}!`)
         .setDescription(
           `You've been registered and received **${STARTER_BONUS} pikapoints** to get started!\n\n` +
@@ -93,11 +94,14 @@ export async function handleRegister(
         .setColor(COLOR)
         .setThumbnail(message.author.displayAvatarURL());
 
-      await message.reply({ embeds: [embed] });
+      await message.reply({ embeds: [welcomeEmbed] });
 
       Logger.info(
         `New trainer registered: ${trainerName} (${message.author.id}) with ${STARTER_BONUS} starter bonus`,
       );
+
+      // Prompt for team selection
+      await promptTeamSelection(message, trainerName);
     }
   } catch (error) {
     Logger.error('Error handling register command', error);
@@ -107,5 +111,107 @@ export async function handleRegister(
       )
       .setColor(0xff0000);
     await message.reply({ embeds: [embed] });
+  }
+}
+
+/**
+ * Prompt user to select a team using reactions
+ */
+async function promptTeamSelection(
+  message: Message,
+  trainerName: string,
+): Promise<void> {
+  const teamEmbed = new EmbedBuilder()
+    .setTitle('⚔️ Choose Your Team!')
+    .setDescription(
+      `**${trainerName}**, select your team by reacting below:\n\n` +
+        `<:electrocution:${TEAMS.ELECTROCUTION.emojiId}> **${TEAMS.ELECTROCUTION.name}**\n` +
+        `<:lensflare:${TEAMS.LENSFLARE.emojiId}> **${TEAMS.LENSFLARE.name}**\n` +
+        `<:hyperjoy:${TEAMS.HYPERJOY.emojiId}> **${TEAMS.HYPERJOY.name}**\n\n` +
+        `React within 60 seconds to join your team!`,
+    )
+    .setColor(0x00bfff);
+
+  try {
+    if (!message.channel.isSendable()) {
+      Logger.warn('Cannot send team selection in this channel type');
+      return;
+    }
+
+    const teamMessage = await message.channel.send({ embeds: [teamEmbed] });
+
+    // Add reaction emojis
+    await teamMessage.react(TEAMS.ELECTROCUTION.emojiId);
+    await teamMessage.react(TEAMS.LENSFLARE.emojiId);
+    await teamMessage.react(TEAMS.HYPERJOY.emojiId);
+
+    // Create reaction collector
+    const filter = (reaction: MessageReaction, user: User) => {
+      return (
+        user.id === message.author.id &&
+        [
+          TEAMS.ELECTROCUTION.emojiId,
+          TEAMS.LENSFLARE.emojiId,
+          TEAMS.HYPERJOY.emojiId,
+        ].includes(reaction.emoji.id || '')
+      );
+    };
+
+    const collector = teamMessage.createReactionCollector({
+      filter,
+      max: 1,
+      time: 60000,
+    });
+
+    collector.on('collect', async (reaction: MessageReaction) => {
+      let selectedTeam: string = '';
+
+      if (reaction.emoji.id === TEAMS.ELECTROCUTION.emojiId) {
+        selectedTeam = TEAMS.ELECTROCUTION.name;
+      } else if (reaction.emoji.id === TEAMS.LENSFLARE.emojiId) {
+        selectedTeam = TEAMS.LENSFLARE.name;
+      } else if (reaction.emoji.id === TEAMS.HYPERJOY.emojiId) {
+        selectedTeam = TEAMS.HYPERJOY.name;
+      }
+
+      if (selectedTeam) {
+        await trainerService.setTeam(message.author.id, selectedTeam);
+
+        const confirmEmbed = new EmbedBuilder()
+          .setTitle('✅ Team Selected!')
+          .setDescription(
+            `**${trainerName}** has joined **${selectedTeam}**!\n\n` +
+              `You can now gain EXP and rank up through your team.\n` +
+              `Use \`!pg trainer ${trainerName}\` to view your progress!`,
+          )
+          .setColor(0x00ff00);
+
+        if (message.channel.isSendable()) {
+          await message.channel.send({ embeds: [confirmEmbed] });
+        }
+        await teamMessage.delete().catch(() => {});
+
+        Logger.info(
+          `Trainer ${trainerName} (${message.author.id}) joined ${selectedTeam}`,
+        );
+      }
+    });
+
+    collector.on('end', async () => {
+      if (collector.collected.size === 0) {
+        const timeoutEmbed = new EmbedBuilder()
+          .setDescription(
+            `⏱️ Team selection timed out. You can join a team later using \`!pg team <team_name>\`.`,
+          )
+          .setColor(0xff9900);
+
+        if (message.channel.isSendable()) {
+          await message.channel.send({ embeds: [timeoutEmbed] });
+        }
+        await teamMessage.delete().catch(() => {});
+      }
+    });
+  } catch (error) {
+    Logger.error('Error in team selection prompt', error);
   }
 }

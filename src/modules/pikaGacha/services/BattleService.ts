@@ -2,6 +2,7 @@ import { sequelize } from '../config/database';
 import pokemonService from './PokemonService';
 import inventoryService from './InventoryService';
 import trainerService from './TrainerService';
+import rankService from './RankService';
 import Logger from '../../../utils/logger';
 
 export interface BattleResult {
@@ -150,8 +151,8 @@ export class BattleService {
     // Update stats and exp in transaction
     await sequelize.transaction(async (t) => {
       // Update experience
-      await trainerService.updateExp(winnerId, winnerExp);
-      await trainerService.updateExp(loserId, loserExp);
+      await rankService.addExp(winnerId, winnerExp);
+      await rankService.addExp(loserId, loserExp);
 
       // Update battle stats
       if (!tied) {

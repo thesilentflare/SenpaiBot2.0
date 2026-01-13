@@ -40,6 +40,13 @@ class PikaGachaModule implements BotModule {
   private initialized = false;
 
   async initialize(client: Client): Promise<void> {
+    if (this.initialized) {
+      this.logger.warn(
+        'Module already initialized, skipping re-initialization',
+      );
+      return;
+    }
+
     try {
       // Initialize database
       await initializeDatabase();

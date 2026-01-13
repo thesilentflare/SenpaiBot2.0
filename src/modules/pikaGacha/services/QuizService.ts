@@ -60,6 +60,11 @@ export class QuizService {
    * Initialize the quiz system with a Discord client and channel
    */
   public initializeQuiz(client: Client, channelId: string): void {
+    logger.info(`[QuizService] initializeQuiz called (channel: ${channelId})`);
+
+    // Clear any existing timers first to prevent duplicate schedules
+    this.stopQuiz();
+
     this.client = client;
     this.quizChannelId = channelId;
 
@@ -108,7 +113,12 @@ export class QuizService {
     const { time: nextQuizTime, type: quizType } = this.getNextQuizTime(now);
     const delay = nextQuizTime.getTime() - now.getTime();
 
+    logger.debug(
+      `[QuizService] scheduleNextQuiz called, scheduling ${quizType} quiz`,
+    );
+
     this.quizInterval = setTimeout(() => {
+      logger.debug(`[QuizService] Quiz timeout triggered for ${quizType} quiz`);
       if (quizType === 'text') {
         this.postQuiz();
       } else {

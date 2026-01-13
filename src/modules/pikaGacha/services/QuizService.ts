@@ -252,20 +252,16 @@ export class QuizService {
         return;
       }
 
-      const spriteQuestion = getRandomSpriteQuestion();
+      // Get random sprite question from database
+      const spriteQuestion = await getRandomSpriteQuestion();
 
       const embed = new EmbedBuilder()
         .setColor(0x9370db)
         .setTitle("👁️ Who's That Pokemon?!")
-        .setDescription(
-          `**Identify this Pokemon!**\n\n` +
-            `Difficulty: ${spriteQuestion.difficulty.toUpperCase()}\n` +
-            `Generation: ${spriteQuestion.generation}\n\n` +
-            `Reply with the name within ${QUIZ_TIMEOUT_MS / 1000} seconds!\n` +
-            `Correct answers earn **${BASE_REWARD}-${MAX_REWARD}** pikapoints based on your streak!`,
-        )
         .setImage(spriteQuestion.spriteUrl)
-        .setFooter({ text: 'PikaGacha Sprite Quiz' })
+        .setFooter({ 
+          text: `Reply with the name within ${QUIZ_TIMEOUT_MS / 1000} seconds! • Earn ${BASE_REWARD}-${MAX_REWARD} pikapoints` 
+        })
         .setTimestamp();
 
       const message = await (channel as TextChannel).send({ embeds: [embed] });

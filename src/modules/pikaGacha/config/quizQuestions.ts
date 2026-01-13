@@ -1,8 +1,258 @@
+import axios from 'axios';
+import { Pokemon } from '../models/Pokemon';
+import { Op } from 'sequelize';
+import Logger from '../../../utils/logger';
+
 export interface QuizQuestion {
   question: string;
   answer: string;
   difficulty: 'easy' | 'medium' | 'hard';
   category: string;
+  pokemonName?: string; // For dynamic questions
+}
+
+interface PokeApiPokemon {
+  id: number;
+  name: string;
+  types: Array<{ type: { name: string } }>;
+  stats: Array<{ base_stat: number; stat: { name: string } }>;
+  height: number;
+  weight: number;
+  abilities: Array<{ ability: { name: string }; is_hidden: boolean }>;
+}
+
+/**
+ * Generate a random text quiz question from PokeAPI
+ */
+export async function getRandomTextQuizQuestion(): Promise<QuizQuestion | null> {
+  try {
+    // Get a random Pokemon from database (exclude special Pokemon)
+    const pokemon = await Pokemon.findOne({
+      where: {
+        isSpecial: false,
+        id: { [Op.lte]: 905 }, // Up to Gen 8
+      },
+      order: Pokemon.sequelize!.random(),
+    });
+
+    if (!pokemon) {
+      Logger.error('No Pokemon found in database for text quiz');
+      return null;
+    }
+
+    // Fetch Pokemon data from PokeAPI
+    const response = await axios.get<PokeApiPokemon>(
+      `https://pokeapi.co/api/v2/pokemon/${pokemon.id}`,
+    );
+    const pokeData = response.data;
+
+    // Generate a random question type
+    const questionTypes = [
+      'type',
+      'dual-type',
+      'stat',
+      'height',
+      'weight',
+      'ability',
+      'generation',
+    ];
+    const questionType =
+      questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+    return generateQuestionByType(pokemon.name, pokeData, questionType);
+  } catch (error) {
+    Logger.error('Error generating text quiz question from PokeAPI', error);
+    return null;
+  }
+}
+
+/**
+ * Generate a question based on type
+ */
+function generateQuestionByType(
+  pokemonName: string,
+  pokeData: PokeApiPokemon,
+  questionType: string,
+): QuizQuestion {
+  const types = pokeData.types.map((t) => t.type.name);
+  const formattedName =
+    pokemonName.charAt(0).toUpperCase() + pokemonName.slice(1);
+
+  switch (questionType) {
+    case 'type': {
+      // Ask for primary type or one of the types
+      const typeToAsk = types[Math.floor(Math.random() * types.length)];
+      return {
+        question:
+          types.length === 1
+            ? `What type is ${formattedName}?`
+            : `Name one of ${formattedName}'s types.`,
+        answer: typeToAsk,
+        difficulty: getDifficulty(pokeData.id),
+        category: 'pokemon-type',
+        pokemonName,
+      };
+    }
+
+    case 'dual-type': {
+      if (types.length === 2) {
+        return {
+          question: `${formattedName} is a ${types[0].toUpperCase()} type. What is its second type?`,
+          answer: types[1],
+          difficulty: getDifficulty(pokeData.id),
+          category: 'pokemon-type',
+          pokemonName,
+        };
+      }
+      // Fallback to regular type question
+      return {
+        question: `What type is ${formattedName}?`,
+        answer: types[0],
+        difficulty: getDifficulty(pokeData.id),
+        category: 'pokemon-type',
+        pokemonName,
+      };
+    }
+
+    case 'stat': {
+      // Pick a random stat
+      const statNames = [
+        'hp',
+        'attack',
+        'defense',
+        'special-attack',
+        'special-defense',
+        'speed',
+      ];
+      const statToAsk = statNames[Math.floor(Math.random() * statNames.length)];
+      const stat = pokeData.stats.find((s) => s.stat.name === statToAsk);
+
+      if (!stat) {
+        // Fallback
+        return {
+          question: `What type is ${formattedName}?`,
+          answer: types[0],
+          difficulty: getDifficulty(pokeData.id),
+          category: 'pokemon-type',
+          pokemonName,
+        };
+      }
+
+      const statDisplayName = statToAsk
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
+      return {
+        question: `What is ${formattedName}'s base ${statDisplayName} stat?`,
+        answer: stat.base_stat.toString(),
+        difficulty: 'hard',
+        category: 'pokemon-stats',
+        pokemonName,
+      };
+    }
+
+    case 'height': {
+      // Height in decimeters, convert to meters
+      const heightInMeters = (pokeData.height / 10).toFixed(1);
+      return {
+        question: `How tall is ${formattedName} in meters? (e.g., 1.5)`,
+        answer: heightInMeters,
+        difficulty: 'hard',
+        category: 'pokemon-stats',
+        pokemonName,
+      };
+    }
+
+    case 'weight': {
+      // Weight in hectograms, convert to kg
+      const weightInKg = (pokeData.weight / 10).toFixed(1);
+      return {
+        question: `How much does ${formattedName} weigh in kg? (e.g., 45.0)`,
+        answer: weightInKg,
+        difficulty: 'hard',
+        category: 'pokemon-stats',
+        pokemonName,
+      };
+    }
+
+    case 'ability': {
+      // Pick a non-hidden ability
+      const normalAbilities = pokeData.abilities.filter((a) => !a.is_hidden);
+      if (normalAbilities.length > 0) {
+        const ability =
+          normalAbilities[Math.floor(Math.random() * normalAbilities.length)];
+        const abilityName = ability.ability.name
+          .split('-')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+
+        return {
+          question: `Name one of ${formattedName}'s abilities.`,
+          answer: ability.ability.name,
+          difficulty: getDifficulty(pokeData.id),
+          category: 'pokemon-ability',
+          pokemonName,
+        };
+      }
+      // Fallback
+      return {
+        question: `What type is ${formattedName}?`,
+        answer: types[0],
+        difficulty: getDifficulty(pokeData.id),
+        category: 'pokemon-type',
+        pokemonName,
+      };
+    }
+
+    case 'generation': {
+      // Ask what generation the Pokemon is from
+      // Accept either "gen X" or just the number
+      const genNumber = getGenerationNumber(pokeData.id);
+      return {
+        question: `What generation is ${formattedName} from? (Answer with Gen X or just the number)`,
+        answer: genNumber.toString(),
+        difficulty: getDifficulty(pokeData.id),
+        category: 'pokemon-generation',
+        pokemonName,
+      };
+    }
+
+    default: {
+      const generation = `Gen ${getGenerationNumber(pokeData.id)}`;
+      return {
+        question: `What type is ${formattedName}? (${generation})`,
+        answer: types[0],
+        difficulty: getDifficulty(pokeData.id),
+        category: 'pokemon-type',
+        pokemonName,
+      };
+    }
+  }
+}
+
+/**
+ * Get generation number from Pokemon ID
+ */
+function getGenerationNumber(pokemonId: number): number {
+  if (pokemonId <= 151) return 1;
+  if (pokemonId <= 251) return 2;
+  if (pokemonId <= 386) return 3;
+  if (pokemonId <= 493) return 4;
+  if (pokemonId <= 649) return 5;
+  if (pokemonId <= 721) return 6;
+  if (pokemonId <= 809) return 7;
+  if (pokemonId <= 905) return 8;
+  return 0;
+}
+
+/**
+ * Determine difficulty based on Pokemon ID (generation)
+ */
+function getDifficulty(pokemonId: number): 'easy' | 'medium' | 'hard' {
+  if (pokemonId <= 151) return 'easy'; // Gen 1
+  if (pokemonId <= 386) return 'medium'; // Gen 1-3
+  return 'hard'; // Gen 4+
 }
 
 export const quizQuestions: QuizQuestion[] = [
@@ -313,6 +563,38 @@ export function checkAnswer(
     str
       .toLowerCase()
       .trim()
-      .replace(/[.\-_]/g, ' ');
-  return normalize(userAnswer) === normalize(correctAnswer);
+      .replace(/[.\-_]/g, ' ')
+      .replace(/\s+/g, ' '); // Normalize multiple spaces to single space
+
+  const normalizedUser = normalize(userAnswer);
+  const normalizedCorrect = normalize(correctAnswer);
+
+  // Check for exact match
+  if (normalizedUser === normalizedCorrect) {
+    return true;
+  }
+
+  // For generation answers, accept "gen X", "generation X", or just "X"
+  const genMatch = normalizedUser.match(/^(?:gen(?:eration)?\s*)?(\d+)$/);
+  if (genMatch && genMatch[1] === correctAnswer) {
+    return true;
+  }
+
+  // For numeric answers (stats, height, weight), allow some tolerance
+  const userNum = parseFloat(userAnswer);
+  const correctNum = parseFloat(correctAnswer);
+  if (!isNaN(userNum) && !isNaN(correctNum)) {
+    // Allow exact match or within 1 unit for stats
+    return Math.abs(userNum - correctNum) <= 1;
+  }
+
+  // Check if user answer contains the correct answer (for abilities with spaces/hyphens)
+  if (
+    normalizedUser.includes(normalizedCorrect) ||
+    normalizedCorrect.includes(normalizedUser)
+  ) {
+    return true;
+  }
+
+  return false;
 }

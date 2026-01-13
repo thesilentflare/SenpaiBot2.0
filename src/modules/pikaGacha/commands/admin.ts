@@ -1,4 +1,11 @@
-import { Message, EmbedBuilder } from 'discord.js';
+import {
+  Message,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType,
+} from 'discord.js';
 import pokemonService from '../services/PokemonService';
 import { Pokemon, Trainer } from '../models';
 import { isAdmin } from '../../adminManager/helpers';
@@ -1002,6 +1009,234 @@ export async function handleVoiceStats(
     const embed = new EmbedBuilder()
       .setTitle('❌ Error')
       .setDescription('An error occurred while fetching voice stats.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
+}
+
+export async function handleDeleteTrainer(
+  message: Message,
+  args: string[],
+): Promise<void> {
+  // Admin-only check
+  if (!(await isAdmin(message.author.id, message.guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('This command is admin-only!')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  if (args.length < 1) {
+    const embed = new EmbedBuilder()
+      .setTitle('🗑️ Delete Trainer Usage')
+      .setDescription(
+        '**Usage:** `!pg deletetrainer <@user|user_id>`\n\n' +
+          '**Example:**\n' +
+          "• `!pg deletetrainer @User` - Delete User's trainer profile\n" +
+          '• `!pg deletetrainer 123456789012345678` - Delete trainer by ID\n\n' +
+          '⚠️ **WARNING:** This will permanently delete:\n' +
+          '• Trainer profile\n' +
+          '• All Pokémon in inventory\n' +
+          '• All items (Poké Balls, etc.)\n' +
+          '• Favorites\n' +
+          '• Jackpot entries\n' +
+          '• User pikapoints and savings\n\n' +
+          '**This action cannot be undone!**',
+      )
+      .setColor(ADMIN_COLOR);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  // Parse user mention or ID
+  const userMention = args[0];
+  const userId = userMention.replace(/[<@!>]/g, '');
+
+  try {
+    // Check if trainer exists
+    const trainer = await Trainer.findOne({ where: { userId } });
+
+    if (!trainer) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Trainer Not Found')
+        .setDescription('No trainer found with that ID!')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    // Try to get Discord user for display name
+    let displayName = userId;
+    try {
+      const discordUser = await message.client.users.fetch(userId);
+      displayName = discordUser.username;
+    } catch {
+      // Use trainer name as fallback
+      displayName = trainer.name || userId;
+    }
+
+    // Get stats before deletion
+    const { Inventory, Item, Favorite, Jackpot, User } =
+      await import('../models');
+    const inventoryCount = await Inventory.count({ where: { userId } });
+    const itemsCount = await Item.count({ where: { userId } });
+    const favoritesCount = await Favorite.count({ where: { userId } });
+    const jackpotCount = await Jackpot.count({ where: { userId } });
+    const user = await User.findOne({ where: { id: userId } });
+
+    // Create confirmation embed
+    const confirmEmbed = new EmbedBuilder()
+      .setTitle('⚠️ Confirm Trainer Deletion')
+      .setDescription(
+        `**Are you sure you want to delete ${displayName}'s trainer profile?**\n\n` +
+          '**This will permanently delete:**',
+      )
+      .addFields([
+        { name: 'Trainer Name', value: trainer.name || 'N/A', inline: true },
+        { name: 'Team', value: trainer.team || 'None', inline: true },
+        { name: 'Rank', value: trainer.rank || 'Recruit', inline: true },
+        {
+          name: 'Pokémon in Inventory',
+          value: inventoryCount.toString(),
+          inline: true,
+        },
+        { name: 'Items (Balls)', value: itemsCount.toString(), inline: true },
+        { name: 'Favorites', value: favoritesCount.toString(), inline: true },
+        {
+          name: 'Jackpot Entries',
+          value: jackpotCount.toString(),
+          inline: true,
+        },
+        {
+          name: 'Pikapoints',
+          value: user ? `${user.points.toLocaleString()}` : '0',
+          inline: true,
+        },
+        {
+          name: 'Savings',
+          value: user ? `${user.savings.toLocaleString()}` : '0',
+          inline: true,
+        },
+      ])
+      .setFooter({ text: '⚠️ This action cannot be undone!' })
+      .setColor(0xff0000);
+
+    // Create confirmation buttons
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId('delete_confirm')
+        .setLabel('✅ Confirm Delete')
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId('delete_cancel')
+        .setLabel('❌ Cancel')
+        .setStyle(ButtonStyle.Secondary),
+    );
+
+    const reply = await message.reply({
+      embeds: [confirmEmbed],
+      components: [row],
+    });
+
+    // Create button collector
+    const collector = reply.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 30000, // 30 seconds to confirm
+    });
+
+    collector.on('collect', async (interaction) => {
+      // Only the admin who ran the command can confirm
+      if (interaction.user.id !== message.author.id) {
+        await interaction.reply({
+          content: 'Only the admin who ran this command can confirm!',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      if (interaction.customId === 'delete_confirm') {
+        await interaction.deferUpdate();
+
+        try {
+          // Delete all related data
+          await Inventory.destroy({ where: { userId } });
+          await Item.destroy({ where: { userId } });
+          await Favorite.destroy({ where: { userId } });
+          await Jackpot.destroy({ where: { userId } });
+          await Trainer.destroy({ where: { userId } });
+
+          // Reset user points to 0
+          if (user) {
+            await user.update({ points: 0, savings: 0 });
+          }
+
+          const successEmbed = new EmbedBuilder()
+            .setTitle('✅ Trainer Deleted')
+            .setDescription(
+              `**${displayName}'s trainer profile has been permanently deleted.**\n\n` +
+                '**Deleted:**\n' +
+                `• Trainer profile\n` +
+                `• ${inventoryCount} Pokémon\n` +
+                `• ${itemsCount} items\n` +
+                `• ${favoritesCount} favorites\n` +
+                `• ${jackpotCount} jackpot entries\n` +
+                `• Pikapoints and savings reset to 0`,
+            )
+            .setColor(ADMIN_COLOR);
+
+          await interaction.editReply({
+            embeds: [successEmbed],
+            components: [],
+          });
+
+          Logger.info(
+            `Admin ${message.author.tag} deleted trainer ${displayName} (${userId})`,
+          );
+        } catch (error) {
+          Logger.error('Error deleting trainer', error);
+          const errorEmbed = new EmbedBuilder()
+            .setTitle('❌ Error')
+            .setDescription('An error occurred while deleting the trainer.')
+            .setColor(0xff0000);
+          await interaction.editReply({
+            embeds: [errorEmbed],
+            components: [],
+          });
+        }
+      } else if (interaction.customId === 'delete_cancel') {
+        await interaction.deferUpdate();
+        const cancelEmbed = new EmbedBuilder()
+          .setTitle('❌ Deletion Cancelled')
+          .setDescription('Trainer deletion was cancelled.')
+          .setColor(ADMIN_COLOR);
+        await interaction.editReply({
+          embeds: [cancelEmbed],
+          components: [],
+        });
+      }
+
+      collector.stop();
+    });
+
+    collector.on('end', async (collected, reason) => {
+      if (reason === 'time') {
+        const timeoutEmbed = new EmbedBuilder()
+          .setTitle('⏱️ Confirmation Timeout')
+          .setDescription('Deletion cancelled - confirmation timed out.')
+          .setColor(ADMIN_COLOR);
+        await reply.edit({
+          embeds: [timeoutEmbed],
+          components: [],
+        });
+      }
+    });
+  } catch (error) {
+    Logger.error('Error in deletetrainer command', error);
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Error')
+      .setDescription('An error occurred. Check logs for details.')
       .setColor(0xff0000);
     await message.reply({ embeds: [embed] });
   }

@@ -26,6 +26,7 @@ import {
   handleVoiceStats,
   handleUploadSeed,
   handleListSeeds,
+  handleDeleteTrainer,
 } from './commands/admin';
 import { handleRegister } from './commands/register';
 import { LeagueService } from './services/LeagueService';
@@ -298,6 +299,11 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'deletetrainer') {
+        await handleDeleteTrainer(message, args);
+        return true;
+      }
+
       // Unknown subcommand
       await message.reply(
         `❌ Unknown PikaGacha command: \`${subcommand}\`\n` +
@@ -456,6 +462,12 @@ class PikaGachaModule implements BotModule {
         command: '!pg listseeds',
         description: 'List all uploaded seed files',
         usage: '!pg listseeds',
+        adminOnly: true,
+      },
+      {
+        command: '!pg deletetrainer',
+        description: 'Permanently delete a trainer and all their data',
+        usage: '!pg deletetrainer <@user|user_id>',
         adminOnly: true,
       },
     ];

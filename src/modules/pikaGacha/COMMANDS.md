@@ -803,6 +803,78 @@ Give pikapoints to all registered trainers.
 
 ---
 
+### `!pg deletetrainer <@user|user_id>`
+
+**⚠️ DANGEROUS ADMIN COMMAND**
+
+Permanently delete a trainer and ALL their PikaGacha data.
+
+**Usage:**
+
+```
+!pg deletetrainer @User                    # Delete by mention
+!pg deletetrainer 123456789012345678       # Delete by ID
+```
+
+**Permissions:** Admins only  
+**Confirmation Required:** ✅ Yes (30 second button confirmation)
+
+**What it deletes:**
+
+- Trainer profile (name, team, rank, EXP)
+- All Pokemon in inventory
+- All items (Poké Balls, Great Balls, etc.)
+- All favorites
+- All jackpot entries
+- Resets pikapoints and savings to 0
+
+**⚠️ WARNING:**
+
+- **This action is permanent and cannot be undone!**
+- The user will need to register again to play
+- All progress, Pokemon, and items will be lost forever
+- A confirmation dialog will show all data before deletion
+
+**Confirmation Process:**
+
+1. Command shows preview with all data to be deleted
+2. Admin has 30 seconds to click "Confirm Delete" button
+3. Only the admin who ran the command can confirm
+4. Clicking "Cancel" or waiting 30 seconds cancels deletion
+
+**When to use:**
+
+- User requests data deletion
+- Banning a user from PikaGacha
+- Clearing inactive accounts
+- Testing/debugging (with permission)
+
+**Example:**
+
+```
+!pg deletetrainer @OldUser
+
+⚠️ Confirm Trainer Deletion
+Are you sure you want to delete OldUser's trainer profile?
+
+This will permanently delete:
+• Trainer Name: OldPlayer
+• Team: Electrocution
+• Rank: Captain
+• Pokémon in Inventory: 47
+• Items (Balls): 12
+• Favorites: 5
+• Jackpot Entries: 3
+• Pikapoints: 2,450
+• Savings: 1,000
+
+[✅ Confirm Delete] [❌ Cancel]
+
+⚠️ This action cannot be undone!
+```
+
+---
+
 ## Support & Troubleshooting
 
 **"You don't have enough pikapoints!"**

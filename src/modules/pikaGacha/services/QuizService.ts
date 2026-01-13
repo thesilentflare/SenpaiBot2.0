@@ -8,7 +8,11 @@ import {
 import { UserService } from './UserService';
 import { TrainerService } from './TrainerService';
 import { ItemService } from './ItemService';
-import { getRandomQuestion, checkAnswer } from '../config/quizQuestions';
+import {
+  getRandomQuestion,
+  checkAnswer,
+  getRandomTextQuizQuestion,
+} from '../config/quizQuestions';
 import {
   getRandomSpriteQuestion,
   checkSpriteAnswer,
@@ -239,7 +243,47 @@ export class QuizService {
         return;
       }
 
-      const question = getRandomQuestion();
+      // Get dynamic question from PokeAPI
+      const question = await getRandomTextQuizQuestion();
+
+      if (!question) {
+        logger.error(
+          'Failed to generate text quiz question, falling back to hardcoded questions',
+        );
+        const fallbackQuestion = getRandomQuestion();
+        const embed = new EmbedBuilder()
+          .setColor(0x9370db)
+          .setTitle('🧠 PikaGacha Quiz!')
+          .setDescription(
+            `**${fallbackQuestion.question}**\n\n` +
+              `Difficulty: ${fallbackQuestion.difficulty.toUpperCase()}\n` +
+              `Category: ${fallbackQuestion.category}\n\n` +
+              `Reply with your answer within ${QUIZ_TIMEOUT_MS / 1000} seconds!\n` +
+              `Correct answers earn **${BASE_REWARD}-${MAX_REWARD}** pikapoints based on your streak!`,
+          )
+          .setFooter({ text: 'PikaGacha Quiz' })
+          .setTimestamp();
+
+        const message = await (channel as TextChannel).send({
+          embeds: [embed],
+        });
+
+        const timeout = setTimeout(() => {
+          this.handleQuizTimeout(message);
+        }, QUIZ_TIMEOUT_MS);
+
+        this.activeQuiz = {
+          question: fallbackQuestion.question,
+          answer: fallbackQuestion.answer,
+          messageId: message.id,
+          timeout,
+          type: 'text',
+        };
+
+        logger.info(`Posted fallback text quiz: ${fallbackQuestion.question}`);
+        return;
+      }
+
       const embed = new EmbedBuilder()
         .setColor(0x9370db)
         .setTitle('🧠 PikaGacha Quiz!')
@@ -268,7 +312,9 @@ export class QuizService {
         type: 'text',
       };
 
-      logger.info(`Posted text quiz: ${question.question}`);
+      logger.info(
+        `Posted text quiz: ${question.question} (Pokemon: ${question.pokemonName || 'N/A'})`,
+      );
     } catch (error) {
       logger.error('Error posting quiz:', error);
     }

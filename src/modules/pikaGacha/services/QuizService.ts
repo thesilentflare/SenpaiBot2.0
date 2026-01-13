@@ -43,6 +43,7 @@ export class QuizService {
   } | null = null;
   private quizInterval: NodeJS.Timeout | null = null;
   private isInitialized: boolean = false;
+  private isPostingQuiz: boolean = false; // Prevent concurrent quiz posts
   private static instanceCount = 0;
   private instanceId: number;
 
@@ -51,13 +52,17 @@ export class QuizService {
     this.userService = UserService.getInstance();
     this.trainerService = TrainerService.getInstance();
     this.itemService = new ItemService();
-    logger.debug(`QuizService constructor called (instance #${this.instanceId})`);
+    logger.debug(
+      `QuizService constructor called (instance #${this.instanceId})`,
+    );
   }
 
   public static getInstance(): QuizService {
     if (!QuizService.instance) {
       QuizService.instance = new QuizService();
-      logger.debug(`QuizService singleton instance created (#${QuizService.instance.instanceId})`);
+      logger.debug(
+        `QuizService singleton instance created (#${QuizService.instance.instanceId})`,
+      );
     }
     return QuizService.instance;
   }
@@ -67,11 +72,15 @@ export class QuizService {
    */
   public initializeQuiz(client: Client, channelId: string): void {
     if (this.isInitialized) {
-      logger.warn(`[Instance #${this.instanceId}] initializeQuiz called but already initialized - ignoring`);
+      logger.warn(
+        `[Instance #${this.instanceId}] initializeQuiz called but already initialized - ignoring`,
+      );
       return;
     }
 
-    logger.info(`[Instance #${this.instanceId}] initializeQuiz called (channel: ${channelId})`);
+    logger.info(
+      `[Instance #${this.instanceId}] initializeQuiz called (channel: ${channelId})`,
+    );
     // Clear any existing timers first to prevent duplicate schedules
     this.stopQuiz();
 
@@ -121,7 +130,9 @@ export class QuizService {
   private scheduleNextQuiz(): void {
     // Safety check: Clear any existing interval first
     if (this.quizInterval) {
-      logger.warn('scheduleNextQuiz called but interval already exists! Clearing it first.');
+      logger.warn(
+        'scheduleNextQuiz called but interval already exists! Clearing it first.',
+      );
       clearTimeout(this.quizInterval);
       this.quizInterval = null;
     }
@@ -133,12 +144,25 @@ export class QuizService {
     logger.debug(`scheduleNextQuiz called, scheduling ${quizType} quiz`);
 
     const timerId = setTimeout(() => {
-      logger.info(`Quiz timeout triggered for ${quizType} quiz at ${new Date().toLocaleTimeString()}`);
+      logger.info(
+        `Quiz timeout triggered for ${quizType} quiz at ${new Date().toLocaleTimeString()}`,
+      );
+      
+      // Prevent concurrent quiz posts
+      if (this.isPostingQuiz) {
+        logger.warn('Already posting a quiz, skipping this trigger');
+        return;
+      }
+      
+      this.isPostingQuiz = true;
+      
       if (quizType === 'text') {
         this.postQuiz();
       } else {
         this.postSpriteQuiz();
       }
+      
+      this.isPostingQuiz = false;
       this.scheduleNextQuiz(); // Schedule the next one after posting
     }, delay);
 

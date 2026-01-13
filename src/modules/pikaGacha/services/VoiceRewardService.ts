@@ -97,14 +97,16 @@ export class VoiceRewardService {
           await this.userService.updateUser(userId, {
             voiceChannelJoinTime: null,
           });
-          logger.info(`Not enough members for ${username} - tracking not started`);
+          logger.info(
+            `Not enough members for ${username} - tracking not started`,
+          );
         }
       }
 
       // User left a voice channel
       if (leftChannel) {
         logger.info(`User ${username} left voice channel`);
-        
+
         // Award any pending rewards before clearing
         await this.checkAndRewardUser(userId);
 

@@ -8,12 +8,7 @@ import * as path from 'path';
 import Logger from '../../../utils/logger';
 
 const SEED_DATA_DIR = path.join(process.cwd(), 'seed_data');
-const DEFAULT_SEED_FILE = path.join(
-  __dirname,
-  '..',
-  'scripts',
-  'pokedata.csv',
-);
+const DEFAULT_SEED_FILE = path.join(__dirname, '..', 'scripts', 'pokedata.csv');
 
 /**
  * Ensure seed_data directory exists

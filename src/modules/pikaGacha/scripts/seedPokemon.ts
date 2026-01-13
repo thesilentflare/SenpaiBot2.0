@@ -52,6 +52,7 @@ function parsePokemonCSV(filePath: string): PokemonData[] {
  * Determine regionId based on Pokemon ID
  */
 function getRegionId(pokemonId: number): number {
+  if (pokemonId >= 10000) return 0; // Special
   if (pokemonId <= 151) return 1; // Kanto
   if (pokemonId <= 251) return 2; // Johto
   if (pokemonId <= 386) return 3; // Hoenn
@@ -59,9 +60,9 @@ function getRegionId(pokemonId: number): number {
   if (pokemonId <= 649) return 5; // Unova
   if (pokemonId <= 721) return 6; // Kalos
   if (pokemonId <= 809) return 7; // Alola
-  if (pokemonId <= 905) return 9; // Galar
-  if (pokemonId <= 1025) return 10; // Paldea
-  return 8; // Special
+  if (pokemonId <= 905) return 8; // Galar
+  if (pokemonId <= 1025) return 9; // Paldea
+  return 0; // Special (fallback)
 }
 
 /**

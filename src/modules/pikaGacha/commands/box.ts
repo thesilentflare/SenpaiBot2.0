@@ -21,7 +21,6 @@ const ROWS = 4;
 const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 450;
 
-
 /**
  * Generate a sprite grid image for the given Pokemon list
  */
@@ -52,13 +51,13 @@ async function generateBoxImage(
   for (const item of pokemonList) {
     try {
       const spriteUrl = getSpriteUrl(item.pokemon.id);
-      
+
       // Download sprite
       const response = await axios.get(spriteUrl, {
         responseType: 'arraybuffer',
         timeout: 5000,
       });
-      
+
       const img = await loadImage(Buffer.from(response.data));
 
       // Calculate position (sprites are 100x100 pixels)
@@ -75,7 +74,10 @@ async function generateBoxImage(
         y++;
       }
     } catch (error) {
-      Logger.warn(`Failed to load sprite for Pokemon #${item.pokemon.id}`, error);
+      Logger.warn(
+        `Failed to load sprite for Pokemon #${item.pokemon.id}`,
+        error,
+      );
       // Continue to next Pokemon on error
       x++;
       if (x >= COLS) {
@@ -130,7 +132,9 @@ export async function handleBox(
     let currentPage = 0;
 
     // Function to generate image for a specific page
-    const generatePageImage = async (page: number): Promise<AttachmentBuilder> => {
+    const generatePageImage = async (
+      page: number,
+    ): Promise<AttachmentBuilder> => {
       const start = page * POKEMON_PER_PAGE;
       const end = Math.min(start + POKEMON_PER_PAGE, inventory.length);
       const pageInventory = inventory.slice(start, end);
@@ -159,7 +163,11 @@ export async function handleBox(
     const messageContent = `${username}'s party (page ${currentPage + 1})`;
     const response =
       totalPages > 1
-        ? await message.reply({ content: messageContent, files: [attachment], components: [row] })
+        ? await message.reply({
+            content: messageContent,
+            files: [attachment],
+            components: [row],
+          })
         : await message.reply({ content: messageContent, files: [attachment] });
 
     // If only one page, no need for interaction handling
@@ -191,7 +199,7 @@ export async function handleBox(
       // Generate new image
       const newAttachment = await generatePageImage(currentPage);
       const newMessageContent = `${username}'s party (page ${currentPage + 1})`;
-      
+
       // Update buttons
       const newRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
@@ -206,10 +214,10 @@ export async function handleBox(
           .setDisabled(currentPage === totalPages - 1),
       );
 
-      await interaction.update({ 
-        content: newMessageContent, 
-        files: [newAttachment], 
-        components: [newRow] 
+      await interaction.update({
+        content: newMessageContent,
+        files: [newAttachment],
+        components: [newRow],
       });
     });
 
@@ -236,9 +244,13 @@ export async function handleBox(
       }
     });
 
-    Logger.info(`${username} viewed their Pokemon box (${inventory.length} species, page ${currentPage + 1}/${totalPages})`);
+    Logger.info(
+      `${username} viewed their Pokemon box (${inventory.length} species, page ${currentPage + 1}/${totalPages})`,
+    );
   } catch (error) {
     Logger.error('Error handling box command', error);
-    await message.reply('❌ An error occurred while loading the box. Please try again.');
+    await message.reply(
+      '❌ An error occurred while loading the box. Please try again.',
+    );
   }
 }

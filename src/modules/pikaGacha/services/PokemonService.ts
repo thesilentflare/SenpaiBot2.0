@@ -92,7 +92,7 @@ export class PokemonService {
     const result: { [regionName: string]: Pokemon[] } = {};
 
     for (const region of Object.values(REGIONS)) {
-      if (region.id === 8) continue; // Skip special region
+      if (region.id === 0) continue; // Skip special region
       const focus = await this.getFocusPokemon(region);
       result[region.name] = focus;
     }
@@ -111,7 +111,7 @@ export class PokemonService {
     };
 
     // For special region, only get active ones
-    if (region.id === 8) {
+    if (region.id === 0) {
       where.active = true;
     }
 

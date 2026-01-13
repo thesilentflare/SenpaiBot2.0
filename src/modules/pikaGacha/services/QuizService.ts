@@ -147,21 +147,21 @@ export class QuizService {
       logger.info(
         `Quiz timeout triggered for ${quizType} quiz at ${new Date().toLocaleTimeString()}`,
       );
-      
+
       // Prevent concurrent quiz posts
       if (this.isPostingQuiz) {
         logger.warn('Already posting a quiz, skipping this trigger');
         return;
       }
-      
+
       this.isPostingQuiz = true;
-      
+
       if (quizType === 'text') {
         this.postQuiz();
       } else {
         this.postSpriteQuiz();
       }
-      
+
       this.isPostingQuiz = false;
       this.scheduleNextQuiz(); // Schedule the next one after posting
     }, delay);

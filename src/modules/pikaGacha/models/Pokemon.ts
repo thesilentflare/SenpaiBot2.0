@@ -48,8 +48,8 @@ Pokemon.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
-        min: 1,
-        max: 8,
+        min: 0,
+        max: 7,
       },
     },
     bst: {

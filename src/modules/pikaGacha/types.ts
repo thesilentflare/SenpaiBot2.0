@@ -12,16 +12,17 @@ export const SINNOH: Region = { name: 'Sinnoh', id: 4, min: 387, max: 493 };
 export const UNOVA: Region = { name: 'Unova', id: 5, min: 494, max: 649 };
 export const KALOS: Region = { name: 'Kalos', id: 6, min: 650, max: 721 };
 export const ALOLA: Region = { name: 'Alola', id: 7, min: 722, max: 809 };
-export const GALAR: Region = { name: 'Galar', id: 9, min: 810, max: 905 };
-export const PALDEA: Region = { name: 'Paldea', id: 10, min: 906, max: 1025 };
+export const GALAR: Region = { name: 'Galar', id: 8, min: 810, max: 905 };
+export const PALDEA: Region = { name: 'Paldea', id: 9, min: 906, max: 1025 };
 export const SPECIAL: Region = {
   name: 'Special',
-  id: 8,
+  id: 0,
   min: 10000,
   max: 11000,
 };
 
 export const REGIONS: Region[] = [
+  SPECIAL,
   KANTO,
   JOHTO,
   HOENN,
@@ -31,10 +32,19 @@ export const REGIONS: Region[] = [
   ALOLA,
   GALAR,
   PALDEA,
-  SPECIAL,
 ];
 
-export const REGION_LIST = [KANTO, JOHTO, HOENN, SINNOH, UNOVA, KALOS, ALOLA, GALAR, PALDEA];
+export const REGION_LIST = [
+  KANTO,
+  JOHTO,
+  HOENN,
+  SINNOH,
+  UNOVA,
+  KALOS,
+  ALOLA,
+  GALAR,
+  PALDEA,
+];
 
 export function getRegionById(id: number): Region | null {
   return REGIONS.find((r) => r.id === id) || null;

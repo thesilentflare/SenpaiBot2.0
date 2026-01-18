@@ -59,7 +59,9 @@ export async function handleFavorite(
     if (isFavorite === null) {
       const embed = new EmbedBuilder()
         .setTitle('❌ Max Favorites Reached')
-        .setDescription('You have reached the maximum number of favorites! Remove a favorite first.')
+        .setDescription(
+          'You have reached the maximum number of favorites! Remove a favorite first.',
+        )
         .setColor(COLOR_ERROR);
       await message.reply({ embeds: [embed] });
       return;

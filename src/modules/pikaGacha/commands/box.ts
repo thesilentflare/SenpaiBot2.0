@@ -15,10 +15,10 @@ import axios from 'axios';
 
 const POKEMON_PER_PAGE = 32; // 8x4 grid
 const INTERACTION_TIMEOUT = 120000; // 2 minutes
-const SPRITE_SIZE = 48; // Further reduced for faster generation
+const SPRITE_SIZE = 64; // Increased size now that we load in parallel
 const COLS = 8;
-const CANVAS_WIDTH = 384; // Further reduced for faster generation
-const CANVAS_HEIGHT = 192; // Further reduced for faster generation
+const CANVAS_WIDTH = 512; // 8 cols * 64px
+const CANVAS_HEIGHT = 256; // 4 rows * 64px
 
 /**
  * Generate a sprite grid image for the given Pokemon list
@@ -43,46 +43,46 @@ async function generateBoxImage(
   // Draw background
   ctx.drawImage(background, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  // Load and draw each Pokemon sprite
-  let x = 0;
-  let y = 0;
-
-  for (const item of pokemonList) {
+  // Load ALL sprites in parallel for maximum speed
+  const spritePromises = pokemonList.map(async (item) => {
     try {
       const spriteUrl = getSpriteUrl(item.pokemon.id);
-
-      // Download sprite
       const response = await axios.get(spriteUrl, {
         responseType: 'arraybuffer',
         timeout: 5000,
       });
-
-      const img = await loadImage(Buffer.from(response.data));
-
-      // Calculate position (sprites are 100x100 pixels)
-      const offsetX = x * SPRITE_SIZE;
-      const offsetY = y * SPRITE_SIZE;
-
-      // Draw sprite (resize from original size to 100x100)
-      ctx.drawImage(img, offsetX, offsetY, SPRITE_SIZE, SPRITE_SIZE);
-
-      // Move to next position
-      x++;
-      if (x >= COLS) {
-        x = 0;
-        y++;
-      }
+      return {
+        img: await loadImage(Buffer.from(response.data)),
+        pokemonId: item.pokemon.id,
+      };
     } catch (error) {
       Logger.warn(
         `Failed to load sprite for Pokemon #${item.pokemon.id}`,
         error,
       );
-      // Continue to next Pokemon on error
-      x++;
-      if (x >= COLS) {
-        x = 0;
-        y++;
-      }
+      return null;
+    }
+  });
+
+  // Wait for all sprites to load
+  const sprites = await Promise.all(spritePromises);
+
+  // Draw all loaded sprites
+  let x = 0;
+  let y = 0;
+
+  for (const sprite of sprites) {
+    if (sprite) {
+      const offsetX = x * SPRITE_SIZE;
+      const offsetY = y * SPRITE_SIZE;
+      ctx.drawImage(sprite.img, offsetX, offsetY, SPRITE_SIZE, SPRITE_SIZE);
+    }
+
+    // Move to next position
+    x++;
+    if (x >= COLS) {
+      x = 0;
+      y++;
     }
   }
 
@@ -96,14 +96,24 @@ export async function handleBox(
   // Check if viewing another user's box
   let userId = message.author.id;
   let username = message.author.username;
+  let favoritesOnly = false;
 
-  if (args.length > 0) {
+  // Check for --favorites or -f flag
+  const filteredArgs = args.filter((arg) => {
+    if (arg === '--favorites' || arg === '-f') {
+      favoritesOnly = true;
+      return false;
+    }
+    return true;
+  });
+
+  if (filteredArgs.length > 0) {
     // Try to extract user ID from mention or direct ID
-    const mention = args[0].match(/^<@!?(\d+)>$/);
+    const mention = filteredArgs[0].match(/^<@!?(\d+)>$/);
     if (mention) {
       userId = mention[1];
-    } else if (/^\d+$/.test(args[0])) {
-      userId = args[0];
+    } else if (/^\d+$/.test(filteredArgs[0])) {
+      userId = filteredArgs[0];
     }
 
     try {
@@ -117,16 +127,27 @@ export async function handleBox(
 
   try {
     // Get user's full inventory with counts
-    const inventory = await inventoryService.getInventoryWithCounts(userId);
+    let inventory = await inventoryService.getInventoryWithCounts(userId);
+
+    // Filter to favorites if flag is set
+    if (favoritesOnly) {
+      const favorites = await inventoryService.getFavorites(userId);
+      const favoriteIds = new Set(favorites.map((f) => f.pokemonId));
+      inventory = inventory.filter((item) => favoriteIds.has(item.pokemon.id));
+    }
 
     if (inventory.length === 0) {
-      await message.reply(`📦 ${username} has no Pokémon in their box!`);
+      const emptyMessage = favoritesOnly
+        ? `⭐ ${username} has no favorite Pokémon!`
+        : `📦 ${username} has no Pokémon in their box!`;
+      await message.reply(emptyMessage);
       return;
     }
 
     // Send loading message
+    const boxType = favoritesOnly ? 'favorites' : 'box';
     const loadingMessage = await message.reply(
-      `📦 Loading ${username}'s box... (${inventory.length} unique Pokémon)`,
+      `📦 Loading ${username}'s ${boxType}... (${inventory.length} unique Pokémon)`,
     );
 
     // Sort by Pokemon ID
@@ -164,7 +185,10 @@ export async function handleBox(
         .setDisabled(currentPage === totalPages - 1),
     );
 
-    const messageContent = `${username}'s party (page ${currentPage + 1}/${totalPages})`;
+    const boxTitle = favoritesOnly
+      ? `${username}'s favorites ⭐`
+      : `${username}'s party`;
+    const messageContent = `${boxTitle} (page ${currentPage + 1}/${totalPages})`;
 
     // Edit the loading message with the final result
     const response =

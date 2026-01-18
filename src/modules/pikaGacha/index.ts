@@ -373,7 +373,7 @@ class PikaGachaModule implements BotModule {
       {
         command: '!pg box',
         description: 'View Pokémon collection with sprites (paginated)',
-        usage: '!pg box [user]',
+        usage: '!pg box [user] [--favorites|-f]',
       },
       {
         command: '!pg release',

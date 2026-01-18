@@ -2,6 +2,10 @@ import {
   TEAM_ELECTROCUTION_EMOJI_ID,
   TEAM_LENSFLARE_EMOJI_ID,
   TEAM_HYPERJOY_EMOJI_ID,
+  GACHA_COST as GACHA_COST_CONFIG,
+  JACKPOT_CONTRIBUTION as JACKPOT_CONTRIBUTION_CONFIG,
+  MIN_BALANCE as MIN_BALANCE_CONFIG,
+  TEAM_SWITCH_COST as TEAM_SWITCH_COST_CONFIG,
 } from './config/config';
 
 export interface Region {
@@ -160,9 +164,9 @@ export const RELEASE_VALUES: { [rarity: number]: number } = {
   8: 45,
 };
 
-export const GACHA_COST = 30;
-export const JACKPOT_CONTRIBUTION = 3;
-export const MIN_BALANCE = -100;
+export const GACHA_COST = GACHA_COST_CONFIG;
+export const JACKPOT_CONTRIBUTION = JACKPOT_CONTRIBUTION_CONFIG;
+export const MIN_BALANCE = MIN_BALANCE_CONFIG;
 
 export const TEAMS = {
   ELECTROCUTION: {
@@ -197,7 +201,7 @@ export const TEAMS = {
   },
 };
 
-export const TEAM_SWITCH_COST = 420;
+export const TEAM_SWITCH_COST = TEAM_SWITCH_COST_CONFIG;
 
 export const RANKS = [
   { name: 'Rookie', expRequired: 0 },

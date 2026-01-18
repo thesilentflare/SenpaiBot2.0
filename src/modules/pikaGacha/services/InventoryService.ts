@@ -2,6 +2,7 @@ import { Inventory, Pokemon, Favorite } from '../models';
 import { Op } from 'sequelize';
 import { Region } from '../types';
 import Logger from '../../../utils/logger';
+import { MAX_FAVORITES } from '../config/config';
 
 export interface PokemonWithCount {
   pokemon: Pokemon;
@@ -313,8 +314,9 @@ export class InventoryService {
 
   /**
    * Toggle favorite status
+   * @returns true if added, false if removed, null if max favorites reached
    */
-  async toggleFavorite(userId: string, pokemonId: number): Promise<boolean> {
+  async toggleFavorite(userId: string, pokemonId: number): Promise<boolean | null> {
     try {
       const existing = await Favorite.findOne({ where: { userId, pokemonId } });
 
@@ -323,6 +325,13 @@ export class InventoryService {
         Logger.debug(`User ${userId} unfavorited pokemon ${pokemonId}`);
         return false; // Removed from favorites
       } else {
+        // Check if user has reached max favorites
+        const currentFavorites = await Favorite.count({ where: { userId } });
+        if (currentFavorites >= MAX_FAVORITES) {
+          Logger.debug(`User ${userId} has reached max favorites (${MAX_FAVORITES})`);
+          return null; // Max favorites reached
+        }
+        
         await Favorite.create({ userId, pokemonId });
         Logger.debug(`User ${userId} favorited pokemon ${pokemonId}`);
         return true; // Added to favorites

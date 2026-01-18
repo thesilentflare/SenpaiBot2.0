@@ -2,6 +2,7 @@ import { Message, EmbedBuilder, MessageReaction, User } from 'discord.js';
 import trainerService from '../services/TrainerService';
 import userService from '../services/UserService';
 import { TEAMS } from '../types';
+import { STARTER_BONUS } from '../config/config';
 import Logger from '../../../utils/logger';
 
 const COLOR = 0xffd700; // Gold color for PikaGacha
@@ -77,7 +78,6 @@ export async function handleRegister(
 
     // New registration - give starter bonus
     if (result.status === 'created') {
-      const STARTER_BONUS = 100;
       await userService.adjustPoints(message.author.id, STARTER_BONUS);
 
       const welcomeEmbed = new EmbedBuilder()
@@ -145,7 +145,9 @@ async function promptTeamSelection(
     const lensflareId = TEAMS.LENSFLARE.emojiId;
     const hyperjoyId = TEAMS.HYPERJOY.emojiId;
 
-    Logger.info(`Team emoji IDs: ${electrocutionId}, ${lensflareId}, ${hyperjoyId}`);
+    Logger.info(
+      `Team emoji IDs: ${electrocutionId}, ${lensflareId}, ${hyperjoyId}`,
+    );
 
     // Add reaction emojis
     await teamMessage.react(electrocutionId);
@@ -154,7 +156,9 @@ async function promptTeamSelection(
 
     // Create reaction collector
     const filter = (reaction: MessageReaction, user: User) => {
-      Logger.info(`Reaction filter - User: ${user.id}, Author: ${message.author.id}, Emoji ID: ${reaction.emoji.id}`);
+      Logger.info(
+        `Reaction filter - User: ${user.id}, Author: ${message.author.id}, Emoji ID: ${reaction.emoji.id}`,
+      );
       return (
         user.id === message.author.id &&
         [electrocutionId, lensflareId, hyperjoyId].includes(

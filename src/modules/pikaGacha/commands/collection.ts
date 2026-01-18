@@ -10,10 +10,11 @@ import pokemonService from '../services/PokemonService';
 import inventoryService from '../services/InventoryService';
 import Logger from '../../../utils/logger';
 import { getRegionByPokemonId, SPECIAL_POKEMON } from '../types';
+import { COLLECTION_ITEMS_PER_PAGE } from '../config/config';
 
 const COLOR_GOLD = 0xffd700;
 const COLOR_ERROR = 0xff0000;
-const ITEMS_PER_PAGE = 20; // Pokemon per page
+const ITEMS_PER_PAGE = COLLECTION_ITEMS_PER_PAGE;
 const INTERACTION_TIMEOUT = 120000; // 2 minutes
 
 export async function handlePokedex(

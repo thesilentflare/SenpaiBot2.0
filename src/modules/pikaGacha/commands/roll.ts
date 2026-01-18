@@ -3,9 +3,8 @@ import gachaService from '../services/GachaService';
 import userService from '../services/UserService';
 import Logger from '../../../utils/logger';
 import { SPECIAL_POKEMON, getRegionByName } from '../types';
-import { ALLOWED_ROLL_CHANNEL_IDS } from '../config/config';
+import { ALLOWED_ROLL_CHANNEL_IDS, ROLL_COST } from '../config/config';
 
-const ROLL_COST = 30;
 const COLOR_ERROR = 0xff0000;
 
 export async function handleRoll(

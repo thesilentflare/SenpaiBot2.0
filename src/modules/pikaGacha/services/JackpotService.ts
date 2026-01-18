@@ -2,6 +2,7 @@ import { Jackpot } from '../models';
 import userService from './UserService';
 import itemService from './ItemService';
 import trainerService from './TrainerService';
+import { JACKPOT_MYTHIC_MULTIPLIER } from '../config/config';
 import Logger from '../../../utils/logger';
 
 export interface JackpotPayout {
@@ -89,7 +90,7 @@ export class JackpotService {
     // Determine multiplier
     let multiplier = 1;
     if (rarity === 7) {
-      multiplier = 2; // Mythic doubles jackpot
+      multiplier = JACKPOT_MYTHIC_MULTIPLIER;
     }
 
     const adjustedJackpot = totalJackpot * multiplier;

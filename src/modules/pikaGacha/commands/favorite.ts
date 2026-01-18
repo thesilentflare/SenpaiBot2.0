@@ -55,6 +55,16 @@ export async function handleFavorite(
       pokemon.id,
     );
 
+    // Check if max favorites reached
+    if (isFavorite === null) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Max Favorites Reached')
+        .setDescription('You have reached the maximum number of favorites! Remove a favorite first.')
+        .setColor(COLOR_ERROR);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
     const action = isFavorite ? 'added to' : 'removed from';
     const emoji = isFavorite ? '⭐' : '🚫';
     const embed = new EmbedBuilder()

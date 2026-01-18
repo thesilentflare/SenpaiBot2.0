@@ -10,22 +10,39 @@ import { createCanvas, loadImage } from 'canvas';
 import inventoryService from '../services/InventoryService';
 import Logger from '../../../utils/logger';
 import { getSpriteUrl } from '../config/spriteQuizQuestions';
+import {
+  BOX_POKEMON_PER_PAGE,
+  BOX_SPRITE_SIZE,
+  BOX_COLS,
+  BOX_INTERACTION_TIMEOUT,
+} from '../config/config';
 import path from 'path';
 import axios from 'axios';
 
-const POKEMON_PER_PAGE = 32; // 8x4 grid
-const INTERACTION_TIMEOUT = 120000; // 2 minutes
-const SPRITE_SIZE = 64; // Increased size now that we load in parallel
-const COLS = 8;
-const CANVAS_WIDTH = 512; // 8 cols * 64px
-const CANVAS_HEIGHT = 256; // 4 rows * 64px
+const POKEMON_PER_PAGE = BOX_POKEMON_PER_PAGE;
+const INTERACTION_TIMEOUT = BOX_INTERACTION_TIMEOUT;
+
+// Default box settings
+const DEFAULT_SPRITE_SIZE = BOX_SPRITE_SIZE;
+const DEFAULT_COLS = BOX_COLS;
+
+// Favorites box settings (larger sprites, 3x2 grid)
+const FAVORITES_SPRITE_SIZE = 96; // Larger sprites for favorites
+const FAVORITES_COLS = 3;
 
 /**
  * Generate a sprite grid image for the given Pokemon list
  */
 async function generateBoxImage(
   pokemonList: Array<{ pokemon: { id: number; name: string }; count: number }>,
+  isFavorites: boolean = false,
 ): Promise<Buffer> {
+  // Use different settings for favorites vs regular box
+  const SPRITE_SIZE = isFavorites ? FAVORITES_SPRITE_SIZE : DEFAULT_SPRITE_SIZE;
+  const COLS = isFavorites ? FAVORITES_COLS : DEFAULT_COLS;
+  const CANVAS_WIDTH = COLS * SPRITE_SIZE;
+  const CANVAS_HEIGHT = Math.ceil(pokemonList.length / COLS) * SPRITE_SIZE;
+
   // Load background image
   const backgroundPath = path.join(
     __dirname,
@@ -160,7 +177,10 @@ export async function handleBox(
     const start = 0;
     const end = Math.min(POKEMON_PER_PAGE, inventory.length);
     const firstPageInventory = inventory.slice(start, end);
-    const firstPageBuffer = await generateBoxImage(firstPageInventory);
+    const firstPageBuffer = await generateBoxImage(
+      firstPageInventory,
+      favoritesOnly,
+    );
     const firstPageAttachment = new AttachmentBuilder(firstPageBuffer, {
       name: 'box_page_0.png',
     });
@@ -213,7 +233,10 @@ export async function handleBox(
         const end = Math.min(start + POKEMON_PER_PAGE, inventory.length);
         const pageInventory = inventory.slice(start, end);
 
-        const imageBuffer = await generateBoxImage(pageInventory);
+        const imageBuffer = await generateBoxImage(
+          pageInventory,
+          favoritesOnly,
+        );
         pageAttachments[page] = new AttachmentBuilder(imageBuffer, {
           name: `box_page_${page}.png`,
         });
@@ -257,7 +280,10 @@ export async function handleBox(
         const start = currentPage * POKEMON_PER_PAGE;
         const end = Math.min(start + POKEMON_PER_PAGE, inventory.length);
         const pageInventory = inventory.slice(start, end);
-        const imageBuffer = await generateBoxImage(pageInventory);
+        const imageBuffer = await generateBoxImage(
+          pageInventory,
+          favoritesOnly,
+        );
         newAttachment = new AttachmentBuilder(imageBuffer, {
           name: `box_page_${currentPage}.png`,
         });

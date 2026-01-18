@@ -84,3 +84,32 @@ export const VOICE_REWARD_INTERVAL_MS = parseInt(
 export const VOICE_REWARD_POINTS = parseInt(
   process.env.VOICE_REWARD_POINTS || '2',
 ); // Points per interval
+
+// Game Economy Constants
+export const ROLL_COST = parseInt(process.env.ROLL_COST || '30'); // Cost per roll
+export const GACHA_COST = parseInt(process.env.GACHA_COST || '30'); // Cost per gacha
+export const JACKPOT_CONTRIBUTION = parseInt(
+  process.env.JACKPOT_CONTRIBUTION || '3',
+); // Points per roll to jackpot
+export const MIN_BALANCE = parseInt(process.env.MIN_BALANCE || '-100'); // Minimum allowed balance
+export const STARTER_BONUS = parseInt(process.env.STARTER_BONUS || '100'); // Starter pikapoints for new trainers
+export const TEAM_SWITCH_COST = parseInt(process.env.TEAM_SWITCH_COST || '420'); // Cost to switch teams
+export const JACKPOT_MYTHIC_MULTIPLIER = parseInt(
+  process.env.JACKPOT_MYTHIC_MULTIPLIER || '2',
+); // Mythic jackpot multiplier
+
+// Box/UI Constants
+export const BOX_POKEMON_PER_PAGE = parseInt(
+  process.env.BOX_POKEMON_PER_PAGE || '32',
+); // Pokemon per page in box view
+export const BOX_SPRITE_SIZE = parseInt(process.env.BOX_SPRITE_SIZE || '64'); // Sprite size in pixels
+export const BOX_COLS = parseInt(process.env.BOX_COLS || '8'); // Number of columns
+export const BOX_INTERACTION_TIMEOUT = parseInt(
+  process.env.BOX_INTERACTION_TIMEOUT || '120000',
+); // 2 minutes
+
+// Collection/Inventory Constants
+export const COLLECTION_ITEMS_PER_PAGE = parseInt(
+  process.env.COLLECTION_ITEMS_PER_PAGE || '20',
+); // Items per page in collection
+export const MAX_FAVORITES = parseInt(process.env.MAX_FAVORITES || '6'); // Maximum favorite Pokemon

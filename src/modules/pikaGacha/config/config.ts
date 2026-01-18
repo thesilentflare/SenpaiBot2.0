@@ -21,6 +21,19 @@ try {
 // Quiz System Configuration
 export const QUIZ_CHANNEL_ID = process.env.QUIZ_CHANNEL_ID || '';
 
+// Roll Command Configuration
+export const ALLOWED_ROLL_CHANNEL_IDS = process.env.ALLOWED_ROLL_CHANNEL_IDS
+  ? JSON.parse(process.env.ALLOWED_ROLL_CHANNEL_IDS)
+  : [];
+
+// Team Emoji Configuration
+export const TEAM_ELECTROCUTION_EMOJI_ID =
+  process.env.TEAM_ELECTROCUTION_EMOJI_ID || '674064096664223745';
+export const TEAM_LENSFLARE_EMOJI_ID =
+  process.env.TEAM_LENSFLARE_EMOJI_ID || '496138997391687710';
+export const TEAM_HYPERJOY_EMOJI_ID =
+  process.env.TEAM_HYPERJOY_EMOJI_ID || '1008527027441246329';
+
 // League of Legends Integration
 export const ENABLE_LEAGUE_TRACKING =
   moduleConfig.enableLeagueTracking !== false &&

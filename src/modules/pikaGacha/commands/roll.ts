@@ -3,6 +3,7 @@ import gachaService from '../services/GachaService';
 import userService from '../services/UserService';
 import Logger from '../../../utils/logger';
 import { REGIONS, SPECIAL_POKEMON, getRegionByName } from '../types';
+import { ALLOWED_ROLL_CHANNEL_IDS } from '../config/config';
 
 const ROLL_COST = 30;
 const COLOR_GOLD = 0xffd700;
@@ -14,6 +15,19 @@ export async function handleRoll(
 ): Promise<void> {
   const userId = message.author.id;
   const username = message.author.username;
+
+  // Check if rolling is restricted to specific channels
+  if (
+    ALLOWED_ROLL_CHANNEL_IDS.length > 0 &&
+    !ALLOWED_ROLL_CHANNEL_IDS.includes(message.channelId)
+  ) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Wrong Channel')
+      .setDescription('Rolling is only allowed in designated channels!')
+      .setColor(COLOR_ERROR);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
 
   // Parse region and count arguments
   let regionId: number | null = null;

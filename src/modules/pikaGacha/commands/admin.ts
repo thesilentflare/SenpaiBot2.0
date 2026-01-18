@@ -1167,9 +1167,9 @@ export async function handleDeleteTrainer(
           await Jackpot.destroy({ where: { userId } });
           await Trainer.destroy({ where: { userId } });
 
-          // Reset user points to 0
+          // Delete user from PikaGacha users table
           if (user) {
-            await user.update({ points: 0, savings: 0 });
+            await user.destroy();
           }
 
           const successEmbed = new EmbedBuilder()
@@ -1182,7 +1182,7 @@ export async function handleDeleteTrainer(
                 `• ${itemsCount} items\n` +
                 `• ${favoritesCount} favorites\n` +
                 `• ${jackpotCount} jackpot entries\n` +
-                `• Pikapoints and savings reset to 0`,
+                `• User account and all pikapoints`,
             )
             .setColor(ADMIN_COLOR);
 

@@ -1,3 +1,9 @@
+import {
+  TEAM_ELECTROCUTION_EMOJI_ID,
+  TEAM_LENSFLARE_EMOJI_ID,
+  TEAM_HYPERJOY_EMOJI_ID,
+} from './config/config';
+
 export interface Region {
   name: string;
   id: number;
@@ -162,20 +168,32 @@ export const TEAMS = {
   ELECTROCUTION: {
     name: 'Team Electrocution',
     emoji: 'electrocution',
-    emojiId: '496081109558362134',
-    thumbnail: 'https://cdn.discordapp.com/emojis/496081109558362134.png?v=1',
+    get emojiId() {
+      return TEAM_ELECTROCUTION_EMOJI_ID;
+    },
+    get thumbnail() {
+      return `https://cdn.discordapp.com/emojis/${TEAM_ELECTROCUTION_EMOJI_ID}.png?v=1`;
+    },
   },
   LENSFLARE: {
     name: 'Team Lensflare',
     emoji: 'lensflare',
-    emojiId: '496138997391687710',
-    thumbnail: 'https://cdn.discordapp.com/emojis/496138997391687710.png?v=1',
+    get emojiId() {
+      return TEAM_LENSFLARE_EMOJI_ID;
+    },
+    get thumbnail() {
+      return `https://cdn.discordapp.com/emojis/${TEAM_LENSFLARE_EMOJI_ID}.png?v=1`;
+    },
   },
   HYPERJOY: {
     name: 'Team Hyperjoy',
     emoji: 'hyperjoy',
-    emojiId: '431882995289554978',
-    thumbnail: 'https://cdn.discordapp.com/emojis/431882995289554978.png?v=1',
+    get emojiId() {
+      return TEAM_HYPERJOY_EMOJI_ID;
+    },
+    get thumbnail() {
+      return `https://cdn.discordapp.com/emojis/${TEAM_HYPERJOY_EMOJI_ID}.png?v=1`;
+    },
   },
 };
 

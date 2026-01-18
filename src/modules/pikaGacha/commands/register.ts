@@ -140,20 +140,26 @@ async function promptTeamSelection(
 
     const teamMessage = await message.channel.send({ embeds: [teamEmbed] });
 
+    // Store emoji IDs as constants to ensure they're evaluated once
+    const electrocutionId = TEAMS.ELECTROCUTION.emojiId;
+    const lensflareId = TEAMS.LENSFLARE.emojiId;
+    const hyperjoyId = TEAMS.HYPERJOY.emojiId;
+
+    Logger.info(`Team emoji IDs: ${electrocutionId}, ${lensflareId}, ${hyperjoyId}`);
+
     // Add reaction emojis
-    await teamMessage.react(TEAMS.ELECTROCUTION.emojiId);
-    await teamMessage.react(TEAMS.LENSFLARE.emojiId);
-    await teamMessage.react(TEAMS.HYPERJOY.emojiId);
+    await teamMessage.react(electrocutionId);
+    await teamMessage.react(lensflareId);
+    await teamMessage.react(hyperjoyId);
 
     // Create reaction collector
     const filter = (reaction: MessageReaction, user: User) => {
+      Logger.info(`Reaction filter - User: ${user.id}, Author: ${message.author.id}, Emoji ID: ${reaction.emoji.id}`);
       return (
         user.id === message.author.id &&
-        [
-          TEAMS.ELECTROCUTION.emojiId,
-          TEAMS.LENSFLARE.emojiId,
-          TEAMS.HYPERJOY.emojiId,
-        ].includes(reaction.emoji.id || '')
+        [electrocutionId, lensflareId, hyperjoyId].includes(
+          reaction.emoji.id || '',
+        )
       );
     };
 
@@ -164,15 +170,18 @@ async function promptTeamSelection(
     });
 
     collector.on('collect', async (reaction: MessageReaction) => {
+      Logger.info(`Collected reaction with emoji ID: ${reaction.emoji.id}`);
       let selectedTeam: string = '';
 
-      if (reaction.emoji.id === TEAMS.ELECTROCUTION.emojiId) {
+      if (reaction.emoji.id === electrocutionId) {
         selectedTeam = TEAMS.ELECTROCUTION.name;
-      } else if (reaction.emoji.id === TEAMS.LENSFLARE.emojiId) {
+      } else if (reaction.emoji.id === lensflareId) {
         selectedTeam = TEAMS.LENSFLARE.name;
-      } else if (reaction.emoji.id === TEAMS.HYPERJOY.emojiId) {
+      } else if (reaction.emoji.id === hyperjoyId) {
         selectedTeam = TEAMS.HYPERJOY.name;
       }
+
+      Logger.info(`Selected team: ${selectedTeam}`);
 
       if (selectedTeam) {
         await trainerService.setTeam(message.author.id, selectedTeam);

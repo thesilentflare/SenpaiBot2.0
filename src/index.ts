@@ -31,6 +31,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions, // Required for reaction collectors
     GatewayIntentBits.GuildVoiceStates, // Required for voice channel tracking
   ],
 });

@@ -2,6 +2,7 @@ import { Message, EmbedBuilder, AttachmentBuilder } from 'discord.js';
 import battleService from '../services/BattleService';
 import pokemonService from '../services/PokemonService';
 import userService from '../services/UserService';
+import inventoryService from '../services/InventoryService';
 import { generateBattleImage } from '../utils/imageGenerator';
 import Logger from '../../../utils/logger';
 
@@ -186,19 +187,13 @@ export async function handleBattle(
         return;
       }
 
-      const validation1 = await battleService.validateBattle(
-        user1Id,
-        user2Id,
-        pokemon1.id,
-        0,
-      );
-      if (!validation1.valid) {
+      // Validate user 1 has this pokemon
+      const user1HasPokemon = await inventoryService.hasPokemon(user1Id, pokemon1.id);
+      if (!user1HasPokemon) {
         if (message.channel.isSendable()) {
           const embed = new EmbedBuilder()
             .setTitle('❌ Validation Failed')
-            .setDescription(
-              validation1.error || 'You do not have that Pokémon!',
-            )
+            .setDescription('You do not have that Pokémon!')
             .setColor(COLOR_ERROR);
           await message.channel.send({ embeds: [embed] });
         }
@@ -266,19 +261,13 @@ export async function handleBattle(
         return;
       }
 
-      const validation2 = await battleService.validateBattle(
-        user1Id,
-        user2Id,
-        pokemon1Id,
-        pokemon2.id,
-      );
-      if (!validation2.valid) {
+      // Validate user 2 has this pokemon
+      const user2HasPokemon = await inventoryService.hasPokemon(user2Id, pokemon2.id);
+      if (!user2HasPokemon) {
         if (message.channel.isSendable()) {
           const embed = new EmbedBuilder()
             .setTitle('❌ Validation Failed')
-            .setDescription(
-              validation2.error || 'You do not have that Pokémon!',
-            )
+            .setDescription('You do not have that Pokémon!')
             .setColor(COLOR_ERROR);
           await message.channel.send({ embeds: [embed] });
         }

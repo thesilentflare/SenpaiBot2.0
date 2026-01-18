@@ -1,4 +1,4 @@
-import { Client, EmbedBuilder, Message } from 'discord.js';
+import { EmbedBuilder, Message } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
 import Logger from '../../utils/logger';
 import { fetchCardPreview } from './helpers';
@@ -12,7 +12,7 @@ class YugiohModule implements BotModule {
   enabled = true;
   private logger = Logger.forModule('yugioh');
 
-  initialize(client: Client): void {
+  initialize(): void {
     this.logger.debug('Module initialized');
   }
 

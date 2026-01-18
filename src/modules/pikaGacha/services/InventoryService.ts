@@ -340,7 +340,7 @@ export class InventoryService {
       // Handle unique constraint violation
       if (error.name === 'SequelizeUniqueConstraintError') {
         // Already exists, so remove it instead
-        const deleted = await Favorite.destroy({
+        await Favorite.destroy({
           where: { userId, pokemonId },
         });
         Logger.debug(

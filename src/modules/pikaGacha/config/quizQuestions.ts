@@ -182,10 +182,6 @@ function generateQuestionByType(
       if (normalAbilities.length > 0) {
         const ability =
           normalAbilities[Math.floor(Math.random() * normalAbilities.length)];
-        const abilityName = ability.ability.name
-          .split('-')
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' ');
 
         return {
           question: `Name one of ${formattedName}'s abilities.`,

@@ -1,4 +1,4 @@
-import { AttachmentBuilder, Client, Message } from 'discord.js';
+import { AttachmentBuilder, Message } from 'discord.js';
 import path from 'path';
 import { BotModule, CommandInfo } from '../../types/module';
 import Logger from '../../utils/logger';
@@ -35,7 +35,7 @@ class FortniteModule implements BotModule {
   enabled = true;
   private logger = Logger.forModule('fortnite');
 
-  initialize(client: Client): void {
+  initialize(): void {
     this.logger.debug('Module initialized');
   }
 

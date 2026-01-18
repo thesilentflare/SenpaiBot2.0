@@ -3,7 +3,7 @@ import pokemonService from './PokemonService';
 import inventoryService from './InventoryService';
 import userService from './UserService';
 import rankService from './RankService';
-import { BALL_TYPES, BallType } from '../types';
+import { BALL_TYPES } from '../types';
 import Logger from '../../../utils/logger';
 
 export class ItemService {

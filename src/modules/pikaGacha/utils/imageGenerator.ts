@@ -1,7 +1,6 @@
 import {
   createCanvas,
   loadImage,
-  Canvas,
   Image as CanvasImage,
   registerFont,
 } from 'canvas';

@@ -1,4 +1,4 @@
-import { Client, Message } from 'discord.js';
+import { Message } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
 import Logger from '../../utils/logger';
 
@@ -19,7 +19,7 @@ class FortuneModule implements BotModule {
   enabled = true;
   private logger = Logger.forModule('fortune');
 
-  initialize(client: Client): void {
+  initialize(): void {
     this.logger.debug('Module initialized');
   }
 

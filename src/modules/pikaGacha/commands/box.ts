@@ -6,7 +6,7 @@ import {
   ButtonStyle,
   ComponentType,
 } from 'discord.js';
-import { createCanvas, loadImage, Image } from 'canvas';
+import { createCanvas, loadImage } from 'canvas';
 import inventoryService from '../services/InventoryService';
 import Logger from '../../../utils/logger';
 import { getSpriteUrl } from '../config/spriteQuizQuestions';
@@ -17,7 +17,6 @@ const POKEMON_PER_PAGE = 32; // 8x4 grid
 const INTERACTION_TIMEOUT = 120000; // 2 minutes
 const SPRITE_SIZE = 48; // Further reduced for faster generation
 const COLS = 8;
-const ROWS = 4;
 const CANVAS_WIDTH = 384; // Further reduced for faster generation
 const CANVAS_HEIGHT = 192; // Further reduced for faster generation
 

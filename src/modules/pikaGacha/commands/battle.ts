@@ -8,7 +8,6 @@ import Logger from '../../../utils/logger';
 
 const COLOR_GOLD = 0xffd700;
 const COLOR_ERROR = 0xff0000;
-const COLOR_SUCCESS = 0x00ff00;
 
 export async function handleBattle(
   message: Message,
@@ -188,7 +187,10 @@ export async function handleBattle(
       }
 
       // Validate user 1 has this pokemon
-      const user1HasPokemon = await inventoryService.hasPokemon(user1Id, pokemon1.id);
+      const user1HasPokemon = await inventoryService.hasPokemon(
+        user1Id,
+        pokemon1.id,
+      );
       if (!user1HasPokemon) {
         if (message.channel.isSendable()) {
           const embed = new EmbedBuilder()
@@ -262,7 +264,10 @@ export async function handleBattle(
       }
 
       // Validate user 2 has this pokemon
-      const user2HasPokemon = await inventoryService.hasPokemon(user2Id, pokemon2.id);
+      const user2HasPokemon = await inventoryService.hasPokemon(
+        user2Id,
+        pokemon2.id,
+      );
       if (!user2HasPokemon) {
         if (message.channel.isSendable()) {
           const embed = new EmbedBuilder()

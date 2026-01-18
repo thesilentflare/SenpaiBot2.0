@@ -149,7 +149,7 @@ export class BattleService {
     const loserExp = this.getRandomExp(5, 15);
 
     // Update stats and exp in transaction
-    await sequelize.transaction(async (t) => {
+    await sequelize.transaction(async (_t) => {
       // Update experience
       await rankService.addExp(winnerId, winnerExp);
       await rankService.addExp(loserId, loserExp);

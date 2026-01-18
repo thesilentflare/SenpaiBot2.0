@@ -1,4 +1,3 @@
-import { Pokemon } from '../models';
 import userService from './UserService';
 import pokemonService from './PokemonService';
 import inventoryService from './InventoryService';

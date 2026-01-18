@@ -2,7 +2,6 @@ import { Message, EmbedBuilder } from 'discord.js';
 import inventoryService from '../services/InventoryService';
 import pokemonService from '../services/PokemonService';
 import Logger from '../../../utils/logger';
-import { SPECIAL_POKEMON } from '../types';
 
 const COLOR_GOLD = 0xffd700;
 const COLOR_ERROR = 0xff0000;

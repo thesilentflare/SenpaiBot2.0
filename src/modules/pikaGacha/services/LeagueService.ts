@@ -1,4 +1,4 @@
-import { Client, ActivityType, GuildMember, Presence } from 'discord.js';
+import { Client, ActivityType, Presence } from 'discord.js';
 import { UserService } from './UserService';
 import Logger from '../../../utils/logger';
 import {

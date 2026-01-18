@@ -1,10 +1,4 @@
-import {
-  Client,
-  TextChannel,
-  Message,
-  EmbedBuilder,
-  AttachmentBuilder,
-} from 'discord.js';
+import { Client, TextChannel, Message, EmbedBuilder } from 'discord.js';
 import { UserService } from './UserService';
 import { TrainerService } from './TrainerService';
 import { ItemService } from './ItemService';
@@ -16,11 +10,9 @@ import {
 import {
   getRandomSpriteQuestion,
   checkSpriteAnswer,
-  SpriteQuizQuestion,
 } from '../config/spriteQuizQuestions';
 import Logger from '../../../utils/logger';
 import {
-  QUIZ_INTERVAL_MS,
   QUIZ_TIMEOUT_MS,
   BASE_REWARD,
   STREAK_BONUS,
@@ -178,30 +170,6 @@ export class QuizService {
     logger.info(
       `Next ${quizType} quiz scheduled for ${nextQuizTime.toLocaleTimeString()} (in ${Math.round(delay / 60000)} minutes)`,
     );
-  }
-
-  /**
-   * Get the next exact hour or half-hour mark
-   */
-  private getNextHourOrHalfHour(from: Date): Date {
-    const next = new Date(from);
-    const minutes = next.getMinutes();
-    const seconds = next.getSeconds();
-    const milliseconds = next.getMilliseconds();
-
-    // Reset seconds and milliseconds
-    next.setSeconds(0, 0);
-
-    if (minutes < 30) {
-      // Next half hour
-      next.setMinutes(30);
-    } else {
-      // Next full hour
-      next.setMinutes(0);
-      next.setHours(next.getHours() + 1);
-    }
-
-    return next;
   }
 
   /**
@@ -538,7 +506,7 @@ export class QuizService {
    */
   private async checkForShutdowns(
     winnerId: string,
-    winnerStreak: number,
+    _winnerStreak: number,
   ): Promise<Array<{ name: string; streakLost: number; points: number }>> {
     const shutdownInfo: Array<{
       name: string;

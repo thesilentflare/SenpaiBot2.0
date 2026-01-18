@@ -19,7 +19,6 @@ import {
   getLatestSeedFile,
   saveUploadedSeedFile,
   listUploadedSeedFiles,
-  deleteUploadedSeedFile,
 } from '../utils/seedManager';
 import axios from 'axios';
 
@@ -216,7 +215,7 @@ export async function handleReseed(
 
 export async function handleUploadSeed(
   message: Message,
-  args: string[],
+  _args: string[],
 ): Promise<void> {
   // Admin-only check
   if (!(await isAdmin(message.author.id, message.guild))) {
@@ -333,7 +332,7 @@ export async function handleUploadSeed(
 
 export async function handleListSeeds(
   message: Message,
-  args: string[],
+  _args: string[],
 ): Promise<void> {
   // Admin-only check
   if (!(await isAdmin(message.author.id, message.guild))) {
@@ -1220,7 +1219,7 @@ export async function handleDeleteTrainer(
       collector.stop();
     });
 
-    collector.on('end', async (collected, reason) => {
+    collector.on('end', async (_collected, reason) => {
       if (reason === 'time') {
         const timeoutEmbed = new EmbedBuilder()
           .setTitle('⏱️ Confirmation Timeout')

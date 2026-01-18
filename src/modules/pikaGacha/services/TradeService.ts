@@ -65,7 +65,7 @@ export class TradeService {
     }
 
     // Perform trade in transaction
-    const result = await sequelize.transaction(async (t) => {
+    const result = await sequelize.transaction(async (_t) => {
       // Deduct points from both users
       await userService.adjustPoints(user1Id, -cost);
       await userService.adjustPoints(user2Id, -cost);

@@ -1,4 +1,4 @@
-import { Client, Message, EmbedBuilder } from 'discord.js';
+import { Message, EmbedBuilder } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
 import Logger from '../../utils/logger';
 import { fetchWikiPreview } from './helpers';
@@ -12,7 +12,7 @@ class WarframeModule implements BotModule {
   enabled = true;
   private logger = Logger.forModule('warframe');
 
-  initialize(client: Client): void {
+  initialize(): void {
     this.logger.debug('Module initialized');
   }
 

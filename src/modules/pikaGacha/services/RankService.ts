@@ -121,7 +121,6 @@ export class RankService {
     }
 
     // Update rank and subtract required EXP
-    const oldRank = trainer.rank;
     trainer.rank = nextRank.rank;
     trainer.rankExp -= nextRank.expRequired;
     await trainer.save();

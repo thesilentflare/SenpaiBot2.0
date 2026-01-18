@@ -1,5 +1,4 @@
 import {
-  Client,
   EmbedBuilder,
   Message,
   ActionRowBuilder,
@@ -14,12 +13,10 @@ class HelpModule implements BotModule {
   name = 'help';
   description = 'Display available commands';
   enabled = true;
-  private client: Client | null = null;
   private allModules: BotModule[] = [];
   private logger = Logger.forModule('help');
 
-  initialize(client: Client): void {
-    this.client = client;
+  initialize(): void {
     this.logger.debug('Module initialized');
   }
 

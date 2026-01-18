@@ -1,4 +1,4 @@
-import { Jackpot, User } from '../models';
+import { Jackpot } from '../models';
 import userService from './UserService';
 import itemService from './ItemService';
 import trainerService from './TrainerService';

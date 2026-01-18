@@ -2,11 +2,10 @@ import { Message, EmbedBuilder } from 'discord.js';
 import gachaService from '../services/GachaService';
 import userService from '../services/UserService';
 import Logger from '../../../utils/logger';
-import { REGIONS, SPECIAL_POKEMON, getRegionByName } from '../types';
+import { SPECIAL_POKEMON, getRegionByName } from '../types';
 import { ALLOWED_ROLL_CHANNEL_IDS } from '../config/config';
 
 const ROLL_COST = 30;
-const COLOR_GOLD = 0xffd700;
 const COLOR_ERROR = 0xff0000;
 
 export async function handleRoll(

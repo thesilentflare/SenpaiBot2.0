@@ -1,11 +1,6 @@
 import { Pokemon } from '../models';
 import { Op } from 'sequelize';
-import {
-  Region,
-  getRegionByName,
-  getRegionByPokemonId,
-  REGIONS,
-} from '../types';
+import { Region, getRegionByPokemonId, REGIONS } from '../types';
 import Logger from '../../../utils/logger';
 
 export class PokemonService {

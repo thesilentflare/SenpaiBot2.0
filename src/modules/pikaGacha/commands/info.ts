@@ -59,8 +59,8 @@ export async function handleHelp(message: Message): Promise<void> {
     .setTitle('🎮 PikaGacha Commands - Competition')
     .setDescription(
       '**Progression**\n' +
-        '`!pg promote` - Rank up (costs EXP)\n' +
-        '`!pg prestige` - Prestige to unlock bonuses\n' +
+        '`!pg promote` - Rank up within your current prestige (costs EXP)\n' +
+        '`!pg prestige` - Reset rank for permanent bonuses (keeps Pokémon)\n' +
         '`!pg leaderboard [category]` - View rankings\n\n' +
         '**Social**\n' +
         '`!pg trade <@user>` - Trade Pokémon\n' +

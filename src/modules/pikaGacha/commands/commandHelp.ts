@@ -307,12 +307,16 @@ export const COMMAND_HELP = {
     new EmbedBuilder()
       .setTitle('📈 Promote Command Help')
       .setDescription(
-        '**Description:** Rank up using EXP\n\n' +
+        '**Description:** Rank up within your current prestige level using EXP\n\n' +
           '**Usage:**\n' +
           '• `!pg promote` - Rank up if you have enough EXP\n\n' +
           '**Example:**\n' +
           '• `!pg promote` - Use EXP to rank up\n\n' +
-          '**Note:** Each rank requires more EXP',
+          '**How it works:**\n' +
+          '• Earn EXP from rolling, opening balls, battles, and quizzes\n' +
+          '• Each rank requires more EXP than the last\n' +
+          '• Ranks reset when you prestige\n' +
+          '• Higher ranks give you better rewards and bonuses',
       )
       .setColor(COLOR_HELP),
 
@@ -320,12 +324,17 @@ export const COMMAND_HELP = {
     new EmbedBuilder()
       .setTitle('✨ Prestige Command Help')
       .setDescription(
-        '**Description:** Reset rank for permanent bonuses\n\n' +
+        '**Description:** Reset your rank for permanent bonuses\n\n' +
           '**Usage:**\n' +
-          '• `!pg prestige` - Prestige (resets rank, keeps Pokémon)\n\n' +
+          '• `!pg prestige` - Prestige to the next level\n\n' +
           '**Example:**\n' +
-          '• `!pg prestige` - Prestige for bonuses\n\n' +
-          '**Note:** Gives permanent multipliers!',
+          '• `!pg prestige` - Reset rank for permanent bonuses\n\n' +
+          '**How it works:**\n' +
+          '• Resets your rank back to 1\n' +
+          '• Increases your prestige level by 1\n' +
+          '• Grants permanent multipliers and bonuses\n' +
+          '• Your Pokémon collection is NOT affected\n' +
+          '• Different from promote - prestige is a full reset for long-term power',
       )
       .setColor(COLOR_HELP),
 

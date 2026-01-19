@@ -949,7 +949,7 @@ export async function handleTriggerQuiz(
   message: Message,
   args: string[],
 ): Promise<void> {
-  if (!(await isAdmin(message.author.id))) {
+  if (!(await isAdmin(message.author.id, message.guild))) {
     const embed = new EmbedBuilder()
       .setTitle('❌ Access Denied')
       .setDescription('Only administrators can trigger quizzes.')
@@ -1026,7 +1026,7 @@ export async function handleVoiceStats(
   message: Message,
   args: string[],
 ): Promise<void> {
-  if (!(await isAdmin(message.author.id))) {
+  if (!(await isAdmin(message.author.id, message.guild))) {
     const embed = new EmbedBuilder()
       .setTitle('❌ Access Denied')
       .setDescription('Only administrators can view voice stats.')

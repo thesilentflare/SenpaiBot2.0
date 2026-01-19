@@ -168,21 +168,31 @@ export async function handleFullRoll(
   const userId = message.author.id;
   const username = message.author.username;
 
-  // Parse region and count
+  // Parse region, count, and flags
   let regionId: number | null = null;
   let count = 10; // Default to 10
   let rollAll = false;
+  let showDetailed = false;
 
-  if (args.length > 0) {
+  // Filter out flags and keep other args
+  const filteredArgs = args.filter((arg) => {
+    if (arg === '--detailed' || arg === '-d') {
+      showDetailed = true;
+      return false;
+    }
+    return true;
+  });
+
+  if (filteredArgs.length > 0) {
     // First arg could be region, count, or "all"
-    const firstArg = args[0].toLowerCase();
+    const firstArg = filteredArgs[0].toLowerCase();
 
     // Check for "all" keyword
     if (firstArg === 'all') {
       rollAll = true;
       // Check if second arg is region
-      if (args.length > 1) {
-        const region = getRegionByName(args[1]);
+      if (filteredArgs.length > 1) {
+        const region = getRegionByName(filteredArgs[1]);
         if (region) {
           regionId = region.id;
         }
@@ -193,11 +203,11 @@ export async function handleFullRoll(
       if (region) {
         regionId = region.id;
         // Second arg could be count or "all"
-        if (args.length > 1) {
-          if (args[1].toLowerCase() === 'all') {
+        if (filteredArgs.length > 1) {
+          if (filteredArgs[1].toLowerCase() === 'all') {
             rollAll = true;
           } else {
-            const parsedCount = parseInt(args[1]);
+            const parsedCount = parseInt(filteredArgs[1]);
             if (!isNaN(parsedCount) && parsedCount > 0 && parsedCount <= 100) {
               count = parsedCount;
             }
@@ -253,7 +263,62 @@ export async function handleFullRoll(
     // Perform multi-roll
     const results = await gachaService.multiRoll(userId, count, regionId);
 
-    // Build summary
+    // If detailed mode, show individual rolls like regular roll command
+    if (showDetailed) {
+      for (let i = 0; i < results.results.length; i++) {
+        const result = results.results[i];
+
+        // Build embed
+        const title = `${username} Summoned:`;
+        let rarityText: string;
+        if (result.pokemon.rarity <= 5) {
+          rarityText = `${result.pokemon.rarity}⭐`;
+        } else if (result.pokemon.rarity === 6) {
+          rarityText = 'Legendary';
+        } else if (result.pokemon.rarity === 7) {
+          rarityText = 'Mythic';
+        } else {
+          rarityText = 'Special';
+        }
+
+        const description = `${result.pokemon.name}\nRarity: ${rarityText}`;
+        const embed = new EmbedBuilder()
+          .setTitle(title)
+          .setDescription(description)
+          .setColor(0x9370db);
+
+        // Set thumbnail
+        if (result.pokemon.id >= 10000) {
+          const url = SPECIAL_POKEMON[result.pokemon.id];
+          if (url) {
+            embed.setThumbnail(url);
+          }
+        } else {
+          const strId = result.pokemon.id.toString().padStart(3, '0');
+          embed.setThumbnail(
+            `https://www.serebii.net/sunmoon/pokemon/${strId}.png`,
+          );
+        }
+
+        // Calculate remaining balance for this roll
+        const remainingBalance =
+          results.newBalance + (results.results.length - i - 1) * ROLL_COST;
+        const content = `Roll ${i + 1}/${count} - You now have ${remainingBalance} pikapoints.`;
+
+        await message.reply({
+          content,
+          embeds: [embed],
+        });
+
+        Logger.info(
+          `${username} (${userId}) rolled ${result.pokemon.name} (${rarityText}) - Roll ${i + 1}/${count} (fullroll detailed)`,
+        );
+      }
+
+      return; // Exit early, we've shown all the detailed results
+    }
+
+    // Build summary (default condensed view)
     const rarityGroups: { [key: string]: string[] } = {
       '1⭐': [],
       '2⭐': [],

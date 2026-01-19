@@ -27,6 +27,7 @@ import {
   handleUploadSeed,
   handleListSeeds,
   handleDeleteTrainer,
+  handleGiftBalls,
 } from './commands/admin';
 import { handleRegister } from './commands/register';
 import { LeagueService } from './services/LeagueService';
@@ -299,6 +300,11 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'giftballs') {
+        await handleGiftBalls(message, args);
+        return true;
+      }
+
       if (subcommand === 'deletetrainer') {
         await handleDeleteTrainer(message, args);
         return true;
@@ -338,7 +344,7 @@ class PikaGachaModule implements BotModule {
       {
         command: '!pg fullroll',
         description: 'Roll multiple times at once',
-        usage: '!pg fullroll [region] [count]',
+        usage: '!pg fullroll [region] [count] [--detailed|-d]',
       },
       {
         command: '!pg trainer',
@@ -468,6 +474,12 @@ class PikaGachaModule implements BotModule {
         command: '!pg deletetrainer',
         description: 'Permanently delete a trainer and all their data',
         usage: '!pg deletetrainer <@user|user_id>',
+        adminOnly: true,
+      },
+      {
+        command: '!pg giftballs',
+        description: 'Gift balls to a user',
+        usage: '!pg giftballs <@user|user_id> <ball_type> <amount>',
         adminOnly: true,
       },
     ];

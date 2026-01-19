@@ -15,13 +15,23 @@ export class ItemService {
     itemType: number,
     quantity: number = 1,
   ): Promise<void> {
-    const [item] = await Item.findOrCreate({
+    // Simple approach: try to find and update, or create if not exists
+    const existingItem = await Item.findOne({
       where: { userId, itemType },
-      defaults: { userId, itemType, quantity: 0 },
     });
 
-    item.quantity += quantity;
-    await item.save();
+    if (existingItem) {
+      // Item exists, just increment
+      existingItem.quantity += quantity;
+      await existingItem.save();
+    } else {
+      // Item doesn't exist, create it
+      await Item.create({
+        userId,
+        itemType,
+        quantity,
+      });
+    }
 
     Logger.debug(
       `Added ${quantity}× ${this.getItemName(itemType)} to user ${userId}`,

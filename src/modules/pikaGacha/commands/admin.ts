@@ -11,6 +11,7 @@ import { Pokemon, Trainer } from '../models';
 import { isAdmin } from '../../adminManager/helpers';
 import Logger from '../../../utils/logger';
 import userService from '../services/UserService';
+import itemService from '../services/ItemService';
 import { QuizService } from '../services/QuizService';
 import { VoiceRewardService } from '../services/VoiceRewardService';
 import * as fs from 'fs';
@@ -21,6 +22,7 @@ import {
   listUploadedSeedFiles,
 } from '../utils/seedManager';
 import axios from 'axios';
+import { getBallType } from '../types';
 
 const ADMIN_COLOR = 0xff6b6b; // Red color for admin commands
 
@@ -1236,6 +1238,187 @@ export async function handleDeleteTrainer(
     const embed = new EmbedBuilder()
       .setTitle('❌ Error')
       .setDescription('An error occurred. Check logs for details.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
+}
+
+/**
+ * Gift balls to a user
+ * Usage: !pg giftballs <user> <ball_type> <amount>
+ */
+export async function handleGiftBalls(
+  message: Message,
+  args: string[],
+): Promise<void> {
+  // Admin-only check
+  if (!(await isAdmin(message.author.id, message.guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('This command is admin-only!')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  if (args.length < 3) {
+    const embed = new EmbedBuilder()
+      .setTitle('📖 Command Usage')
+      .setDescription(
+        '**Usage:** `!pg giftballs <user> <ball_type> <amount>`\n\n' +
+          '**Ball Types:**\n' +
+          '- `pokeball` or `1` - Poké Ball\n' +
+          '- `greatball` or `2` - Great Ball\n' +
+          '- `ultraball` or `3` - Ultra Ball\n' +
+          '- `masterball` or `4` - Master Ball\n\n' +
+          '**Examples:**\n' +
+          '`!pg giftballs @user pokeball 5`\n' +
+          '`!pg giftballs @user 3 10` (10 Ultra Balls)',
+      )
+      .setColor(ADMIN_COLOR);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  try {
+    // Parse user
+    let userId: string;
+    const mention = args[0].match(/^<@!?(\d+)>$/);
+    if (mention) {
+      userId = mention[1];
+    } else if (/^\d+$/.test(args[0])) {
+      userId = args[0];
+    } else {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Invalid User')
+        .setDescription('Please mention a user or provide a valid user ID.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    // Verify user exists
+    try {
+      await message.client.users.fetch(userId);
+    } catch (error) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ User Not Found')
+        .setDescription('Could not find that user.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    // Check if user is registered
+    const trainer = await Trainer.findOne({ where: { userId } });
+    if (!trainer) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ User Not Registered')
+        .setDescription('This user has not registered for PikaGacha yet.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    // Parse ball type
+    const ballTypeArg = args[1].toLowerCase();
+    let ballTypeId: number;
+
+    // Check if it's a number (1-4)
+    if (/^\d+$/.test(ballTypeArg)) {
+      ballTypeId = parseInt(ballTypeArg);
+      if (ballTypeId < 1 || ballTypeId > 4) {
+        const embed = new EmbedBuilder()
+          .setTitle('❌ Invalid Ball Type')
+          .setDescription('Ball type must be between 1 and 4.')
+          .setColor(0xff0000);
+        await message.reply({ embeds: [embed] });
+        return;
+      }
+    } else {
+      // Check if it's a ball name
+      const ballTypeMapping: { [key: string]: number } = {
+        pokeball: 1,
+        'poke ball': 1,
+        greatball: 2,
+        'great ball': 2,
+        ultraball: 3,
+        'ultra ball': 3,
+        masterball: 4,
+        'master ball': 4,
+      };
+
+      ballTypeId = ballTypeMapping[ballTypeArg];
+      if (!ballTypeId) {
+        const embed = new EmbedBuilder()
+          .setTitle('❌ Invalid Ball Type')
+          .setDescription(
+            'Ball type must be: pokeball, greatball, ultraball, or masterball (or 1-4)',
+          )
+          .setColor(0xff0000);
+        await message.reply({ embeds: [embed] });
+        return;
+      }
+    }
+
+    // Parse amount
+    const amount = parseInt(args[2]);
+    if (isNaN(amount) || amount <= 0) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Invalid Amount')
+        .setDescription('Amount must be a positive number.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    if (amount > 1000) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Amount Too Large')
+        .setDescription('Maximum amount is 1000 balls per gift.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    // Get ball type info
+    const ballType = getBallType(ballTypeId);
+    if (!ballType) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Error')
+        .setDescription('Invalid ball type.')
+        .setColor(0xff0000);
+      await message.reply({ embeds: [embed] });
+      return;
+    }
+
+    // Gift the balls
+    await itemService.addItem(userId, ballTypeId, amount);
+
+    const user = await message.client.users.fetch(userId);
+    const embed = new EmbedBuilder()
+      .setTitle('🎁 Balls Gifted!')
+      .setDescription(
+        `Successfully gifted **${amount}× ${ballType.displayName}** to **${user.username}** (${trainer.name})!`,
+      )
+      .setColor(ADMIN_COLOR);
+
+    await message.reply({ embeds: [embed] });
+
+    Logger.info(
+      `Admin ${message.author.username} gifted ${amount}× ${ballType.displayName} to ${user.username} (${userId})`,
+    );
+  } catch (error) {
+    const errorMsg =
+      error instanceof Error
+        ? `${error.name}: ${error.message}`
+        : 'Unknown error';
+    Logger.error('Error in giftballs command:', errorMsg);
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Error')
+      .setDescription(
+        'An error occurred while gifting balls. Check logs for details.',
+      )
       .setColor(0xff0000);
     await message.reply({ embeds: [embed] });
   }

@@ -15,7 +15,7 @@
     "test:coverage": "jest --coverage",
     "dev": "cross-env NODE_ENV=development npx ts-node src/index.ts",
     "build": "tsc && npm run copy-assets",
-    "copy-assets": "mkdir -p dist/assets && cp -r src/assets/* dist/assets/ && mkdir -p dist/modules/pikaGacha/assets && cp -r src/modules/pikaGacha/assets/* dist/modules/pikaGacha/assets/",
+    "copy-assets": "mkdir -p dist/assets && cp -r src/assets/* dist/assets/ && mkdir -p dist/modules/pikaGacha/assets && cp -r src/modules/pikaGacha/assets/* dist/modules/pikaGacha/assets/ && mkdir -p dist/modules/pikaGacha/scripts && cp src/modules/pikaGacha/scripts/pokedata.csv dist/modules/pikaGacha/scripts/",
     "start": "node dist/index.js",
     "format": "prettier --write .",
     "seed:pikagacha": "npx ts-node src/modules/pikaGacha/scripts/seedPokemon.ts"

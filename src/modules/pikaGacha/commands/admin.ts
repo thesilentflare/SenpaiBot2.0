@@ -23,6 +23,7 @@ import {
 } from '../utils/seedManager';
 import axios from 'axios';
 import { getBallType } from '../types';
+import { AttachmentBuilder } from 'discord.js';
 
 const ADMIN_COLOR = 0xff6b6b; // Red color for admin commands
 
@@ -378,6 +379,87 @@ export async function handleListSeeds(
     const embed = new EmbedBuilder()
       .setTitle('❌ Error')
       .setDescription('Failed to list seed files.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
+}
+
+export async function handleDownloadSeed(
+  message: Message,
+  _args: string[],
+): Promise<void> {
+  // Admin-only check
+  if (!(await isAdmin(message.author.id, message.guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('This command is admin-only!')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  try {
+    const processingEmbed = new EmbedBuilder()
+      .setTitle('📥 Preparing CSV Download...')
+      .setDescription('Please wait...')
+      .setColor(ADMIN_COLOR);
+    const statusMessage = await message.reply({ embeds: [processingEmbed] });
+
+    // Get the latest seed file (uploaded or default)
+    const seedFilePath = getLatestSeedFile();
+    const filename = path.basename(seedFilePath);
+
+    // Check if file exists
+    if (!fs.existsSync(seedFilePath)) {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ File Not Found')
+        .setDescription('The seed file could not be found.')
+        .setColor(0xff0000);
+      await statusMessage.edit({ embeds: [embed] });
+      return;
+    }
+
+    // Read the file
+    const fileBuffer = await fs.promises.readFile(seedFilePath);
+    const fileStats = await fs.promises.stat(seedFilePath);
+    const sizeKB = (fileStats.size / 1024).toFixed(2);
+
+    // Count lines for entry count
+    const csvContent = fileBuffer.toString('utf-8');
+    const lines = csvContent.split('\n').filter((line) => line.trim());
+    const entryCount = lines.length - 1; // Subtract header row
+
+    // Determine if this is default or uploaded
+    const isDefault = seedFilePath.includes('scripts/pokedata.csv');
+    const fileType = isDefault ? 'Default' : 'Uploaded';
+
+    // Create attachment
+    const attachment = new AttachmentBuilder(fileBuffer, {
+      name: filename,
+    });
+
+    const successEmbed = new EmbedBuilder()
+      .setTitle('📥 Seed CSV Ready!')
+      .addFields([
+        { name: 'File', value: filename, inline: false },
+        { name: 'Type', value: fileType, inline: true },
+        { name: 'Size', value: `${sizeKB} KB`, inline: true },
+        { name: 'Entries', value: `${entryCount}`, inline: true },
+      ])
+      .setDescription(
+        'The CSV file is attached. You can edit it and re-upload using `!pg uploadseed`.',
+      )
+      .setColor(ADMIN_COLOR);
+
+    await statusMessage.edit({ embeds: [successEmbed], files: [attachment] });
+    Logger.info(`Admin ${message.author.tag} downloaded seed CSV: ${filename}`);
+  } catch (error) {
+    Logger.error('Error downloading seed CSV', error);
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Download Error')
+      .setDescription(
+        'Failed to download the CSV file. Check logs for details.',
+      )
       .setColor(0xff0000);
     await message.reply({ embeds: [embed] });
   }

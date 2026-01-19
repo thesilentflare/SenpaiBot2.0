@@ -27,6 +27,7 @@ import {
   handleVoiceStats,
   handleUploadSeed,
   handleListSeeds,
+  handleDownloadSeed,
   handleDeleteTrainer,
   handleGiftBalls,
 } from './commands/admin';
@@ -312,6 +313,11 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'downloadseed') {
+        await handleDownloadSeed(message, args);
+        return true;
+      }
+
       if (subcommand === 'giftballs') {
         await handleGiftBalls(message, args);
         return true;
@@ -490,6 +496,12 @@ class PikaGachaModule implements BotModule {
         command: '!pg listseeds',
         description: 'List all uploaded seed files',
         usage: '!pg listseeds',
+        adminOnly: true,
+      },
+      {
+        command: '!pg downloadseed',
+        description: 'Download the current seed CSV file for editing',
+        usage: '!pg downloadseed',
         adminOnly: true,
       },
       {

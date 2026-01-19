@@ -5,6 +5,10 @@
   "license": "GNU GPLv3",
   "description": "Our bot for our Discord server.",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",

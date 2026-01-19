@@ -49,22 +49,22 @@ describe('Yugioh Module', () => {
     });
 
     it('should initialize without errors', () => {
-    expect(() => YugiohModule.initialize()).not.toThrow();
-  });
-});
-
-describe('Command Handling', () => {
-  it('should handle !ygo command with card name as misspelling', async () => {
-    const mockMessage = createMockMessage('!ygo Dark Magician');
-    const handled = await YugiohModule.handleMessage(mockMessage as Message);
-
-    expect(handled).toBe(true);
-    expect(mockMessage.reply).toHaveBeenCalledWith(
-      expect.stringContaining('Did you mean'),
-    );
+      expect(() => YugiohModule.initialize()).not.toThrow();
+    });
   });
 
-  it('should prompt when no card name provided', async () => {
+  describe('Command Handling', () => {
+    it('should handle !ygo command with card name as misspelling', async () => {
+      const mockMessage = createMockMessage('!ygo Dark Magician');
+      const handled = await YugiohModule.handleMessage(mockMessage as Message);
+
+      expect(handled).toBe(true);
+      expect(mockMessage.reply).toHaveBeenCalledWith(
+        expect.stringContaining('Did you mean'),
+      );
+    });
+
+    it('should prompt when no card name provided', async () => {
       const mockMessage = createMockMessage('!ygo');
       const handled = await YugiohModule.handleMessage(mockMessage as Message);
 

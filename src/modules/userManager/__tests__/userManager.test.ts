@@ -38,7 +38,7 @@ const createMockMessage = (
   authorId: string = '123456789',
 ): Partial<Message> => {
   const usersCollection = new Collection<string, User>();
-  
+
   const mockMessage = {
     content,
     reply: jest.fn() as any,
@@ -240,7 +240,7 @@ describe('UserManager Module', () => {
         id: '987654321',
         username: 'OtherUser',
       };
-      
+
       // Properly set up the Collection with the user
       (mockMessage.mentions!.users as Collection<string, User>).set(
         '987654321',
@@ -291,7 +291,7 @@ describe('UserManager Module', () => {
         id: '987654321',
         username: 'OldName',
       };
-      
+
       // Properly set up the Collection with the user
       (mockMessage.mentions!.users as Collection<string, User>).set(
         '987654321',
@@ -367,9 +367,7 @@ describe('UserManager Module', () => {
     test('should handle user not found during rename', async () => {
       mockIsAdmin.mockResolvedValue(true);
 
-      const mockMessage = createMockMessage(
-        '!user rename 999999999 NewName',
-      );
+      const mockMessage = createMockMessage('!user rename 999999999 NewName');
       mockDb.get.mockResolvedValue(undefined);
 
       const handled = await UserManagerModule.handleMessage(
@@ -427,12 +425,12 @@ describe('UserManager Module', () => {
 
       expect(commands).toBeDefined();
       expect(commands.length).toBeGreaterThan(0);
-      expect(
-        commands.some((cmd) => cmd.command.includes('!user info')),
-      ).toBe(true);
-      expect(
-        commands.some((cmd) => cmd.command.includes('!user rename')),
-      ).toBe(true);
+      expect(commands.some((cmd) => cmd.command.includes('!user info'))).toBe(
+        true,
+      );
+      expect(commands.some((cmd) => cmd.command.includes('!user rename'))).toBe(
+        true,
+      );
     });
 
     test('should have admin-only flag on rename command', () => {

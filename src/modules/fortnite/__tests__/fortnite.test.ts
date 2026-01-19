@@ -36,12 +36,12 @@ describe('Fortnite Module', () => {
     });
 
     it('should initialize without errors', () => {
-    expect(() => FortniteModule.initialize()).not.toThrow();
+      expect(() => FortniteModule.initialize()).not.toThrow();
+    });
   });
-});
 
-describe('Command Handling', () => {
-  it('should handle !drop command', async () => {
+  describe('Command Handling', () => {
+    it('should handle !drop command', async () => {
       const mockMessage = createMockMessage('!drop');
       const handled = await FortniteModule.handleMessage(
         mockMessage as Message,

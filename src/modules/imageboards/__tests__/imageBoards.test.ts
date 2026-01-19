@@ -47,21 +47,21 @@ describe('ImageBoards Module', () => {
     });
 
     it('should initialize without errors', () => {
-    expect(() => ImageBoardsModule.initialize()).not.toThrow();
-  });
-});
-
-describe('Command Handling', () => {
-  it('should handle !daily yandere command', async () => {
-    const mockMessage = createMockMessage('!daily yandere');
-    const handled = await ImageBoardsModule.handleMessage(
-      mockMessage as Message,
-    );
-
-    expect(handled).toBe(true);
+      expect(() => ImageBoardsModule.initialize()).not.toThrow();
+    });
   });
 
-  it('should handle !daily safebooru command', async () => {
+  describe('Command Handling', () => {
+    it('should handle !daily yandere command', async () => {
+      const mockMessage = createMockMessage('!daily yandere');
+      const handled = await ImageBoardsModule.handleMessage(
+        mockMessage as Message,
+      );
+
+      expect(handled).toBe(true);
+    });
+
+    it('should handle !daily safebooru command', async () => {
       const mockMessage = createMockMessage('!daily safebooru');
       const handled = await ImageBoardsModule.handleMessage(
         mockMessage as Message,

@@ -30,21 +30,21 @@ describe('Fortune Module', () => {
     });
 
     it('should initialize without errors', () => {
-    expect(() => FortuneModule.initialize()).not.toThrow();
-  });
-});
-
-describe('Command Handling', () => {
-  it('should handle !fortune command', () => {
-    const mockMessage = createMockMessage('!fortune');
-    const handled = FortuneModule.handleMessage(mockMessage as Message);
-
-    expect(handled).toBe(true);
-    expect(mockMessage.reply).toHaveBeenCalledTimes(1);
-    expect(mockMessage.reply).toHaveBeenCalledWith(expect.any(String));
+      expect(() => FortuneModule.initialize()).not.toThrow();
+    });
   });
 
-  it('should handle !fortune with trailing text', () => {
+  describe('Command Handling', () => {
+    it('should handle !fortune command', () => {
+      const mockMessage = createMockMessage('!fortune');
+      const handled = FortuneModule.handleMessage(mockMessage as Message);
+
+      expect(handled).toBe(true);
+      expect(mockMessage.reply).toHaveBeenCalledTimes(1);
+      expect(mockMessage.reply).toHaveBeenCalledWith(expect.any(String));
+    });
+
+    it('should handle !fortune with trailing text', () => {
       const mockMessage = createMockMessage('!fortune please');
       const handled = FortuneModule.handleMessage(mockMessage as Message);
 

@@ -47,16 +47,17 @@ describe('Warframe Module', () => {
     });
 
     it('should initialize without errors', () => {
-    expect(() => WarframeModule.initialize()).not.toThrow();
+      expect(() => WarframeModule.initialize()).not.toThrow();
+    });
   });
-});
 
-describe('Command Handling', () => {
-  it.skip('should handle !codex command', async () => {    // Skipped for now as it would make real API calls
-    const mockMessage = createMockMessage('!codex Excalibur');
-    const handled = await WarframeModule.handleMessage(
-      mockMessage as Message,
-    );
+  describe('Command Handling', () => {
+    it.skip('should handle !codex command', async () => {
+      // Skipped for now as it would make real API calls
+      const mockMessage = createMockMessage('!codex Excalibur');
+      const handled = await WarframeModule.handleMessage(
+        mockMessage as Message,
+      );
       expect(handled).toBe(true);
     });
 

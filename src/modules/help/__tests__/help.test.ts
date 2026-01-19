@@ -42,19 +42,19 @@ describe('Help Module', () => {
     });
 
     it('should initialize without errors', () => {
-    expect(() => HelpModule.initialize()).not.toThrow();
-  });
-});
-
-describe('Command Handling', () => {
-  it('should handle !help command', () => {
-    const mockMessage = createMockMessage('!help');
-    const handled = HelpModule.handleMessage(mockMessage as Message);
-
-    expect(handled).toBe(true);
+      expect(() => HelpModule.initialize()).not.toThrow();
+    });
   });
 
-  it('should handle !help with trailing spaces', () => {
+  describe('Command Handling', () => {
+    it('should handle !help command', () => {
+      const mockMessage = createMockMessage('!help');
+      const handled = HelpModule.handleMessage(mockMessage as Message);
+
+      expect(handled).toBe(true);
+    });
+
+    it('should handle !help with trailing spaces', () => {
       const mockMessage = createMockMessage('!help   ');
       const handled = HelpModule.handleMessage(mockMessage as Message);
 

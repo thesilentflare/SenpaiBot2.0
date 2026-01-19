@@ -42,6 +42,7 @@ import {
   ENABLE_VOICE_REWARDS,
 } from './config/config';
 import { ensureSeedDataDirectory } from './utils/seedManager';
+import { COMMAND_HELP } from './commands/commandHelp';
 
 class PikaGachaModule implements BotModule {
   name = 'pikaGacha';
@@ -132,122 +133,213 @@ class PikaGachaModule implements BotModule {
     const subcommand = parts[1]?.toLowerCase() || '';
     const args = parts.slice(2);
 
+    // Helper function to check if user wants help for a specific command
+    const wantsHelp = args.length > 0 && args[0].toLowerCase() === 'help';
+
     try {
       // Registration
       if (subcommand === 'register' || subcommand === 'signup') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.register()] });
+          return true;
+        }
         await handleRegister(message, args);
         return true;
       }
 
       // Roll commands
       if (subcommand === 'roll') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.roll()] });
+          return true;
+        }
         await handleRoll(message, args);
         return true;
       }
 
       if (subcommand === 'fullroll') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.fullroll()] });
+          return true;
+        }
         await handleFullRoll(message, args);
         return true;
       }
 
       // Profile commands
       if (subcommand === 'trainer' || subcommand === 'profile') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.trainer()] });
+          return true;
+        }
         await handleProfile(message, args);
         return true;
       }
 
       if (subcommand === 'balance' || subcommand === 'bal') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.balance()] });
+          return true;
+        }
         await handleBalance(message);
         return true;
       }
 
       if (subcommand === 'transfer') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.transfer()] });
+          return true;
+        }
         await handleTransfer(message, args);
         return true;
       }
 
       if (subcommand === 'withdraw') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.withdraw()] });
+          return true;
+        }
         await handleWithdraw(message, args);
         return true;
       }
 
       // Bag commands
       if (subcommand === 'bag') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.bag()] });
+          return true;
+        }
         await handleBag(message, args);
         return true;
       }
 
       if (subcommand === 'open') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.open()] });
+          return true;
+        }
         await handleOpenBall(message, args);
         return true;
       }
 
       // Collection commands
       if (subcommand === 'pokedex' || subcommand === 'dex') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.pokedex()] });
+          return true;
+        }
         await handlePokedex(message, args);
         return true;
       }
 
       if (subcommand === 'inventory' || subcommand === 'inv') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.inventory()] });
+          return true;
+        }
         await handleInventory(message, args);
         return true;
       }
 
       if (subcommand === 'box') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.box()] });
+          return true;
+        }
         await handleBox(message, args);
         return true;
       }
 
       // Release commands
       if (subcommand === 'releasedupes') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.releasedupes()] });
+          return true;
+        }
         await handleReleaseDupes(message, args);
         return true;
       }
 
       if (subcommand === 'release') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.release()] });
+          return true;
+        }
         await handleRelease(message, args);
         return true;
       }
 
       // Favorite commands
       if (subcommand === 'favorites' || subcommand === 'favs') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.favorites()] });
+          return true;
+        }
         await handleFavorites(message, args);
         return true;
       }
 
       if (subcommand === 'favorite' || subcommand === 'fav') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.favorite()] });
+          return true;
+        }
         await handleFavorite(message, args);
         return true;
       }
 
       // Social commands
       if (subcommand === 'trade') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.trade()] });
+          return true;
+        }
         await handleTrade(message, args);
         return true;
       }
 
       if (subcommand === 'battle') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.battle()] });
+          return true;
+        }
         await handleBattle(message, args);
         return true;
       }
 
       if (subcommand === 'leaderboard' || subcommand === 'lb') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.leaderboard()] });
+          return true;
+        }
         await handleLeaderboard(message, args);
         return true;
       }
 
       // Rank commands
       if (subcommand === 'promote') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.promote()] });
+          return true;
+        }
         await handlePromote(message);
         return true;
       }
 
       if (subcommand === 'prestige') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.prestige()] });
+          return true;
+        }
         await handlePrestige(message);
         return true;
       }
 
       if (subcommand === 'team') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.team()] });
+          return true;
+        }
         await handleTeam(message, args);
         return true;
       }

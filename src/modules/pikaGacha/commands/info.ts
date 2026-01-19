@@ -164,7 +164,9 @@ export async function handleInfo(message: Message): Promise<void> {
         '• **Ultra Ball** - 30-60 points or 4-6⭐ Pokémon\n' +
         '• **Master Ball** - 60-150 points or 5-7⭐ Pokémon\n\n' +
         '**Need Help?**\n' +
-        'Use `!pg help` to see all commands or ask in the chat!',
+        '• Use `!pg help` to see all commands\n' +
+        '• Add `help` to any command for details: `!pg roll help`\n' +
+        '• Ask in the chat if you need assistance!',
     )
     .setColor(COLOR_INFO)
     .setFooter({ text: 'Good luck, Trainer! 🎮' });

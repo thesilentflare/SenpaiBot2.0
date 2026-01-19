@@ -153,7 +153,6 @@ export async function handleInfo(message: Message): Promise<void> {
     .setDescription(
       '**Pro Tips:**\n' +
         '• Release duplicate Pokémon for points: `!pg releasedupes`\n' +
-        '• Focus on completing regions for achievements\n' +
         '• Answer quiz questions correctly to build streaks (up to ' +
         MAX_REWARD +
         ' points!)\n' +

@@ -15,6 +15,7 @@ import { handleBattle } from './commands/battle';
 import { handleLeaderboard } from './commands/leaderboard';
 import { handlePromote, handlePrestige } from './commands/rank';
 import { handleTeam } from './commands/team';
+import { handleHelp, handleInfo } from './commands/info';
 import {
   handleReseed,
   handleSetFocus,
@@ -118,7 +119,8 @@ class PikaGachaModule implements BotModule {
     if (content === '!pg') {
       await message.reply(
         '🎮 **PikaGacha Commands**\n\n' +
-          'Use `!help` to see all available PikaGacha commands.\n' +
+          'Use `!pg help` to see all available commands with details.\n' +
+          'Use `!pg info` for a comprehensive guide on how PikaGacha works.\n' +
           'Example: `!pg register <name>` or `!pg roll`',
       );
       return true;
@@ -246,6 +248,16 @@ class PikaGachaModule implements BotModule {
 
       if (subcommand === 'team') {
         await handleTeam(message, args);
+        return true;
+      }
+
+      if (subcommand === 'help') {
+        await handleHelp(message);
+        return true;
+      }
+
+      if (subcommand === 'info') {
+        await handleInfo(message);
         return true;
       }
 
@@ -415,6 +427,16 @@ class PikaGachaModule implements BotModule {
         command: '!pg leaderboard',
         description: 'View leaderboards for various stats',
         usage: '!pg leaderboard [stat_type]',
+      },
+      {
+        command: '!pg help',
+        description: 'Show all commands with detailed descriptions',
+        usage: '!pg help',
+      },
+      {
+        command: '!pg info',
+        description: 'Comprehensive guide on how PikaGacha works',
+        usage: '!pg info',
       },
       {
         command: '!pg reseed',

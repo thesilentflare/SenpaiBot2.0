@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { Client, Message, TextChannel } from 'discord.js';
+import { Message } from 'discord.js';
 import FortniteModule from '../index';
 
 // Mock Discord.js Message and Channel
@@ -36,13 +36,12 @@ describe('Fortnite Module', () => {
     });
 
     it('should initialize without errors', () => {
-      const mockClient = {} as Client;
-      expect(() => FortniteModule.initialize(mockClient)).not.toThrow();
-    });
+    expect(() => FortniteModule.initialize()).not.toThrow();
   });
+});
 
-  describe('Command Handling', () => {
-    it('should handle !drop command', async () => {
+describe('Command Handling', () => {
+  it('should handle !drop command', async () => {
       const mockMessage = createMockMessage('!drop');
       const handled = await FortniteModule.handleMessage(
         mockMessage as Message,

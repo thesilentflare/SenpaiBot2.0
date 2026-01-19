@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, jest } from '@jest/globals';
-import { Client, Message, GuildMember, User, Guild, Collection } from 'discord.js';
+import { Client, Message, User, Guild, Collection } from 'discord.js';
 
 jest.mock('../../database', () => {
   const mockDb: any = {
@@ -57,22 +57,6 @@ const createMockMessage = (
   } as unknown as Partial<Message>;
 
   return mockMessage;
-};
-
-// Mock GuildMember
-const createMockGuildMember = (
-  userId: string,
-  username: string,
-  nickname: string | null = null,
-): Partial<GuildMember> => {
-  return {
-    user: {
-      id: userId,
-      username,
-      bot: false,
-    } as User,
-    nickname,
-  } as Partial<GuildMember>;
 };
 
 describe('UserManager Helpers', () => {

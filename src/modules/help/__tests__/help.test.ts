@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { Client, Message, TextChannel } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 
 // Mock database before importing module
 jest.mock('../../database', () => ({
@@ -42,20 +42,19 @@ describe('Help Module', () => {
     });
 
     it('should initialize without errors', () => {
-      const mockClient = {} as Client;
-      expect(() => HelpModule.initialize(mockClient)).not.toThrow();
-    });
+    expect(() => HelpModule.initialize()).not.toThrow();
+  });
+});
+
+describe('Command Handling', () => {
+  it('should handle !help command', () => {
+    const mockMessage = createMockMessage('!help');
+    const handled = HelpModule.handleMessage(mockMessage as Message);
+
+    expect(handled).toBe(true);
   });
 
-  describe('Command Handling', () => {
-    it('should handle !help command', () => {
-      const mockMessage = createMockMessage('!help');
-      const handled = HelpModule.handleMessage(mockMessage as Message);
-
-      expect(handled).toBe(true);
-    });
-
-    it('should handle !help with trailing spaces', () => {
+  it('should handle !help with trailing spaces', () => {
       const mockMessage = createMockMessage('!help   ');
       const handled = HelpModule.handleMessage(mockMessage as Message);
 

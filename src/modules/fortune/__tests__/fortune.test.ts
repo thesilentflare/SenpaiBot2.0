@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { Client, Message } from 'discord.js';
+import { Message } from 'discord.js';
 import FortuneModule from '../index';
 
 // Mock Discord.js Message
@@ -30,22 +30,21 @@ describe('Fortune Module', () => {
     });
 
     it('should initialize without errors', () => {
-      const mockClient = {} as Client;
-      expect(() => FortuneModule.initialize(mockClient)).not.toThrow();
-    });
+    expect(() => FortuneModule.initialize()).not.toThrow();
+  });
+});
+
+describe('Command Handling', () => {
+  it('should handle !fortune command', () => {
+    const mockMessage = createMockMessage('!fortune');
+    const handled = FortuneModule.handleMessage(mockMessage as Message);
+
+    expect(handled).toBe(true);
+    expect(mockMessage.reply).toHaveBeenCalledTimes(1);
+    expect(mockMessage.reply).toHaveBeenCalledWith(expect.any(String));
   });
 
-  describe('Command Handling', () => {
-    it('should handle !fortune command', () => {
-      const mockMessage = createMockMessage('!fortune');
-      const handled = FortuneModule.handleMessage(mockMessage as Message);
-
-      expect(handled).toBe(true);
-      expect(mockMessage.reply).toHaveBeenCalledTimes(1);
-      expect(mockMessage.reply).toHaveBeenCalledWith(expect.any(String));
-    });
-
-    it('should handle !fortune with trailing text', () => {
+  it('should handle !fortune with trailing text', () => {
       const mockMessage = createMockMessage('!fortune please');
       const handled = FortuneModule.handleMessage(mockMessage as Message);
 

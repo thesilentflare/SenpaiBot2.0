@@ -30,12 +30,12 @@ describe('Birthday Helpers', () => {
   describe('setBirthday', () => {
     it('should set birthday for new user', async () => {
       mockDb.get.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback(null, null); // User not found
         },
       );
       mockDb.run.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback.call({ changes: 1 }, null);
         },
       );
@@ -48,12 +48,12 @@ describe('Birthday Helpers', () => {
 
     it('should update birthday for existing user', async () => {
       mockDb.get.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback(null, { discordID: '123' }); // User found
         },
       );
       mockDb.run.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback.call({ changes: 1 }, null);
         },
       );

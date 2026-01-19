@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { Client, Message } from 'discord.js';
+import { Message } from 'discord.js';
 import EightBallModule from '../index';
 
 // Mock Discord.js Message
@@ -30,22 +30,21 @@ describe('8ball Module', () => {
     });
 
     it('should initialize without errors', () => {
-      const mockClient = {} as Client;
-      expect(() => EightBallModule.initialize(mockClient)).not.toThrow();
-    });
+    expect(() => EightBallModule.initialize()).not.toThrow();
+  });
+});
+
+describe('Command Handling', () => {
+  it('should handle valid !8ball command with question', () => {
+    const mockMessage = createMockMessage('!8ball Will I be successful?');
+    const handled = EightBallModule.handleMessage(mockMessage as Message);
+
+    expect(handled).toBe(true);
+    expect(mockMessage.reply).toHaveBeenCalledTimes(1);
+    expect(mockMessage.reply).toHaveBeenCalledWith(expect.any(String));
   });
 
-  describe('Command Handling', () => {
-    it('should handle valid !8ball command with question', () => {
-      const mockMessage = createMockMessage('!8ball Will I be successful?');
-      const handled = EightBallModule.handleMessage(mockMessage as Message);
-
-      expect(handled).toBe(true);
-      expect(mockMessage.reply).toHaveBeenCalledTimes(1);
-      expect(mockMessage.reply).toHaveBeenCalledWith(expect.any(String));
-    });
-
-    it('should prompt for question when no question provided', () => {
+  it('should prompt for question when no question provided', () => {
       const mockMessage = createMockMessage('!8ball');
       const handled = EightBallModule.handleMessage(mockMessage as Message);
 

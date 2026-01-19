@@ -8,7 +8,7 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
+
 import { initializeDatabase } from '../config/database';
 import { Pokemon } from '../models';
 import Logger from '../../../utils/logger';

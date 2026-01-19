@@ -89,13 +89,13 @@ describe('AdminManager Helpers', () => {
   describe('addAdmin', () => {
     it('should add new admin successfully', async () => {
       mockDb.get.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback(null, null); // User not already admin
         },
       );
 
       mockDb.run.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback.call({ changes: 1 }, null);
         },
       );
@@ -108,7 +108,7 @@ describe('AdminManager Helpers', () => {
 
     it('should reject if user already admin', async () => {
       mockDb.get.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback(null, { discordID: '123' }); // User already admin
         },
       );
@@ -123,7 +123,7 @@ describe('AdminManager Helpers', () => {
   describe('removeAdmin', () => {
     it('should remove admin successfully', async () => {
       mockDb.run.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback.call({ changes: 1 }, null);
         },
       );
@@ -136,7 +136,7 @@ describe('AdminManager Helpers', () => {
 
     it('should handle user not being admin', async () => {
       mockDb.run.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback.call({ changes: 0 }, null);
         },
       );
@@ -151,7 +151,7 @@ describe('AdminManager Helpers', () => {
   describe('setAdminStatus', () => {
     it('should enable admin successfully', async () => {
       mockDb.run.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback.call({ changes: 1 }, null);
         },
       );
@@ -164,7 +164,7 @@ describe('AdminManager Helpers', () => {
 
     it('should disable admin successfully', async () => {
       mockDb.run.mockImplementation(
-        (query: any, params: any, callback: any) => {
+        (_query: any, _params: any, callback: any) => {
           callback.call({ changes: 1 }, null);
         },
       );

@@ -21,6 +21,9 @@ try {
 // Quiz System Configuration
 export const QUIZ_CHANNEL_ID = process.env.QUIZ_CHANNEL_ID || '';
 
+// Reward Logging Configuration
+export const REWARD_LOG_CHANNEL_ID = process.env.REWARD_LOG_CHANNEL_ID || '';
+
 // Roll Command Configuration
 export const ALLOWED_ROLL_CHANNEL_IDS = process.env.ALLOWED_ROLL_CHANNEL_IDS
   ? JSON.parse(process.env.ALLOWED_ROLL_CHANNEL_IDS)

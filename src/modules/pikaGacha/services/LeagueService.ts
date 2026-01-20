@@ -1,10 +1,17 @@
-import { Client, ActivityType, Presence } from 'discord.js';
+import {
+  Client,
+  ActivityType,
+  Presence,
+  EmbedBuilder,
+  TextChannel,
+} from 'discord.js';
 import { UserService } from './UserService';
 import Logger from '../../../utils/logger';
 import {
   LEAGUE_CLIENT_ID,
   MIN_GAME_DURATION_MS,
   LEAGUE_REWARD_POINTS,
+  REWARD_LOG_CHANNEL_ID,
 } from '../config/config';
 
 const logger = Logger.forModule('LeagueService');
@@ -12,6 +19,7 @@ const logger = Logger.forModule('LeagueService');
 export class LeagueService {
   private static instance: LeagueService;
   private userService: UserService;
+  private client: Client | null = null;
 
   private constructor() {
     this.userService = UserService.getInstance();
@@ -28,6 +36,7 @@ export class LeagueService {
    * Initialize League of Legends game tracking for a Discord client
    */
   public initializeLeagueTracking(client: Client): void {
+    this.client = client;
     client.on('presenceUpdate', async (oldPresence, newPresence) => {
       await this.handlePresenceUpdate(oldPresence, newPresence);
     });
@@ -109,6 +118,7 @@ export class LeagueService {
       // Calculate game duration
       const gameEndTime = Date.now();
       const gameDuration = gameEndTime - user.leagueGameStart;
+      const gameMinutes = Math.floor(gameDuration / 60000);
 
       // Check if game was at least 15 minutes
       if (gameDuration >= MIN_GAME_DURATION_MS) {
@@ -116,14 +126,18 @@ export class LeagueService {
         await this.userService.adjustPoints(userId, LEAGUE_REWARD_POINTS);
 
         logger.info(
-          `[LeagueService] User ${userId} completed a ${Math.floor(gameDuration / 60000)}min League game and earned ${LEAGUE_REWARD_POINTS} pikapoints`,
+          `[LeagueService] User ${userId} completed a ${gameMinutes}min League game and earned ${LEAGUE_REWARD_POINTS} pikapoints`,
         );
 
-        // Optionally notify user in DM or channel
-        // This would require the Message or Channel context
+        // Log to Discord channel
+        await this.logRewardToChannel(
+          userId,
+          LEAGUE_REWARD_POINTS,
+          gameMinutes,
+        );
       } else {
         logger.info(
-          `[LeagueService] User ${userId}'s League game was too short (${Math.floor(gameDuration / 60000)}min)`,
+          `[LeagueService] User ${userId}'s League game was too short (${gameMinutes}min)`,
         );
       }
 
@@ -133,6 +147,39 @@ export class LeagueService {
       });
     } catch (error) {
       logger.error('Error handling game end:', error);
+    }
+  }
+
+  /**
+   * Log reward to Discord channel
+   */
+  private async logRewardToChannel(
+    userId: string,
+    points: number,
+    minutes: number,
+  ): Promise<void> {
+    if (!REWARD_LOG_CHANNEL_ID || !this.client) return;
+
+    try {
+      const channel = await this.client.channels.fetch(REWARD_LOG_CHANNEL_ID);
+      if (!channel || !channel.isTextBased()) return;
+
+      const user = await this.client.users.fetch(userId);
+      const userName = user.tag;
+
+      const embed = new EmbedBuilder()
+        .setTitle('💰 Points Earned')
+        .setDescription(
+          `**${userName}** earned **${points} pikapoints**\n` +
+            `Activity: 🎮 League of Legends\n` +
+            `Duration: ${minutes} minute${minutes !== 1 ? 's' : ''}`,
+        )
+        .setColor(0x00ff00)
+        .setTimestamp();
+
+      await (channel as TextChannel).send({ embeds: [embed] });
+    } catch (error) {
+      logger.error('Error logging reward to channel:', error);
     }
   }
 

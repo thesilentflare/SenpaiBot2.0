@@ -1,10 +1,11 @@
-import { Client, VoiceState } from 'discord.js';
+import { Client, VoiceState, EmbedBuilder, TextChannel } from 'discord.js';
 import { UserService } from './UserService';
 import Logger from '../../../utils/logger';
 import {
   MIN_VOICE_MEMBERS,
   VOICE_REWARD_INTERVAL_MS,
   VOICE_REWARD_POINTS,
+  REWARD_LOG_CHANNEL_ID,
 } from '../config/config';
 
 const logger = Logger.forModule('VoiceRewardService');
@@ -17,6 +18,7 @@ export class VoiceRewardService {
   private static instance: VoiceRewardService;
   private userService: UserService;
   private rewardInterval: NodeJS.Timeout | null = null;
+  private client: Client | null = null;
 
   private constructor() {
     this.userService = UserService.getInstance();
@@ -33,6 +35,7 @@ export class VoiceRewardService {
    * Initialize voice channel reward tracking
    */
   public initializeVoiceTracking(client: Client): void {
+    this.client = client;
     logger.info(
       `Initializing voice tracking: MIN_MEMBERS=${MIN_VOICE_MEMBERS}, INTERVAL=${REWARD_INTERVAL_MS}ms, POINTS=${REWARD_POINTS}`,
     );
@@ -240,13 +243,56 @@ export class VoiceRewardService {
             voiceChannelJoinTime: newJoinTime,
           });
 
+          const minutesInVoice = Math.floor(timeInVoice / 60000);
           logger.info(
-            `Awarded ${pointsToAward} points to ${userId} for ${Math.floor(timeInVoice / 60000)} minutes in voice`,
+            `Awarded ${pointsToAward} points to ${userId} for ${minutesInVoice} minutes in voice`,
+          );
+
+          // Send log to Discord channel
+          await this.logRewardToChannel(
+            userId,
+            pointsToAward,
+            minutesInVoice,
+            'voice',
           );
         }
       }
     } catch (error) {
       logger.error('Error checking/rewarding user:', error);
+    }
+  }
+
+  /**
+   * Log reward to Discord channel
+   */
+  private async logRewardToChannel(
+    userId: string,
+    points: number,
+    minutes: number,
+    type: 'voice' | 'game',
+  ): Promise<void> {
+    if (!REWARD_LOG_CHANNEL_ID || !this.client) return;
+
+    try {
+      const channel = await this.client.channels.fetch(REWARD_LOG_CHANNEL_ID);
+      if (!channel || !channel.isTextBased()) return;
+
+      const user = await this.client.users.fetch(userId);
+      const userName = user.tag;
+
+      const embed = new EmbedBuilder()
+        .setTitle('💰 Points Earned')
+        .setDescription(
+          `**${userName}** earned **${points} pikapoints**\n` +
+            `Activity: ${type === 'voice' ? '🎙️ Voice Chat' : '🎮 Playing Game'}\n` +
+            `Duration: ${minutes} minute${minutes !== 1 ? 's' : ''}`,
+        )
+        .setColor(0x00ff00)
+        .setTimestamp();
+
+      await (channel as TextChannel).send({ embeds: [embed] });
+    } catch (error) {
+      logger.error('Error logging reward to channel:', error);
     }
   }
 

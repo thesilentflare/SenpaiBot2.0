@@ -60,7 +60,9 @@ export const LEAGUE_REWARD_POINTS = parseInt(
 export const QUIZ_INTERVAL_MS = parseInt(
   process.env.QUIZ_INTERVAL_MS || '7200000',
 ); // 2 hours in milliseconds
-export const QUIZ_TIMEOUT_MS = parseInt(process.env.QUIZ_TIMEOUT_MS || '60000'); // 1 minute to answer
+export const QUIZ_TIMEOUT_MS = parseInt(
+  process.env.QUIZ_TIMEOUT_MS || '300000',
+); // 5 minutes to answer
 export const BASE_REWARD = parseInt(process.env.BASE_REWARD || '20');
 export const STREAK_BONUS = parseInt(process.env.STREAK_BONUS || '10');
 export const MAX_REWARD = parseInt(process.env.MAX_REWARD || '60');

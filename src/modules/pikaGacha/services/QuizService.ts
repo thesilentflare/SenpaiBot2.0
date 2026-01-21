@@ -142,7 +142,7 @@ export class QuizService {
         }
       } finally {
         this.isPostingQuiz = false;
-        this.scheduleNextQuiz(); // Schedule the next one after posting completes
+        // Don't schedule next quiz here - it will be scheduled when this quiz completes (answered/timeout)
       }
     }, delay);
 

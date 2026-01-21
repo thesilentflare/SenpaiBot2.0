@@ -345,6 +345,9 @@ export class QuizService {
     this.activeQuiz = null;
 
     logger.info('Quiz timed out');
+
+    // Schedule the next quiz
+    this.scheduleNextQuiz();
   }
 
   /**
@@ -479,6 +482,9 @@ export class QuizService {
       logger.info(
         `${message.author.tag} answered correctly (streak: ${newStreak}, points: ${pointsReward})`,
       );
+
+      // Schedule the next quiz
+      this.scheduleNextQuiz();
     } catch (error) {
       logger.error('Error handling correct answer:', error);
     }

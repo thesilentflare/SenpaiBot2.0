@@ -382,6 +382,13 @@ export class QuizService {
   private async handleCorrectAnswer(message: Message): Promise<void> {
     if (!this.activeQuiz) return;
 
+    // Immediately capture and clear the active quiz to prevent race conditions
+    const quizData = this.activeQuiz;
+    if (quizData.timeout) {
+      clearTimeout(quizData.timeout);
+    }
+    this.activeQuiz = null;
+
     try {
       const userId = message.author.id;
 
@@ -472,12 +479,6 @@ export class QuizService {
         .setTimestamp();
 
       await message.reply({ embeds: [embed] });
-
-      // Clear active quiz
-      if (this.activeQuiz.timeout) {
-        clearTimeout(this.activeQuiz.timeout);
-      }
-      this.activeQuiz = null;
 
       logger.info(
         `${message.author.tag} answered correctly (streak: ${newStreak}, points: ${pointsReward})`,

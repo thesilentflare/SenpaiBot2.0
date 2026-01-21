@@ -32,6 +32,7 @@ import {
   handleGiftBalls,
 } from './commands/admin';
 import { handleRegister } from './commands/register';
+import { handleJackpot } from './commands/jackpot';
 import { LeagueService } from './services/LeagueService';
 import { QuizService } from './services/QuizService';
 import { VoiceRewardService } from './services/VoiceRewardService';
@@ -344,6 +345,15 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'jackpot') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.jackpot()] });
+          return true;
+        }
+        await handleJackpot(message);
+        return true;
+      }
+
       if (subcommand === 'help') {
         await handleHelp(message);
         return true;
@@ -525,6 +535,11 @@ class PikaGachaModule implements BotModule {
         command: '!pg leaderboard',
         description: 'View leaderboards for various stats',
         usage: '!pg leaderboard [stat_type]',
+      },
+      {
+        command: '!pg jackpot',
+        description: 'View current jackpot pool and your contribution',
+        usage: '!pg jackpot',
       },
       {
         command: '!pg help',

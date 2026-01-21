@@ -61,7 +61,8 @@ export async function handleHelp(message: Message): Promise<void> {
       '**Progression**\n' +
         '`!pg promote` - Rank up within your current prestige (costs EXP)\n' +
         '`!pg prestige` - Reset rank for permanent bonuses (keeps Pokémon)\n' +
-        '`!pg leaderboard [category]` - View rankings\n\n' +
+        '`!pg leaderboard [category]` - View rankings\n' +
+        '`!pg jackpot` - View jackpot pool and your contribution\n\n' +
         '**Social**\n' +
         '`!pg trade <@user>` - Trade Pokémon\n' +
         '`!pg battle <@user>` - Battle another trainer\n\n' +

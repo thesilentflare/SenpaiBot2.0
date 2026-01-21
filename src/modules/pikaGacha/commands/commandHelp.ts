@@ -354,4 +354,23 @@ export const COMMAND_HELP = {
           'points, collection, rank, prestige',
       )
       .setColor(COLOR_HELP),
+
+  jackpot: () =>
+    new EmbedBuilder()
+      .setTitle('💰 Jackpot Command Help')
+      .setDescription(
+        '**Description:** View current jackpot pool and your contribution\n\n' +
+          '**Usage:**\n' +
+          '• `!pg jackpot` - View jackpot information\n\n' +
+          '**Example:**\n' +
+          '• `!pg jackpot` - Check the current pool\n\n' +
+          '**How it works:**\n' +
+          '• Every roll automatically contributes to the jackpot\n' +
+          '• When someone rolls a 6⭐ Legendary, jackpot pays out at 1x\n' +
+          '• When someone rolls a 7⭐ Mythic, jackpot pays out at 2x\n' +
+          '• All contributors with 3+ points split the pool equally\n' +
+          '• Each winner receives points + a random ball!\n' +
+          '• After payout, the jackpot resets',
+      )
+      .setColor(COLOR_HELP),
 };

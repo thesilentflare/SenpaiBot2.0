@@ -21,11 +21,11 @@ export async function initializeDatabase(): Promise<void> {
     await sequelize.authenticate();
     Logger.info('PikaGacha database connection established');
 
-    // First sync without altering to ensure tables exist
-    await sequelize.sync({ alter: false });
-
-    // Run migrations to add new columns safely
+    // Run migrations first to handle schema changes
     await runMigrations();
+
+    // Then sync without alter to avoid SQLite issues
+    await sequelize.sync({ alter: false });
 
     // Initialize ranks table with seed data
     // Import here to avoid circular dependency
@@ -44,6 +44,12 @@ export async function initializeDatabase(): Promise<void> {
  */
 async function runMigrations(): Promise<void> {
   try {
+    // Clean up any backup tables from failed migrations
+    await cleanupBackupTables();
+
+    // Create items table if it doesn't exist
+    await createItemsTableIfNotExists();
+
     // Check and add leagueGameStart column to Users table
     await addColumnIfNotExists(
       'users',
@@ -98,6 +104,54 @@ async function addColumnIfNotExists(
       `Error adding column ${columnName} to table ${tableName}:`,
       error,
     );
+  }
+}
+
+/**
+ * Clean up backup tables from failed migrations
+ */
+async function cleanupBackupTables(): Promise<void> {
+  try {
+    const [tables] = await sequelize.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%_backup'",
+    );
+
+    for (const table of tables as any[]) {
+      await sequelize.query(`DROP TABLE IF EXISTS ${table.name}`);
+      Logger.info(`Dropped backup table: ${table.name}`);
+    }
+  } catch (error) {
+    Logger.error('Error cleaning up backup tables:', error);
+  }
+}
+
+/**
+ * Create items table if it doesn't exist
+ */
+async function createItemsTableIfNotExists(): Promise<void> {
+  try {
+    const [tables] = await sequelize.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='items'",
+    );
+
+    if ((tables as any[]).length === 0) {
+      await sequelize.query(`
+        CREATE TABLE items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          userId VARCHAR(255) NOT NULL,
+          itemType INTEGER NOT NULL CHECK(itemType >= 1 AND itemType <= 4),
+          quantity INTEGER NOT NULL DEFAULT 1 CHECK(quantity >= 0),
+          createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(userId, itemType)
+        )
+      `);
+      Logger.info('Created items table');
+    } else {
+      Logger.debug('Items table already exists');
+    }
+  } catch (error) {
+    Logger.error('Error creating items table:', error);
   }
 }
 

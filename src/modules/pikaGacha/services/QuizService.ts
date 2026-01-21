@@ -13,6 +13,8 @@ import {
 } from '../config/spriteQuizQuestions';
 import Logger from '../../../utils/logger';
 import {
+  QUIZ_MIN_SPAWN_MS,
+  QUIZ_MAX_SPAWN_MS,
   QUIZ_TIMEOUT_MS,
   BASE_REWARD,
   STREAK_BONUS,
@@ -83,7 +85,7 @@ export class QuizService {
     this.client = client;
     this.quizChannelId = channelId;
 
-    // Schedule quizzes at exact hour and half-hour marks
+    // Schedule first quiz with random delay
     this.scheduleNextQuiz();
 
     this.isInitialized = true;
@@ -92,36 +94,17 @@ export class QuizService {
   }
 
   /**
-   * Calculate next quiz time (15-minute intervals) and determine quiz type
-   * :00 and :30 = text quiz
-   * :15 and :45 = sprite quiz
+   * Get random delay between min and max spawn times
    */
-  private getNextQuizTime(now: Date): { time: Date; type: 'text' | 'sprite' } {
-    const next = new Date(now);
-    const currentMinute = now.getMinutes();
-
-    // Find next 15-minute mark
-    const nextMinute = Math.ceil((currentMinute + 1) / 15) * 15;
-
-    if (nextMinute === 60) {
-      next.setHours(next.getHours() + 1);
-      next.setMinutes(0);
-    } else {
-      next.setMinutes(nextMinute);
-    }
-
-    next.setSeconds(0);
-    next.setMilliseconds(0);
-
-    // Determine quiz type based on minute
-    const minute = next.getMinutes();
-    const type = minute === 0 || minute === 30 ? 'text' : 'sprite';
-
-    return { time: next, type };
+  private getRandomDelay(): number {
+    return (
+      QUIZ_MIN_SPAWN_MS +
+      Math.random() * (QUIZ_MAX_SPAWN_MS - QUIZ_MIN_SPAWN_MS)
+    );
   }
 
   /**
-   * Calculate next hour or half-hour mark and schedule quiz
+   * Schedule next quiz with random delay and type
    */
   private scheduleNextQuiz(): void {
     // Safety check: Clear any existing interval first
@@ -133,9 +116,8 @@ export class QuizService {
       this.quizInterval = null;
     }
 
-    const now = new Date();
-    const { time: nextQuizTime, type: quizType } = this.getNextQuizTime(now);
-    const delay = nextQuizTime.getTime() - now.getTime();
+    const delay = this.getRandomDelay();
+    const quizType: 'text' | 'sprite' = Math.random() < 0.5 ? 'text' : 'sprite';
 
     logger.debug(`scheduleNextQuiz called, scheduling ${quizType} quiz`);
 
@@ -168,7 +150,7 @@ export class QuizService {
     logger.debug(`Timer ID ${timerId} created`);
 
     logger.info(
-      `Next ${quizType} quiz scheduled for ${nextQuizTime.toLocaleTimeString()} (in ${Math.round(delay / 60000)} minutes)`,
+      `Next ${quizType} quiz scheduled in ${Math.round(delay / 60000)} minutes`,
     );
   }
 
@@ -346,7 +328,11 @@ export class QuizService {
    * Handle quiz timeout (no correct answer)
    */
   private async handleQuizTimeout(message: Message): Promise<void> {
-    if (!this.activeQuiz) return;
+    // Check if quiz is still active (someone may have answered right before timeout)
+    if (!this.activeQuiz) {
+      logger.debug('Quiz timeout triggered but quiz already cleared');
+      return;
+    }
 
     const embed = new EmbedBuilder()
       .setColor(0xff6b6b)

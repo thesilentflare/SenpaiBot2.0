@@ -57,9 +57,12 @@ export const LEAGUE_REWARD_POINTS = parseInt(
 );
 
 // Quiz System Constants
-export const QUIZ_INTERVAL_MS = parseInt(
-  process.env.QUIZ_INTERVAL_MS || '7200000',
-); // 2 hours in milliseconds
+export const QUIZ_MIN_SPAWN_MS = parseInt(
+  process.env.QUIZ_MIN_SPAWN_MS || '300000',
+); // 5 minutes minimum
+export const QUIZ_MAX_SPAWN_MS = parseInt(
+  process.env.QUIZ_MAX_SPAWN_MS || '1800000',
+); // 30 minutes maximum
 export const QUIZ_TIMEOUT_MS = parseInt(
   process.env.QUIZ_TIMEOUT_MS || '300000',
 ); // 5 minutes to answer

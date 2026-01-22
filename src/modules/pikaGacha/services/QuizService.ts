@@ -382,17 +382,10 @@ export class QuizService {
   private async handleCorrectAnswer(message: Message): Promise<void> {
     if (!this.activeQuiz) return;
 
-    // Immediately capture and clear the active quiz to prevent race conditions
-    const quizData = this.activeQuiz;
-    if (quizData.timeout) {
-      clearTimeout(quizData.timeout);
-    }
-    this.activeQuiz = null;
-
     try {
       const userId = message.author.id;
 
-      // Get or create user and trainer
+      // Get or create user and trainer BEFORE clearing quiz
       let user = await this.userService.getUser(userId);
       if (!user) {
         await message.reply(
@@ -408,6 +401,13 @@ export class QuizService {
         );
         return;
       }
+
+      // Now that we've validated the user, immediately capture and clear the quiz to prevent race conditions
+      const quizData = this.activeQuiz;
+      if (quizData.timeout) {
+        clearTimeout(quizData.timeout);
+      }
+      this.activeQuiz = null;
 
       const currentStreak = trainer.currentStreak;
       const previousStreak = currentStreak;

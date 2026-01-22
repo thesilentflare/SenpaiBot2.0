@@ -1,4 +1,4 @@
-import { Client, Message, EmbedBuilder, AttachmentBuilder } from 'discord.js';
+import { Message, EmbedBuilder, AttachmentBuilder } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
 import Logger from '../../utils/logger';
 import {
@@ -24,7 +24,7 @@ class ImageboardsModule implements BotModule {
     this.imageboards = [fetchYandere, fetchSafebooru];
   }
 
-  initialize(client: Client): void {
+  initialize(): void {
     this.logger.debug('Module initialized');
   }
 

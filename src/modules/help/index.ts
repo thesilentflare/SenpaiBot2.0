@@ -1,4 +1,11 @@
-import { Client, EmbedBuilder, Message } from 'discord.js';
+import {
+  EmbedBuilder,
+  Message,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType,
+} from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
 import Logger from '../../utils/logger';
 
@@ -6,12 +13,10 @@ class HelpModule implements BotModule {
   name = 'help';
   description = 'Display available commands';
   enabled = true;
-  private client: Client | null = null;
   private allModules: BotModule[] = [];
   private logger = Logger.forModule('help');
 
-  initialize(client: Client): void {
-    this.client = client;
+  initialize(): void {
     this.logger.debug('Module initialized');
   }
 
@@ -66,56 +71,142 @@ class HelpModule implements BotModule {
       }
     }
 
-    // Build the help embed
-    const embed = new EmbedBuilder()
-      .setTitle('🤖 SenpaiBot Commands')
-      .setColor(0x93acff)
-      .setFooter({ text: 'Use the commands exactly as shown' });
+    // Build pages - group modules into pages
+    const pages: EmbedBuilder[] = [];
+    const modulesPerPage = 3;
+    const moduleEntries = Array.from(moduleCommands.entries());
 
-    // Add user commands grouped by module
-    for (const [moduleName, { user }] of moduleCommands) {
-      if (user.length > 0) {
-        let commandsText = '';
-        user.forEach((cmd) => {
-          commandsText += `**${cmd.command}** - ${cmd.description}\n`;
-          if (cmd.usage) {
-            commandsText += `  _${cmd.usage}_\n`;
+    for (let i = 0; i < moduleEntries.length; i += modulesPerPage) {
+      const pageModules = moduleEntries.slice(i, i + modulesPerPage);
+      const embed = new EmbedBuilder()
+        .setTitle('🤖 SenpaiBot Commands')
+        .setColor(0x93acff)
+        .setFooter({
+          text: `Page ${Math.floor(i / modulesPerPage) + 1}/${Math.ceil(moduleEntries.length / modulesPerPage)} • Use the buttons to navigate`,
+        });
+
+      for (const [moduleName, { user, admin }] of pageModules) {
+        // Add user commands
+        if (user.length > 0) {
+          let commandsText = '';
+          user.forEach((cmd) => {
+            commandsText += `**${cmd.command}** - ${cmd.description}\n`;
+          });
+
+          if (commandsText.length > 0) {
+            const displayName =
+              moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+            // Truncate if too long
+            if (commandsText.length > 1024) {
+              commandsText =
+                commandsText.substring(0, 1000) + '...\n_[Truncated]_';
+            }
+            embed.addFields([
+              {
+                name: `📋 ${displayName}`,
+                value: commandsText,
+                inline: false,
+              },
+            ]);
           }
-        });
-
-        // Capitalize first letter of module name for display
-        const displayName =
-          moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
-        embed.addFields({
-          name: `📋 ${displayName}`,
-          value: commandsText,
-          inline: false,
-        });
-      }
-    }
-
-    // Add admin commands
-    const allAdminCommands: CommandInfo[] = [];
-    for (const [, { admin }] of moduleCommands) {
-      allAdminCommands.push(...admin);
-    }
-
-    if (allAdminCommands.length > 0) {
-      let adminCommandsText = '';
-      allAdminCommands.forEach((cmd) => {
-        adminCommandsText += `**${cmd.command}** - ${cmd.description}\n`;
-        if (cmd.usage) {
-          adminCommandsText += `  _${cmd.usage}_\n`;
         }
-      });
-      embed.addFields({
-        name: '🛡️ Admin Commands',
-        value: adminCommandsText,
-        inline: false,
-      });
+
+        // Add admin commands for this module
+        if (admin.length > 0) {
+          let adminText = '';
+          admin.forEach((cmd) => {
+            adminText += `**${cmd.command}** - ${cmd.description}\n`;
+          });
+
+          if (adminText.length > 0) {
+            const displayName =
+              moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+            if (adminText.length > 1024) {
+              adminText = adminText.substring(0, 1000) + '...\n_[Truncated]_';
+            }
+            embed.addFields([
+              {
+                name: `🛡️ ${displayName} (Admin)`,
+                value: adminText,
+                inline: false,
+              },
+            ]);
+          }
+        }
+      }
+
+      pages.push(embed);
     }
 
-    await message.reply({ embeds: [embed] });
+    if (pages.length === 0) {
+      await message.reply('No commands available.');
+      return;
+    }
+
+    let currentPage = 0;
+
+    // Create buttons
+    const getButtons = (disabled: { prev: boolean; next: boolean }) => {
+      return new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId('help_prev')
+          .setLabel('◀ Previous')
+          .setStyle(ButtonStyle.Primary)
+          .setDisabled(disabled.prev),
+        new ButtonBuilder()
+          .setCustomId('help_next')
+          .setLabel('Next ▶')
+          .setStyle(ButtonStyle.Primary)
+          .setDisabled(disabled.next),
+      );
+    };
+
+    // Send initial message
+    const reply = await message.reply({
+      embeds: [pages[currentPage]],
+      components:
+        pages.length > 1 ? [getButtons({ prev: true, next: false })] : [],
+    });
+
+    if (pages.length === 1) return;
+
+    // Create collector for button interactions
+    const collector = reply.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 300000, // 5 minutes
+    });
+
+    collector.on('collect', async (interaction) => {
+      // Only allow the original user to use the buttons
+      if (interaction.user.id !== message.author.id) {
+        await interaction.reply({
+          content: 'These buttons are not for you!',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      if (interaction.customId === 'help_prev') {
+        currentPage = Math.max(0, currentPage - 1);
+      } else if (interaction.customId === 'help_next') {
+        currentPage = Math.min(pages.length - 1, currentPage + 1);
+      }
+
+      await interaction.update({
+        embeds: [pages[currentPage]],
+        components: [
+          getButtons({
+            prev: currentPage === 0,
+            next: currentPage === pages.length - 1,
+          }),
+        ],
+      });
+    });
+
+    collector.on('end', () => {
+      // Disable buttons after timeout
+      reply.edit({ components: [] }).catch(() => {});
+    });
   }
 
   getCommands(): CommandInfo[] {

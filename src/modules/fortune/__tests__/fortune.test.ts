@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { Client, Message } from 'discord.js';
+import { Message } from 'discord.js';
 import FortuneModule from '../index';
 
 // Mock Discord.js Message
@@ -30,8 +30,7 @@ describe('Fortune Module', () => {
     });
 
     it('should initialize without errors', () => {
-      const mockClient = {} as Client;
-      expect(() => FortuneModule.initialize(mockClient)).not.toThrow();
+      expect(() => FortuneModule.initialize()).not.toThrow();
     });
   });
 

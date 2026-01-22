@@ -1,4 +1,4 @@
-import { Client, EmbedBuilder, Message } from 'discord.js';
+import { EmbedBuilder, Message } from 'discord.js';
 import { BotModule, CommandInfo } from '../../types/module';
 import {
   addAdmin,
@@ -15,7 +15,7 @@ class AdminManagerModule implements BotModule {
   enabled = true;
   private logger = Logger.forModule('adminManager');
 
-  initialize(client: Client): void {
+  initialize(): void {
     this.logger.debug('Module initialized');
   }
 

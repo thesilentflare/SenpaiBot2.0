@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { Client, Message } from 'discord.js';
+import { Message } from 'discord.js';
 
 // Mock https module
 const mockHttpsResponse = {
@@ -14,7 +14,7 @@ const mockHttpsRequest = {
 };
 
 jest.mock('https', () => ({
-  get: jest.fn((url: any, callback: any) => {
+  get: jest.fn((_url: any, callback: any) => {
     callback(mockHttpsResponse);
     return mockHttpsRequest;
   }),
@@ -47,8 +47,7 @@ describe('ImageBoards Module', () => {
     });
 
     it('should initialize without errors', () => {
-      const mockClient = {} as Client;
-      expect(() => ImageBoardsModule.initialize(mockClient)).not.toThrow();
+      expect(() => ImageBoardsModule.initialize()).not.toThrow();
     });
   });
 

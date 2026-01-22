@@ -31,5 +31,10 @@
   },
   "fortnite": {
     "enabled": true
+  },
+  "pikaGacha": {
+    "enabled": true,
+    "enableLeagueTracking": true,
+    "enableQuiz": true
   }
 }

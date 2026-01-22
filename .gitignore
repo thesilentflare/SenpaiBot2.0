@@ -83,3 +83,5 @@ yarn.lock
 # Db
 *.db
 *.sqlite3
+# Uploaded seed data
+seed_data/

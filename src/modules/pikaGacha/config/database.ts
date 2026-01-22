@@ -2,7 +2,9 @@ import { Sequelize } from 'sequelize';
 import path from 'path';
 import Logger from '../../../utils/logger';
 
-const dbPath = path.join(__dirname, '../data/pikagacha.db');
+// Store database in project root to persist across builds
+// In production, dist/ folder gets deleted on rebuild
+const dbPath = path.join(process.cwd(), 'data', 'pikagacha.db');
 
 export const sequelize = new Sequelize({
   dialect: 'sqlite',

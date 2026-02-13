@@ -133,7 +133,7 @@ class BirthdaysModule implements BotModule {
           .toUpperCase()} BIRTHDAYS 🎊`;
         const description = birthdayList
           .map((entry: BirthdayEntry) => {
-            const birthdayDate = new Date(entry.dateISOString);
+            const birthdayDate = parseISO(entry.dateISOString);
             const zonedBirthdayDate = toZonedTime(birthdayDate, TIME_ZONE);
             const formattedDate = format(zonedBirthdayDate, 'MM/dd', {
               timeZone: TIME_ZONE,
@@ -239,7 +239,7 @@ class BirthdaysModule implements BotModule {
     let description = 'Person | Month | Day\n\n';
     if (allBirthdays.length > 0) {
       allBirthdays.forEach((entry: BirthdayEntry) => {
-        const birthdayDate = new Date(entry.dateISOString);
+        const birthdayDate = parseISO(entry.dateISOString);
         const zonedBirthdayDate = toZonedTime(birthdayDate, TIME_ZONE);
         const formattedDate = format(zonedBirthdayDate, 'MM/dd', {
           timeZone: TIME_ZONE,

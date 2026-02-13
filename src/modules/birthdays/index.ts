@@ -201,9 +201,8 @@ class BirthdaysModule implements BotModule {
     }
 
     const { id: discordID } = message.author;
-    const parsedDate = parseISO(date);
-    const utcDate = toZonedTime(parsedDate, TIME_ZONE);
-    const isoDateString = format(utcDate, "yyyy-MM-dd'T'HH:mm:ssXXX");
+    // Store birthday at noon UTC to preserve the date across all timezones
+    const isoDateString = `${date}T12:00:00Z`;
 
     const res = await setBirthday(discordID, isoDateString);
     if (res.success) {

@@ -48,7 +48,7 @@ export async function handleRoll(
           const embed = new EmbedBuilder()
             .setTitle('❌ Invalid Region')
             .setDescription(
-              "Region must be one of: 'kanto', 'johto', 'hoenn', 'sinnoh', 'unova', 'kalos', 'alola', or omit for all regions",
+              "Region must be one of: 'kanto', 'johto', 'hoenn', 'sinnoh', 'unova', 'kalos', 'alola', 'galar', 'paldea', 'special', or omit for all regions",
             )
             .setColor(COLOR_ERROR);
           await message.reply({ embeds: [embed] });
@@ -71,7 +71,7 @@ export async function handleRoll(
         const embed = new EmbedBuilder()
           .setTitle('❌ Invalid Region')
           .setDescription(
-            "Region must be one of: 'kanto', 'johto', 'hoenn', 'sinnoh', 'unova', 'kalos', 'alola', or omit for all regions",
+            "Region must be one of: 'kanto', 'johto', 'hoenn', 'sinnoh', 'unova', 'kalos', 'alola', 'galar', 'paldea', 'special', or omit for all regions",
           )
           .setColor(COLOR_ERROR);
         await message.reply({ embeds: [embed] });

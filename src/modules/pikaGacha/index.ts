@@ -15,7 +15,7 @@ import { handleBattle } from './commands/battle';
 import { handleLeaderboard } from './commands/leaderboard';
 import { handlePromote, handlePrestige } from './commands/rank';
 import { handleTeam } from './commands/team';
-import { handleHelp, handleInfo } from './commands/info';
+import { handleHelp, handleInfo, handleRegions } from './commands/info';
 import {
   handleReseed,
   handleSetFocus,
@@ -354,6 +354,15 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'regions') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.regions()] });
+          return true;
+        }
+        await handleRegions(message);
+        return true;
+      }
+
       if (subcommand === 'help') {
         await handleHelp(message);
         return true;
@@ -540,6 +549,11 @@ class PikaGachaModule implements BotModule {
         command: '!pg jackpot',
         description: 'View current jackpot pool and your contribution',
         usage: '!pg jackpot',
+      },
+      {
+        command: '!pg regions',
+        description: 'List available Pokémon regions and their roll status',
+        usage: '!pg regions',
       },
       {
         command: '!pg help',

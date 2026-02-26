@@ -1,4 +1,5 @@
 import { Message, EmbedBuilder } from 'discord.js';
+import { Op } from 'sequelize';
 import {
   ROLL_COST,
   STARTER_BONUS,
@@ -11,7 +12,21 @@ import {
   LEAGUE_REWARD_POINTS,
   MAX_FAVORITES,
 } from '../config/config';
-import { TEAMS } from '../types';
+import {
+  TEAMS,
+  KANTO,
+  JOHTO,
+  HOENN,
+  SINNOH,
+  UNOVA,
+  KALOS,
+  ALOLA,
+  GALAR,
+  PALDEA,
+  SPECIAL,
+  Region,
+} from '../types';
+import { Pokemon } from '../models';
 
 const COLOR_INFO = 0x9370db;
 
@@ -173,4 +188,75 @@ export async function handleInfo(message: Message): Promise<void> {
     .setFooter({ text: 'Good luck, Trainer! 🎮' });
 
   await message.reply({ embeds: [embed1, embed2, embed3, embed4] });
+}
+
+/**
+ * Handle !pg regions command - List available regions based on DB content
+ */
+export async function handleRegions(message: Message): Promise<void> {
+  const ALL_REGIONS: Region[] = [
+    KANTO,
+    JOHTO,
+    HOENN,
+    SINNOH,
+    UNOVA,
+    KALOS,
+    ALOLA,
+    GALAR,
+    PALDEA,
+    SPECIAL,
+  ];
+
+  try {
+    // Query Pokemon counts for each region in parallel
+    const regionData = await Promise.all(
+      ALL_REGIONS.map(async (region) => {
+        const where: any = {
+          id: { [Op.between]: [region.min, region.max] },
+        };
+        // For special region, only count active Pokemon
+        if (region.id === 0) {
+          where.active = true;
+        }
+        const count = await Pokemon.count({ where });
+        return { region, count };
+      }),
+    );
+
+    const lines = regionData.map(({ region, count }) => {
+      if (count > 0) {
+        const idRange =
+          region.id === 0
+            ? `ID ${region.min}+`
+            : `IDs #${region.min}–#${region.max}`;
+        return `**${region.name}** — ${count} Pokémon available *(${idRange})*`;
+      } else {
+        return `**${region.name}** — *Future Release*`;
+      }
+    });
+
+    const availableCount = regionData.filter((r) => r.count > 0).length;
+
+    const embed = new EmbedBuilder()
+      .setTitle('🌍 PikaGacha Regions')
+      .setDescription(
+        `**${availableCount} of ${ALL_REGIONS.length} regions** currently have Pokémon available.\n\n` +
+          lines.join('\n') +
+          '\n\n' +
+          '**Usage:** `!pg roll <region>` to roll in a specific region\n' +
+          '*e.g. `!pg roll kanto`, `!pg roll johto`*',
+      )
+      .setColor(0x9370db)
+      .setFooter({
+        text: '🔒 Future Release regions will be added in upcoming updates',
+      });
+
+    await message.reply({ embeds: [embed] });
+  } catch (error) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Error')
+      .setDescription('An error occurred while fetching region data.')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+  }
 }

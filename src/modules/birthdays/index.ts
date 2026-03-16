@@ -25,6 +25,10 @@ const BIRTHDAY_REMINDER_DAY_OF_MONTH = parseInt(
   process.env.BIRTHDAY_REMINDER_DAY_OF_MONTH || '1',
   10,
 );
+const BIRTHDAY_MIN_BIRTH_YEAR = parseInt(
+  process.env.BIRTHDAY_MIN_BIRTH_YEAR || '1990',
+  10,
+);
 
 class BirthdaysModule implements BotModule {
   name = 'birthdays';
@@ -32,6 +36,7 @@ class BirthdaysModule implements BotModule {
   enabled = true;
   private client: Client | null = null;
   private logger = Logger.forModule('birthdays');
+  private failedAttempts = new Map<string, number>();
 
   async initialize(client: Client): Promise<void> {
     this.client = client;
@@ -168,39 +173,112 @@ class BirthdaysModule implements BotModule {
     }
   }
 
-  private async handleBirthCommand(message: Message): Promise<void> {
-    if (message.author.bot) return;
+  private replyInvalidDate(message: Message, description: string): void {
+    const userId = message.author.id;
+    const attempts = (this.failedAttempts.get(userId) ?? 0) + 1;
+    this.failedAttempts.set(userId, attempts);
 
-    const args = message.content.split(' ');
-    if (args.length !== 2) {
+    if (attempts >= 3) {
       message.reply({
         embeds: [
           {
             title: 'Birthday Error',
-            description: 'Invalid command format. Use: !birth YYYY-MM-DD',
+            description:
+              'You have entered an invalid date too many times. Please ask the server owner to set your birthday for you.',
             color: 0xff0000,
           },
         ],
       });
+      return;
+    }
+
+    message.reply({
+      embeds: [
+        {
+          title: 'Birthday Error',
+          description,
+          color: 0xff0000,
+        },
+      ],
+    });
+  }
+
+  private async handleBirthCommand(message: Message): Promise<void> {
+    if (message.author.bot) return;
+
+    const userId = message.author.id;
+
+    if ((this.failedAttempts.get(userId) ?? 0) >= 3) {
+      message.reply({
+        embeds: [
+          {
+            title: 'Birthday Error',
+            description:
+              'You have entered an invalid date too many times. Please ask the server owner to set your birthday for you.',
+            color: 0xff0000,
+          },
+        ],
+      });
+      return;
+    }
+
+    const args = message.content.split(' ');
+    if (args.length !== 2) {
+      this.replyInvalidDate(
+        message,
+        'Invalid command format. Use: !birth YYYY-MM-DD',
+      );
       return;
     }
 
     const date = args[1];
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date)) {
-      message.reply({
-        embeds: [
-          {
-            title: 'Birthday Error',
-            description: 'Invalid date format. Please use YYYY-MM-DD.',
-            color: 0xff0000,
-          },
-        ],
-      });
+      this.replyInvalidDate(
+        message,
+        'Invalid date format. Please use YYYY-MM-DD.',
+      );
+      return;
+    }
+
+    const parsedDate = new Date(`${date}T12:00:00Z`);
+    if (isNaN(parsedDate.getTime())) {
+      this.replyInvalidDate(
+        message,
+        'Invalid date. Please enter a real calendar date.',
+      );
+      return;
+    }
+
+    const now = new Date();
+    if (parsedDate > now) {
+      this.replyInvalidDate(message, 'Your birthday cannot be in the future.');
+      return;
+    }
+
+    if (parsedDate.getUTCFullYear() < BIRTHDAY_MIN_BIRTH_YEAR) {
+      this.replyInvalidDate(
+        message,
+        `Birthdays before ${BIRTHDAY_MIN_BIRTH_YEAR} are not accepted. Please enter a valid birthday.`,
+      );
+      return;
+    }
+
+    const eighteenYearsAgo = new Date(
+      now.getFullYear() - 18,
+      now.getMonth(),
+      now.getDate(),
+    );
+    if (parsedDate > eighteenYearsAgo) {
+      this.replyInvalidDate(
+        message,
+        'You must be at least 18 years old to use this command.',
+      );
       return;
     }
 
     const { id: discordID } = message.author;
+    this.failedAttempts.delete(discordID);
     // Store birthday at noon UTC to preserve the date across all timezones
     const isoDateString = `${date}T12:00:00Z`;
 

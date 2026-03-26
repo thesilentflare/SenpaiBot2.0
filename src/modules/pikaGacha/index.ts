@@ -15,7 +15,7 @@ import { handleBattle } from './commands/battle';
 import { handleLeaderboard } from './commands/leaderboard';
 import { handlePromote, handlePrestige } from './commands/rank';
 import { handleTeam } from './commands/team';
-import { handleHelp, handleInfo } from './commands/info';
+import { handleHelp, handleInfo, handleRegions } from './commands/info';
 import {
   handleReseed,
   handleSetFocus,
@@ -30,8 +30,10 @@ import {
   handleDownloadSeed,
   handleDeleteTrainer,
   handleGiftBalls,
+  handleAddRegion,
 } from './commands/admin';
 import { handleRegister } from './commands/register';
+import trainerService from './services/TrainerService';
 import { handleJackpot } from './commands/jackpot';
 import { LeagueService } from './services/LeagueService';
 import { QuizService } from './services/QuizService';
@@ -137,7 +139,52 @@ class PikaGachaModule implements BotModule {
     // Helper function to check if user wants help for a specific command
     const wantsHelp = args.length > 0 && args[0].toLowerCase() === 'help';
 
+    // Subcommands that do NOT require a registered trainer
+    const EXEMPT_SUBCOMMANDS = new Set([
+      'register',
+      'signup',
+      'help',
+      'info',
+      'regions',
+      // admin commands
+      'reseed',
+      'setfocus',
+      'removefocus',
+      'addpoints',
+      'removepoints',
+      'giveall',
+      'triggerquiz',
+      'voicestats',
+      'uploadseed',
+      'listseeds',
+      'downloadseed',
+      'giftballs',
+      'addregion',
+      'deletetrainer',
+    ]);
+
     try {
+      // Registration gate — runs before any non-exempt command handler
+      if (!EXEMPT_SUBCOMMANDS.has(subcommand)) {
+        const trainer = await trainerService.getTrainer(message.author.id);
+        if (!trainer) {
+          await message.reply({
+            embeds: [
+              {
+                title: '❌ Not Registered',
+                description:
+                  "You don't have a PikaGacha trainer profile yet!\n\n" +
+                  '**To get started, register with:**\n' +
+                  '`!pg register <trainer_name>`\n\n' +
+                  '**Example:** `!pg register Ash`',
+                color: 0xff0000,
+              },
+            ],
+          });
+          return true;
+        }
+      }
+
       // Registration
       if (subcommand === 'register' || subcommand === 'signup') {
         if (wantsHelp) {
@@ -354,6 +401,15 @@ class PikaGachaModule implements BotModule {
         return true;
       }
 
+      if (subcommand === 'regions') {
+        if (wantsHelp) {
+          await message.reply({ embeds: [COMMAND_HELP.regions()] });
+          return true;
+        }
+        await handleRegions(message);
+        return true;
+      }
+
       if (subcommand === 'help') {
         await handleHelp(message);
         return true;
@@ -422,6 +478,11 @@ class PikaGachaModule implements BotModule {
 
       if (subcommand === 'giftballs') {
         await handleGiftBalls(message, args);
+        return true;
+      }
+
+      if (subcommand === 'addregion') {
+        await handleAddRegion(message, args);
         return true;
       }
 
@@ -542,6 +603,11 @@ class PikaGachaModule implements BotModule {
         usage: '!pg jackpot',
       },
       {
+        command: '!pg regions',
+        description: 'List available Pokémon regions and their roll status',
+        usage: '!pg regions',
+      },
+      {
         command: '!pg help',
         description: 'Show all commands with detailed descriptions',
         usage: '!pg help',
@@ -621,6 +687,12 @@ class PikaGachaModule implements BotModule {
         command: '!pg giftballs',
         description: 'Gift balls to a user',
         usage: '!pg giftballs <@user|user_id> <ball_type> <amount>',
+        adminOnly: true,
+      },
+      {
+        command: '!pg addregion',
+        description: "Auto-fetch and add a region's Pokémon from PokéAPI",
+        usage: '!pg addregion <region> [--confirm]',
         adminOnly: true,
       },
     ];

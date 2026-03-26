@@ -21,7 +21,8 @@ export const COMMAND_HELP = {
           '• `!pg roll kanto` - Roll from Kanto region\n' +
           '• `!pg roll johto 10` - Roll 10 times from Johto\n\n' +
           '**Available Regions:**\n' +
-          'kanto, johto, hoenn, sinnoh, unova, kalos, alola',
+          'kanto, johto, hoenn, sinnoh, unova, kalos, alola, galar, paldea, special\n' +
+          '*Use `!pg regions` to see which regions have Pokémon available*',
       )
       .setColor(COLOR_HELP),
 
@@ -184,14 +185,15 @@ export const COMMAND_HELP = {
     new EmbedBuilder()
       .setTitle('📖 Pokédex Command Help')
       .setDescription(
-        '**Description:** View collection completion progress\n\n' +
-          '**Usage Variations:**\n' +
-          '• `!pg pokedex` - View your Pokédex\n' +
-          "• `!pg pokedex <@user>` - View another user's Pokédex\n" +
-          '• `!pg dex` - Short alias\n\n' +
+        '**Description:** Look up information about a specific Pokémon\n\n' +
+          '**Usage:**\n' +
+          '• `!pg pokedex <pokemon_name_or_id>` - Look up by name or ID\n' +
+          '• `!pg dex <pokemon_name_or_id>` - Short alias\n\n' +
           '**Examples:**\n' +
-          '• `!pg pokedex` - Check your completion\n' +
-          "• `!pg dex @Friend` - Check Friend's completion",
+          '• `!pg pokedex Pikachu` - Look up Pikachu\n' +
+          '• `!pg dex 25` - Look up Pokémon #25\n' +
+          '• `!pg pokedex Charizard` - Look up Charizard\n\n' +
+          '**Displays:** Name, ID, Rarity, BST, Region, sprite image',
       )
       .setColor(COLOR_HELP),
 
@@ -352,6 +354,20 @@ export const COMMAND_HELP = {
           '• `!pg lb collection` - Top by collection\n\n' +
           '**Categories:**\n' +
           'points, collection, rank, prestige',
+      )
+      .setColor(COLOR_HELP),
+
+  regions: () =>
+    new EmbedBuilder()
+      .setTitle('🌍 Regions Command Help')
+      .setDescription(
+        '**Description:** List all Pokémon regions and their availability\n\n' +
+          '**Usage:**\n' +
+          '• `!pg regions` - Show all regions and Pokémon counts\n\n' +
+          '**Example:**\n' +
+          '• `!pg regions` - See which regions are available\n\n' +
+          '**Available Regions:** kanto, johto, hoenn, sinnoh, unova, kalos, alola, galar, paldea, special\n' +
+          '**Future Release regions** are regions not yet seeded in the database',
       )
       .setColor(COLOR_HELP),
 

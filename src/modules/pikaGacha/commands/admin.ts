@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import pokemonService from '../services/PokemonService';
 import { Pokemon, Trainer } from '../models';
+import { Op } from 'sequelize';
 import { isAdmin } from '../../adminManager/helpers';
 import Logger from '../../../utils/logger';
 import userService from '../services/UserService';
@@ -22,7 +23,7 @@ import {
   listUploadedSeedFiles,
 } from '../utils/seedManager';
 import axios from 'axios';
-import { getBallType } from '../types';
+import { getBallType, getRegionByName } from '../types';
 import { AttachmentBuilder } from 'discord.js';
 
 const ADMIN_COLOR = 0xff6b6b; // Red color for admin commands
@@ -1503,5 +1504,466 @@ export async function handleGiftBalls(
       )
       .setColor(0xff0000);
     await message.reply({ embeds: [embed] });
+  }
+}
+
+/**
+ * Auto-fetch and add a region's Pokemon from PokéAPI
+ * Usage: !pg addregion <region> [--confirm]
+ */
+export async function handleAddRegion(
+  message: Message,
+  args: string[],
+): Promise<void> {
+  if (!(await isAdmin(message.author.id, message.guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Access Denied')
+      .setDescription('This command is admin-only!')
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  if (args.length < 1) {
+    const embed = new EmbedBuilder()
+      .setTitle('🌍 Add Region Usage')
+      .setDescription(
+        '**Usage:** `!pg addregion <region> [--confirm]`\n\n' +
+          '**Examples:**\n' +
+          '• `!pg addregion galar` — Preview without making changes\n' +
+          '• `!pg addregion galar --confirm` — Fetch & add Galar Pokémon\n\n' +
+          '**Available regions:** kanto, johto, hoenn, sinnoh, unova, kalos, alola, galar, paldea\n\n' +
+          '**What this does:**\n' +
+          '1. Fetches every Pokémon in the region\'s ID range from PokéAPI\n' +
+          '2. Auto-assigns rarity (Mythical=7★, Legendary=6★, BST-based for 3–5★)\n' +
+          '3. Appends new rows to the current seed CSV and saves it\n' +
+          '4. Reseeds the database from the new file\n\n' +
+          '⚠️ Auto-assigned rarities are a **best-effort first pass**. Review with\n' +
+          '`!pg downloadseed` → edit → `!pg uploadseed` → `!pg reseed --confirm`',
+      )
+      .setColor(ADMIN_COLOR);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  const regionName = args[0].toLowerCase();
+  const confirmFlag = args.includes('--confirm');
+
+  // Reject "special" — those are custom/event Pokemon
+  if (regionName === 'special') {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Special Region Not Supported')
+      .setDescription(
+        'The Special region contains custom/event Pokémon that cannot be auto-fetched from PokéAPI.\n\n' +
+          'Use `!pg uploadseed` to manually add Special Pokémon via CSV.',
+      )
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  // Look up region
+  const region = getRegionByName(regionName);
+  if (!region || region.id === 0) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Unknown Region')
+      .setDescription(
+        `Region **${regionName}** not found.\n\n` +
+          '**Available regions:** kanto, johto, hoenn, sinnoh, unova, kalos, alola, galar, paldea',
+      )
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  // Check if region already has Pokemon in DB
+  const existingCount = await Pokemon.count({
+    where: { id: { [Op.between]: [region.min, region.max] } },
+  });
+
+  if (existingCount > 0) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Region Already Seeded')
+      .setDescription(
+        `**${region.name}** already has **${existingCount} Pokémon** in the database.\n\n` +
+          'To update existing stats use `!pg reseed --confirm`.\n' +
+          'To replace the region entirely: `!pg downloadseed` → edit → `!pg uploadseed` → `!pg reseed --confirm`.',
+      )
+      .setColor(0xff0000);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  const pokemonCount = region.max - region.min + 1;
+  const estimatedSeconds = Math.ceil(
+    (pokemonCount * 2 * 150 + Math.ceil(pokemonCount / 10) * 400) / 1000,
+  );
+
+  // ── Preview mode (no --confirm) ──────────────────────────────────────────
+  if (!confirmFlag) {
+    const embed = new EmbedBuilder()
+      .setTitle(`🌍 Preview: Add Region — ${region.name}`)
+      .addFields([
+        {
+          name: 'ID Range',
+          value: `#${region.min} – #${region.max}`,
+          inline: true,
+        },
+        {
+          name: 'Pokémon to Fetch',
+          value: `~${pokemonCount}`,
+          inline: true,
+        },
+        {
+          name: 'Estimated Time',
+          value: `~${estimatedSeconds}s`,
+          inline: true,
+        },
+        { name: 'Currently in DB', value: '0 (empty)', inline: true },
+        {
+          name: 'API Calls',
+          value: `~${pokemonCount * 2} (pokemon + species per entry)`,
+          inline: true,
+        },
+      ])
+      .setDescription(
+        '**Auto-Rarity Assignment Rules:**\n' +
+          '• `is_mythical: true` → **7★ Mythic**\n' +
+          '• `is_legendary: true` → **6★ Legendary**\n' +
+          '• BST ≥ 540 → **5★**\n' +
+          '• BST ≥ 420 → **4★**\n' +
+          '• BST < 420 → **3★**\n\n' +
+          '⚠️ These thresholds are a best-effort approximation. Manual review is recommended after adding.\n\n' +
+          `**To proceed:** \`!pg addregion ${regionName} --confirm\``,
+      )
+      .setColor(ADMIN_COLOR);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  // ── Fetch mode (--confirm) ────────────────────────────────────────────────
+  const statusMessage = await message.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle(`🌍 Adding Region: ${region.name}`)
+        .setDescription(
+          `Fetching ${pokemonCount} Pokémon from PokéAPI in batches...\n\n🔄 Starting...`,
+        )
+        .setColor(ADMIN_COLOR),
+    ],
+  });
+
+  interface FetchedPokemon {
+    id: number;
+    name: string;
+    rarity: number;
+    bst: number;
+  }
+  interface FetchError {
+    id: number;
+    error: string;
+  }
+
+  const fetched: FetchedPokemon[] = [];
+  const fetchErrors: FetchError[] = [];
+  const BATCH_SIZE = 10;
+  const BATCH_DELAY_MS = 400;
+
+  /** Auto-assign rarity: mythical > legendary > BST tiers */
+  const assignRarity = (
+    bst: number,
+    isLegendary: boolean,
+    isMythical: boolean,
+  ): number => {
+    if (isMythical) return 7;
+    if (isLegendary) return 6;
+    if (bst >= 540) return 5;
+    if (bst >= 420) return 4;
+    return 3;
+  };
+
+  /** Title-case a name that may be hyphenated (e.g. "mr-mime" → "Mr-Mime") */
+  const formatName = (raw: string): string =>
+    raw
+      .split('-')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join('-');
+
+  // Build full ID list for this region
+  const ids = Array.from({ length: pokemonCount }, (_, i) => region.min + i);
+  const totalBatches = Math.ceil(ids.length / BATCH_SIZE);
+
+  for (let batchStart = 0; batchStart < ids.length; batchStart += BATCH_SIZE) {
+    const batch = ids.slice(batchStart, batchStart + BATCH_SIZE);
+    const batchNum = Math.floor(batchStart / BATCH_SIZE) + 1;
+
+    // Update progress every 3 batches or on the last one
+    if (batchNum === 1 || batchNum % 3 === 0 || batchNum === totalBatches) {
+      await statusMessage
+        .edit({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle(`🌍 Adding Region: ${region.name}`)
+              .setDescription(
+                `Fetching from PokéAPI...\n\n` +
+                  `🔄 Batch ${batchNum}/${totalBatches} ` +
+                  `(${Math.min(batchStart + BATCH_SIZE, ids.length)}/${ids.length} processed)\n` +
+                  `✅ Success: ${fetched.length} | ❌ Skipped: ${fetchErrors.length}`,
+              )
+              .setColor(ADMIN_COLOR),
+          ],
+        })
+        .catch(() => {}); // Don't fail if edit rate-limited
+    }
+
+    // Fetch both endpoints in parallel for each Pokemon in the batch
+    await Promise.all(
+      batch.map(async (id) => {
+        try {
+          const [pokemonResp, speciesResp] = await Promise.all([
+            axios.get(`https://pokeapi.co/api/v2/pokemon/${id}`, {
+              timeout: 12000,
+            }),
+            axios.get(`https://pokeapi.co/api/v2/pokemon-species/${id}`, {
+              timeout: 12000,
+            }),
+          ]);
+
+          const pokemonData = pokemonResp.data;
+          const speciesData = speciesResp.data;
+
+          // Sum all base stats for BST
+          const bst: number = pokemonData.stats.reduce(
+            (sum: number, s: { base_stat: number }) => sum + s.base_stat,
+            0,
+          );
+
+          if (!bst || bst <= 0) {
+            fetchErrors.push({ id, error: 'Invalid BST (0 or missing)' });
+            return;
+          }
+
+          // Prefer the official English name from species endpoint
+          const englishEntry = (
+            speciesData.names as { language: { name: string }; name: string }[]
+          ).find((n) => n.language.name === 'en');
+          const name: string = englishEntry
+            ? englishEntry.name
+            : formatName(pokemonData.name as string);
+
+          if (!name || name.trim() === '') {
+            fetchErrors.push({ id, error: 'Could not determine name' });
+            return;
+          }
+
+          const rarity = assignRarity(
+            bst,
+            speciesData.is_legendary as boolean,
+            speciesData.is_mythical as boolean,
+          );
+
+          fetched.push({ id, name, rarity, bst });
+        } catch (err) {
+          if (axios.isAxiosError(err) && err.response?.status === 404) {
+            // Not a standard Pokemon at this ID (alternate form slot, gap, etc.)
+            fetchErrors.push({
+              id,
+              error: '404 – not a base-form Pokémon (skipped)',
+            });
+          } else {
+            const msg =
+              err instanceof Error ? err.message : 'Unknown fetch error';
+            fetchErrors.push({ id, error: msg });
+          }
+        }
+      }),
+    );
+
+    // Polite delay between batches (skip after last batch)
+    if (batchStart + BATCH_SIZE < ids.length) {
+      await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+    }
+  }
+
+  // ── Validate results ──────────────────────────────────────────────────────
+
+  if (fetched.length === 0) {
+    await statusMessage.edit({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ No Pokémon Fetched')
+          .setDescription(
+            'No Pokémon data could be retrieved from PokéAPI. No changes were made.\n\n' +
+              'Check your network connection and try again.',
+          )
+          .setColor(0xff0000),
+      ],
+    });
+    return;
+  }
+
+  // Abort if failure rate is too high (>10%), unless every error is a 404 skip
+  const hardErrors = fetchErrors.filter(
+    (e) => !e.error.startsWith('404'),
+  ).length;
+  const errorRate = hardErrors / pokemonCount;
+  if (errorRate > 0.1) {
+    const errorLines = fetchErrors
+      .slice(0, 25)
+      .map((e) => `• #${e.id}: ${e.error}`)
+      .join('\n');
+    await statusMessage.edit({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ Fetch Failed — Too Many Errors')
+          .setDescription(
+            `Aborted: **${hardErrors}** hard errors out of **${pokemonCount}** Pokémon ` +
+              `(${Math.round(errorRate * 100)}% failure rate, threshold is 10%).\n\n` +
+              `**Errors:**\n${errorLines}` +
+              (fetchErrors.length > 25
+                ? `\n• ...and ${fetchErrors.length - 25} more`
+                : '') +
+              '\n\nNo changes have been saved. Please try again or check your connection.',
+          )
+          .setColor(0xff0000),
+      ],
+    });
+    return;
+  }
+
+  // ── Build and save the updated CSV ───────────────────────────────────────
+
+  // Sort by ID ascending to keep CSV clean
+  fetched.sort((a, b) => a.id - b.id);
+
+  // Rarity breakdown for the summary
+  const rarityBreakdown: Record<number, number> = {};
+  for (const p of fetched) {
+    rarityBreakdown[p.rarity] = (rarityBreakdown[p.rarity] || 0) + 1;
+  }
+  const rarityNames: Record<number, string> = {
+    3: '3★',
+    4: '4★',
+    5: '5★',
+    6: 'Legendary',
+    7: 'Mythic',
+  };
+  const rarityStr = Object.entries(rarityBreakdown)
+    .sort(([a], [b]) => parseInt(a) - parseInt(b))
+    .map(([r, count]) => `${rarityNames[parseInt(r)] ?? r + '★'}: ${count}`)
+    .join(' | ');
+
+  try {
+    // Load existing CSV content
+    const currentCsvPath = getLatestSeedFile();
+    const existingContent = fs.readFileSync(currentCsvPath, 'utf-8').trim();
+
+    // Build new CSV rows: id,name,rarity,focus,bst
+    const newRows = fetched
+      .map((p) => `${p.id},${p.name},${p.rarity},0,${p.bst}`)
+      .join('\n');
+    const updatedContent = `${existingContent}\n${newRows}\n`;
+
+    // Save as a new timestamped seed file
+    const buffer = Buffer.from(updatedContent, 'utf-8');
+    const savedPath = await saveUploadedSeedFile(
+      buffer,
+      `pokedata_add_${regionName}.csv`,
+    );
+    const savedFilename = path.basename(savedPath);
+
+    // Reseed only the new entries directly (avoids re-processing the full CSV)
+    let inserted = 0;
+    let alreadyExisted = 0;
+
+    for (const data of fetched) {
+      const regionId = getRegionId(data.id);
+      const isSpecial = isSpecialPokemon(data.id);
+
+      const [, created] = await Pokemon.findOrCreate({
+        where: { id: data.id },
+        defaults: {
+          id: data.id,
+          name: data.name,
+          rarity: data.rarity,
+          focus: false,
+          bst: data.bst,
+          regionId,
+          isSpecial,
+          active: false,
+        },
+      });
+
+      if (created) {
+        inserted++;
+      } else {
+        alreadyExisted++;
+      }
+    }
+
+    // ── Success embed ─────────────────────────────────────────────────────
+    const skippedLines =
+      fetchErrors.length > 0
+        ? '\n\n**Skipped IDs:**\n' +
+          fetchErrors
+            .slice(0, 15)
+            .map((e) => `• #${e.id}: ${e.error}`)
+            .join('\n') +
+          (fetchErrors.length > 15
+            ? `\n• ...and ${fetchErrors.length - 15} more`
+            : '')
+        : '';
+
+    await statusMessage.edit({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle(`✅ Region Added: ${region.name}`)
+          .addFields([
+            {
+              name: 'Added to DB',
+              value: `**${inserted}**`,
+              inline: true,
+            },
+            {
+              name: 'Skipped (not found)',
+              value: `**${fetchErrors.length}**`,
+              inline: true,
+            },
+            {
+              name: 'Rarity Breakdown',
+              value: rarityStr || 'N/A',
+              inline: false,
+            },
+            { name: 'Seed File', value: savedFilename, inline: false },
+          ])
+          .setDescription(
+            `**${inserted}** Pokémon from **${region.name}** have been added to the database.` +
+              skippedLines +
+              '\n\n' +
+              '⚠️ **Rarities are auto-assigned** — review and adjust if needed:\n' +
+              '`!pg downloadseed` → edit CSV → `!pg uploadseed` → `!pg reseed --confirm`',
+          )
+          .setColor(ADMIN_COLOR),
+      ],
+    });
+
+    Logger.info(
+      `Admin ${message.author.tag} added region ${region.name}: ` +
+        `${inserted} inserted, ${alreadyExisted} already existed, ${fetchErrors.length} skipped`,
+    );
+  } catch (error) {
+    Logger.error('Error saving addregion data', error);
+    await statusMessage.edit({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ Error Saving Data')
+          .setDescription(
+            `Pokémon data was fetched successfully (${fetched.length} entries), ` +
+              'but an error occurred while saving to CSV or the database.\n\n' +
+              'No partial data was committed. Please try again.',
+          )
+          .setColor(0xff0000),
+      ],
+    });
   }
 }

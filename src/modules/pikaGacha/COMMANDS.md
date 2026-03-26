@@ -910,6 +910,64 @@ Gift balls to a specific user.
 
 ---
 
+### `!pg addregion <region> [--confirm]`
+
+Auto-fetch and add a new region's Pokémon from PokéAPI into the database.
+
+**Usage:**
+
+```
+!pg addregion galar            # Preview what would be fetched — no changes made
+!pg addregion galar --confirm  # Fetch data and add to DB
+!pg addregion paldea --confirm # Add Paldea region
+```
+
+**Permissions:** Admins only  
+**Supported regions:** kanto, johto, hoenn, sinnoh, unova, kalos, alola, galar, paldea
+
+**What it does:**
+
+1. Checks that the region isn't already seeded in the DB (aborts if it is)
+2. Fetches each Pokémon in the region's ID range from PokéAPI (in batches of 10)
+3. For each Pokémon: pulls BST from `/pokemon/{id}` and `is_legendary`/`is_mythical` from `/pokemon-species/{id}`
+4. Auto-assigns rarity using the rules below
+5. Appends new rows to the current seed CSV and saves it as a new timestamped file
+6. Inserts the new Pokémon directly into the database
+
+**Auto-Rarity Rules:**
+
+| Condition | Rarity |
+|-----------|--------|
+| `is_mythical: true` | 7★ Mythic |
+| `is_legendary: true` | 6★ Legendary |
+| BST ≥ 540 | 5★ |
+| BST ≥ 420 | 4★ |
+| BST < 420 | 3★ |
+
+**⚠️ Rarity Warning:**
+Auto-assignment is a best-effort first pass. Rarities based on BST may not match your preferred balance (e.g. fan-favourite Pokémon may deserve a higher rarity regardless of BST). Always review and adjust after adding:
+```
+!pg downloadseed → edit CSV → !pg uploadseed → !pg reseed --confirm
+```
+
+**Safeguards:**
+
+- ❌ Aborts if the region already has Pokémon in the DB
+- ❌ Aborts if >10% of fetch calls fail with hard errors (network issues)
+- ✅ 404s (alternate-form slots, ID gaps) are silently skipped and reported
+- ✅ Each Pokémon is validated (valid BST > 0, non-empty name) before saving
+- ✅ CSV is only saved after all fetches complete — no partial writes
+- ✅ DB inserts use `findOrCreate` to prevent duplicates
+- ✅ Requires `--confirm` flag to make any changes
+
+**Notes:**
+
+- The Special region is not supported (those are custom/event Pokémon)
+- Estimated time: ~30–60 seconds for a typical region (96–105 Pokémon)
+- After adding, use `!pg regions` to confirm the region is now available
+
+---
+
 ### `!pg deletetrainer <@user|user_id>`
 
 **⚠️ DANGEROUS ADMIN COMMAND**

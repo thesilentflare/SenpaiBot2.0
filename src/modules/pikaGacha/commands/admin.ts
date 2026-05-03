@@ -1534,10 +1534,10 @@ export async function handleAddRegion(
           '• `!pg addregion galar --confirm` — Fetch & add Galar Pokémon\n\n' +
           '**Available regions:** kanto, johto, hoenn, sinnoh, unova, kalos, alola, galar, paldea\n\n' +
           '**What this does:**\n' +
-          '1. Fetches every Pokémon in the region\'s ID range from PokéAPI\n' +
+          "1. Fetches every Pokémon in the region's ID range from PokéAPI\n" +
           '2. Auto-assigns rarity (Mythical=7★, Legendary=6★, BST-based for 3–5★)\n' +
           '3. Appends new rows to the current seed CSV and saves it\n' +
-          '4. Reseeds the database from the new file\n\n' +
+          '4. Inserts any newly fetched Pokémon into the database (without a full reseed)\n\n' +
           '⚠️ Auto-assigned rarities are a **best-effort first pass**. Review with\n' +
           '`!pg downloadseed` → edit → `!pg uploadseed` → `!pg reseed --confirm`',
       )
@@ -1864,15 +1864,8 @@ export async function handleAddRegion(
       .join('\n');
     const updatedContent = `${existingContent}\n${newRows}\n`;
 
-    // Save as a new timestamped seed file
-    const buffer = Buffer.from(updatedContent, 'utf-8');
-    const savedPath = await saveUploadedSeedFile(
-      buffer,
-      `pokedata_add_${regionName}.csv`,
-    );
-    const savedFilename = path.basename(savedPath);
-
-    // Reseed only the new entries directly (avoids re-processing the full CSV)
+    // Insert into DB first — save the CSV only after inserts succeed so that
+    // a mid-loop DB failure does not leave an orphaned seed file.
     let inserted = 0;
     let alreadyExisted = 0;
 
@@ -1900,6 +1893,14 @@ export async function handleAddRegion(
         alreadyExisted++;
       }
     }
+
+    // Save as a new timestamped seed file (after DB inserts succeed)
+    const buffer = Buffer.from(updatedContent, 'utf-8');
+    const savedPath = await saveUploadedSeedFile(
+      buffer,
+      `pokedata_add_${regionName}.csv`,
+    );
+    const savedFilename = path.basename(savedPath);
 
     // ── Success embed ─────────────────────────────────────────────────────
     const skippedLines =
@@ -1960,7 +1961,7 @@ export async function handleAddRegion(
           .setDescription(
             `Pokémon data was fetched successfully (${fetched.length} entries), ` +
               'but an error occurred while saving to CSV or the database.\n\n' +
-              'No partial data was committed. Please try again.',
+              'Some data may have been saved before the error occurred. Please review the database and try again if needed.',
           )
           .setColor(0xff0000),
       ],

@@ -165,7 +165,8 @@ class PikaGachaModule implements BotModule {
 
     try {
       // Registration gate — runs before any non-exempt command handler
-      if (!EXEMPT_SUBCOMMANDS.has(subcommand)) {
+      // Allow help requests (`!pg <command> help`) even for unregistered users
+      if (!EXEMPT_SUBCOMMANDS.has(subcommand) && !wantsHelp) {
         const trainer = await trainerService.getTrainer(message.author.id);
         if (!trainer) {
           await message.reply({

@@ -288,11 +288,9 @@ Look up information about a specific Pokemon.
 **Displays:**
 
 - Pokemon name and ID
-- Rarity (star rating)
 - Base Stat Total (BST)
 - Region
 - Official artwork sprite
-- Focus status
 
 ---
 
@@ -936,16 +934,17 @@ Auto-fetch and add a new region's Pokémon from PokéAPI into the database.
 
 **Auto-Rarity Rules:**
 
-| Condition | Rarity |
-|-----------|--------|
-| `is_mythical: true` | 7★ Mythic |
+| Condition            | Rarity       |
+| -------------------- | ------------ |
+| `is_mythical: true`  | 7★ Mythic    |
 | `is_legendary: true` | 6★ Legendary |
-| BST ≥ 540 | 5★ |
-| BST ≥ 420 | 4★ |
-| BST < 420 | 3★ |
+| BST ≥ 540            | 5★           |
+| BST ≥ 420            | 4★           |
+| BST < 420            | 3★           |
 
 **⚠️ Rarity Warning:**
 Auto-assignment is a best-effort first pass. Rarities based on BST may not match your preferred balance (e.g. fan-favourite Pokémon may deserve a higher rarity regardless of BST). Always review and adjust after adding:
+
 ```
 !pg downloadseed → edit CSV → !pg uploadseed → !pg reseed --confirm
 ```

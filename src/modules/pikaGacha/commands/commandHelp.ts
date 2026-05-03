@@ -193,7 +193,7 @@ export const COMMAND_HELP = {
           '• `!pg pokedex Pikachu` - Look up Pikachu\n' +
           '• `!pg dex 25` - Look up Pokémon #25\n' +
           '• `!pg pokedex Charizard` - Look up Charizard\n\n' +
-          '**Displays:** Name, ID, Rarity, BST, Region, sprite image',
+          '**Displays:** Name, ID, BST, Region, sprite image',
       )
       .setColor(COLOR_HELP),
 

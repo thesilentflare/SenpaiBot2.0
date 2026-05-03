@@ -227,7 +227,7 @@ export async function handleRegions(message: Message): Promise<void> {
       if (count > 0) {
         const idRange =
           region.id === 0
-            ? `ID ${region.min}+`
+            ? `IDs #${region.min}–#${region.max}`
             : `IDs #${region.min}–#${region.max}`;
         return `**${region.name}** — ${count} Pokémon available *(${idRange})*`;
       } else {

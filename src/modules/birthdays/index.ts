@@ -2,6 +2,7 @@ import { Client, EmbedBuilder, Message, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
 import { BotModule, CommandInfo } from '../../types/module';
 import Logger from '../../utils/logger';
+import { isAdmin } from '../adminManager/helpers';
 import {
   getAllBirthdays,
   getMonthlyBirthdays,
@@ -48,6 +49,11 @@ class BirthdaysModule implements BotModule {
     const content = message.content.trim();
 
     if (content.startsWith('!birth ')) {
+      const args = content.split(' ').slice(1);
+      if (args[0]?.toLowerCase() === 'trigger') {
+        this.handleTriggerReminder(message, args.slice(1));
+        return true;
+      }
       this.handleBirthCommand(message);
       return true;
     }
@@ -131,28 +137,7 @@ class BirthdaysModule implements BotModule {
     const currentDate = now.getDate();
 
     if (currentDate === BIRTHDAY_REMINDER_DAY_OF_MONTH) {
-      const birthdayList = await getMonthlyBirthdays(currentMonth);
-      if (birthdayList.length > 0) {
-        const title = `🎊 ${new Intl.DateTimeFormat('en-US', { month: 'long' })
-          .format(now)
-          .toUpperCase()} BIRTHDAYS 🎊`;
-        const description = birthdayList
-          .map((entry: BirthdayEntry) => {
-            const birthdayDate = parseISO(entry.dateISOString);
-            const zonedBirthdayDate = toZonedTime(birthdayDate, TIME_ZONE);
-            const formattedDate = format(zonedBirthdayDate, 'MM/dd', {
-              timeZone: TIME_ZONE,
-            });
-            return `${entry.name}: ${formattedDate}`;
-          })
-          .join('\n');
-
-        const embed = new EmbedBuilder()
-          .setTitle(title)
-          .setDescription(description)
-          .setColor(0xff0000);
-        await channel.send({ embeds: [embed] });
-      }
+      await this.postMonthlyReminder(channel, currentMonth);
     }
 
     const todayBirthdays = await getTodayBirthdays(currentMonth, currentDate);
@@ -170,6 +155,157 @@ class BirthdaysModule implements BotModule {
         .setDescription(description)
         .setColor(0xff0000);
       await channel.send({ embeds: [embed] });
+    }
+  }
+
+  /** Posts the monthly birthday list for the given month to the reminder channel. */
+  private async postMonthlyReminder(
+    channel: TextChannel,
+    month: number,
+  ): Promise<boolean> {
+    const birthdayList = await getMonthlyBirthdays(month);
+    if (birthdayList.length === 0) return false;
+
+    const monthName = new Intl.DateTimeFormat('en-US', { month: 'long' })
+      .format(new Date(2000, month - 1, 1))
+      .toUpperCase();
+    const title = `🎊 ${monthName} BIRTHDAYS 🎊`;
+    const description = birthdayList
+      .map((entry: BirthdayEntry) => {
+        const birthdayDate = parseISO(entry.dateISOString);
+        const zonedBirthdayDate = toZonedTime(birthdayDate, TIME_ZONE);
+        const formattedDate = format(zonedBirthdayDate, 'MM/dd', {
+          timeZone: TIME_ZONE,
+        });
+        return `${entry.name}: ${formattedDate}`;
+      })
+      .join('\n');
+
+    const embed = new EmbedBuilder()
+      .setTitle(title)
+      .setDescription(description)
+      .setColor(0xff0000);
+    await channel.send({ embeds: [embed] });
+    return true;
+  }
+
+  private async handleTriggerReminder(
+    message: Message,
+    args: string[],
+  ): Promise<void> {
+    if (!(await isAdmin(message.author.id, message.guild))) {
+      await message.reply({
+        embeds: [
+          {
+            title: '❌ Access Denied',
+            description: 'This command is admin-only!',
+            color: 0xff0000,
+          },
+        ],
+      });
+      return;
+    }
+
+    if (!this.client) return;
+
+    const channelId = BIRTHDAY_REMINDER_CHANNEL_ID;
+    if (!channelId) {
+      await message.reply({
+        embeds: [
+          {
+            title: '❌ Not Configured',
+            description:
+              'No birthday reminder channel is configured (`BIRTHDAY_REMINDER_CHANNEL_ID`).',
+            color: 0xff0000,
+          },
+        ],
+      });
+      return;
+    }
+
+    // Parse optional month argument; default to current month
+    const now = new Date();
+    let month = now.getMonth() + 1;
+    if (args.length > 0) {
+      const parsed = parseInt(args[0], 10);
+      if (isNaN(parsed) || parsed < 1 || parsed > 12) {
+        await message.reply({
+          embeds: [
+            {
+              title: '❌ Invalid Month',
+              description:
+                'Please provide a month number between 1 and 12.\n\n' +
+                '**Usage:** `!birth trigger [month]`\n' +
+                '**Example:** `!birth trigger 5` (May)',
+              color: 0xff0000,
+            },
+          ],
+        });
+        return;
+      }
+      month = parsed;
+    }
+
+    try {
+      const channel = (await this.client.channels.fetch(
+        channelId,
+      )) as TextChannel;
+
+      if (!channel || !channel.isTextBased()) {
+        await message.reply({
+          embeds: [
+            {
+              title: '❌ Channel Not Found',
+              description:
+                'The configured birthday reminder channel could not be found.',
+              color: 0xff0000,
+            },
+          ],
+        });
+        return;
+      }
+
+      const monthName = new Intl.DateTimeFormat('en-US', {
+        month: 'long',
+      }).format(new Date(2000, month - 1, 1));
+      const sent = await this.postMonthlyReminder(channel, month);
+
+      if (sent) {
+        await message.reply({
+          embeds: [
+            {
+              title: '✅ Reminder Sent',
+              description: `Monthly birthday reminder for **${monthName}** has been posted to <#${channelId}>.`,
+              color: 0x00cc44,
+            },
+          ],
+        });
+        this.logger.info(
+          `Admin ${message.author.tag} manually triggered birthday reminder for month ${month}`,
+        );
+      } else {
+        await message.reply({
+          embeds: [
+            {
+              title: '📭 No Birthdays',
+              description: `There are no registered birthdays in **${monthName}**.`,
+              color: 0xffcc00,
+            },
+          ],
+        });
+      }
+    } catch (error) {
+      this.logger.error('Error triggering birthday reminder', error);
+      await message.reply({
+        embeds: [
+          {
+            title: '❌ Error',
+            description:
+              'An error occurred while sending the birthday reminder.',
+            color: 0xff0000,
+          },
+        ],
+      });
     }
   }
 
@@ -352,6 +488,12 @@ class BirthdaysModule implements BotModule {
         command: '!blist',
         description: 'List all birthdays in the database',
         usage: '!blist',
+      },
+      {
+        command: '!birth trigger',
+        description: 'Manually trigger the monthly birthday reminder',
+        usage: '!birth trigger [month]',
+        adminOnly: true,
       },
     ];
   }

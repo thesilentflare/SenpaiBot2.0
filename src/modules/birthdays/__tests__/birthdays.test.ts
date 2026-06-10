@@ -72,24 +72,52 @@ describe('Birthday Helpers', () => {
           discordID: '123',
           name: 'User1',
           dateISOString: '2000-05-15T00:00:00.000Z',
+          announce_on: 1,
         },
         {
           discordID: '456',
           name: 'User2',
           dateISOString: '2000-08-20T00:00:00.000Z',
+          announce_on: 1,
         },
       ];
       mockDb.all.mockResolvedValue(mockBirthdays);
 
       const result = await getAllBirthdays();
 
-      expect(result).toEqual(mockBirthdays);
+      expect(result).toHaveLength(2);
+      expect(result[0].announce_on).toBe(true);
+      expect(result[1].announce_on).toBe(true);
       expect(mockDb.all).toHaveBeenCalled();
+    });
+
+    it('should return all birthdays including those with announce_on = false', async () => {
+      const mockBirthdays = [
+        {
+          discordID: '123',
+          name: 'User1',
+          dateISOString: '2000-05-15T00:00:00.000Z',
+          announce_on: 1,
+        },
+        {
+          discordID: '456',
+          name: 'User2',
+          dateISOString: '2000-08-20T00:00:00.000Z',
+          announce_on: 0,
+        },
+      ];
+      mockDb.all.mockResolvedValue(mockBirthdays);
+
+      const result = await getAllBirthdays();
+
+      expect(result).toHaveLength(2);
+      expect(result[0].announce_on).toBe(true);
+      expect(result[1].announce_on).toBe(false);
     });
   });
 
   describe('getTodayBirthdays', () => {
-    it('should filter birthdays for today', async () => {
+    it('should filter birthdays for today with announce_on = true', async () => {
       const today = new Date();
       const todayBirthday = new Date(
         2000,
@@ -98,7 +126,12 @@ describe('Birthday Helpers', () => {
       ).toISOString();
 
       const mockBirthdays = [
-        { discordID: '123', name: 'User1', dateISOString: todayBirthday },
+        {
+          discordID: '123',
+          name: 'User1',
+          dateISOString: todayBirthday,
+          announce_on: 1,
+        },
       ];
       mockDb.all.mockResolvedValue(mockBirthdays);
 
@@ -109,6 +142,26 @@ describe('Birthday Helpers', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].discordID).toBe('123');
+      expect(result[0].announce_on).toBe(true);
+    });
+
+    it('should not return birthdays with announce_on = false', async () => {
+      const today = new Date();
+      const todayBirthday = new Date(
+        2000,
+        today.getMonth(),
+        today.getDate(),
+      ).toISOString();
+
+      // Mock returns empty array since query filters by announce_on = 1
+      mockDb.all.mockResolvedValue([]);
+
+      const result = await getTodayBirthdays(
+        today.getMonth() + 1,
+        today.getDate(),
+      );
+
+      expect(result).toHaveLength(0);
     });
   });
 
@@ -117,7 +170,12 @@ describe('Birthday Helpers', () => {
       const mayBirthday = new Date(2000, 4, 15).toISOString(); // May
 
       const mockBirthdays = [
-        { discordID: '123', name: 'User1', dateISOString: mayBirthday },
+        {
+          discordID: '123',
+          name: 'User1',
+          dateISOString: mayBirthday,
+          announce_on: 1,
+        },
       ];
       mockDb.all.mockResolvedValue(mockBirthdays);
 
@@ -125,6 +183,34 @@ describe('Birthday Helpers', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].discordID).toBe('123');
+      expect(result[0].announce_on).toBe(true);
+    });
+
+    it('should return all birthdays for the month including announce_on = false', async () => {
+      const mayBirthday1 = new Date(2000, 4, 15).toISOString(); // May
+      const mayBirthday2 = new Date(2000, 4, 20).toISOString(); // May
+
+      const mockBirthdays = [
+        {
+          discordID: '123',
+          name: 'User1',
+          dateISOString: mayBirthday1,
+          announce_on: 1,
+        },
+        {
+          discordID: '456',
+          name: 'User2',
+          dateISOString: mayBirthday2,
+          announce_on: 0,
+        },
+      ];
+      mockDb.all.mockResolvedValue(mockBirthdays);
+
+      const result = await getMonthlyBirthdays(5); // May
+
+      expect(result).toHaveLength(2);
+      expect(result[0].announce_on).toBe(true);
+      expect(result[1].announce_on).toBe(false);
     });
   });
 });

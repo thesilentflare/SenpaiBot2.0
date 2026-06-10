@@ -60,6 +60,7 @@ export const initializeDatabase = (): Promise<void> => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         discordID TEXT,
         dateISOString TEXT,
+        announce_on BOOLEAN DEFAULT 1,
         FOREIGN KEY (discordID) REFERENCES Users (discordID)
       )`,
         (err) => {

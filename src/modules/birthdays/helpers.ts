@@ -7,6 +7,7 @@ export type BirthdayEntry = {
   discordID: string;
   name: string;
   dateISOString: string;
+  announce_on?: boolean;
 };
 
 export const getMonthlyBirthdays = async (
@@ -19,7 +20,7 @@ export const getMonthlyBirthdays = async (
   }
 
   const query = `
-    SELECT u.discordID, u.name, b.dateISOString
+    SELECT u.discordID, u.name, b.dateISOString, b.announce_on
     FROM Users u
     JOIN Birthdays b ON u.discordID = b.discordID
     WHERE strftime('%m', b.dateISOString) = ?
@@ -32,6 +33,7 @@ export const getMonthlyBirthdays = async (
     discordID: entry.discordID,
     name: entry.name,
     dateISOString: entry.dateISOString,
+    announce_on: Boolean(entry.announce_on),
   }));
 };
 
@@ -45,11 +47,12 @@ export const getTodayBirthdays = async (
   const dayString = String(day).padStart(2, '0');
 
   const query = `
-        SELECT u.discordID, u.name, b.dateISOString
+        SELECT u.discordID, u.name, b.dateISOString, b.announce_on
         FROM Users u
         JOIN Birthdays b ON u.discordID = b.discordID
         WHERE strftime('%m', b.dateISOString) = ? 
-        AND strftime('%d', b.dateISOString) = ?;
+        AND strftime('%d', b.dateISOString) = ?
+        AND b.announce_on = 1;
     `;
 
   const todayBirthdays = await db.all(query, [monthString, dayString]);
@@ -57,6 +60,7 @@ export const getTodayBirthdays = async (
     discordID: entry.discordID,
     name: entry.name,
     dateISOString: entry.dateISOString,
+    announce_on: Boolean(entry.announce_on),
   }));
 };
 
@@ -64,7 +68,7 @@ export const getAllBirthdays = async (): Promise<BirthdayEntry[]> => {
   const db = await dbPromise;
 
   const query = `
-        SELECT u.discordID, u.name, b.dateISOString
+        SELECT u.discordID, u.name, b.dateISOString, b.announce_on
         FROM Users u
         JOIN Birthdays b ON u.discordID = b.discordID
         ORDER BY strftime('%m', b.dateISOString), strftime('%d', b.dateISOString);
@@ -75,6 +79,7 @@ export const getAllBirthdays = async (): Promise<BirthdayEntry[]> => {
     discordID: entry.discordID,
     name: entry.name,
     dateISOString: entry.dateISOString,
+    announce_on: Boolean(entry.announce_on),
   }));
 };
 

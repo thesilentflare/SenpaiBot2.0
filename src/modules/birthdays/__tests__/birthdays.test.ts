@@ -147,11 +147,6 @@ describe('Birthday Helpers', () => {
 
     it('should not return birthdays with announce_on = false', async () => {
       const today = new Date();
-      const todayBirthday = new Date(
-        2000,
-        today.getMonth(),
-        today.getDate(),
-      ).toISOString();
 
       // Mock returns empty array since query filters by announce_on = 1
       mockDb.all.mockResolvedValue([]);

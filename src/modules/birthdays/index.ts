@@ -63,6 +63,11 @@ class BirthdaysModule implements BotModule {
       return true;
     }
 
+    if (content.startsWith('!blistadmin')) {
+      this.handleBlistAdminCommand(message);
+      return true;
+    }
+
     // Check for birth command without space/args
     if (content === '!birth') {
       message.reply(
@@ -473,6 +478,50 @@ class BirthdaysModule implements BotModule {
     });
   }
 
+  private async handleBlistAdminCommand(message: Message): Promise<void> {
+    if (message.author.bot) return;
+
+    if (!(await isAdmin(message.author.id, message.guild))) {
+      await message.reply({
+        embeds: [
+          {
+            title: '❌ Access Denied',
+            description: 'This command is admin-only!',
+            color: 0xff0000,
+          },
+        ],
+      });
+      return;
+    }
+
+    const allBirthdays = await getAllBirthdays();
+
+    let title = 'All Birthdays (Admin View)';
+    let description = 'Person | Month | Day | Announcements\n\n';
+    if (allBirthdays.length > 0) {
+      allBirthdays.forEach((entry: BirthdayEntry) => {
+        const birthdayDate = parseISO(entry.dateISOString);
+        const zonedBirthdayDate = toZonedTime(birthdayDate, TIME_ZONE);
+        const formattedDate = format(zonedBirthdayDate, 'MM/dd', {
+          timeZone: TIME_ZONE,
+        });
+        const announceStatus = entry.announce_on ? '✅' : '❌';
+        description += `${entry.name}: ${formattedDate} ${announceStatus}\n`;
+      });
+    } else {
+      description = 'No Birthdays in Database';
+    }
+    message.reply({
+      embeds: [
+        {
+          title,
+          description,
+          color: 0x93acff,
+        },
+      ],
+    });
+  }
+
   cleanup(): void {
     this.logger.debug('Module cleaned up');
   }
@@ -488,6 +537,12 @@ class BirthdaysModule implements BotModule {
         command: '!blist',
         description: 'List all birthdays in the database',
         usage: '!blist',
+      },
+      {
+        command: '!blistadmin',
+        description: 'List all birthdays with announcement status',
+        usage: '!blistadmin',
+        adminOnly: true,
       },
       {
         command: '!birth trigger',

@@ -58,13 +58,13 @@ class BirthdaysModule implements BotModule {
       return true;
     }
 
-    if (content.startsWith('!blist')) {
-      this.handleBlistCommand(message);
+    if (content.startsWith('!blistadmin')) {
+      this.handleBlistAdminCommand(message);
       return true;
     }
 
-    if (content.startsWith('!blistadmin')) {
-      this.handleBlistAdminCommand(message);
+    if (content.startsWith('!blist')) {
+      this.handleBlistCommand(message);
       return true;
     }
 
